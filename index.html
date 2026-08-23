@@ -63,20 +63,29 @@
   @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
 
   html,body{ margin:0; height:100%; font-family:'Inter',sans-serif; }
+  
+  /* RESPONSIVE LAYOUT ENGINE */
   body{
     display:flex; align-items:center; justify-content:center;
-    background:var(--page-bg); padding:20px; min-height:100vh; min-height:100dvh;
+    background:var(--page-bg); padding:0; min-height:100vh; min-height:100dvh;
   }
 
   #phone{
-    position:relative; width:390px; height:844px; max-height:92vh; max-width:100%;
-    border-radius:44px; overflow:hidden; background:var(--bg-grad);
-    box-shadow:var(--shadow); border:10px solid var(--frame-border);
+    position:relative; width:100vw; height:100dvh; max-height:100dvh; max-width:100%;
+    border-radius:0; overflow:hidden; background:var(--bg-grad);
+    box-shadow:none; border:none;
   }
-  @media (display-mode: standalone){
-    body{ padding:0; }
-    #phone{ width:100vw; height:100dvh; max-height:100dvh; border-radius:0; border:none; }
+
+  /* DESKTOP DEVICE SIMULATION */
+  @media (min-width: 600px) {
+    body { padding: 20px; }
+    #phone {
+      width: 390px; height: 844px; max-height: 92vh;
+      border-radius: 44px; border: 10px solid var(--frame-border);
+      box-shadow: var(--shadow);
+    }
   }
+
   .blob{ position:absolute; border-radius:50%; filter:blur(52px); pointer-events:none; }
   .blob-1{ top:-60px; right:-60px; width:220px; height:220px; background:color-mix(in srgb, var(--purple) 30%, transparent); }
   .blob-2{ bottom:100px; left:-70px; width:200px; height:200px; background:color-mix(in srgb, var(--pink) 28%, transparent); }
@@ -284,7 +293,6 @@ function makeInternalEmail(name){
 /* ============================================================ */
 const CATEGORY_EMOJI = { study:'📚', fitness:'🏋️', code:'💻', creative:'🎨', learning:'🧠', habit:'🌱' };
 const CATEGORY_LABEL = { study:'Study', fitness:'Fitness', code:'Coding', creative:'Creative', learning:'Learning', habit:'Habit' };
-const AUTH_ONLY_SCREENS = ['loading','authChoice','create','login','yourCode'];
 
 let state = {
   theme: 'light',
@@ -312,42 +320,10 @@ let state = {
   pendingPhotoFile: null,
 };
 
-let lastNavKey = null;
-
-function setState(patch, opts={}){
+function setState(patch){
   state = { ...state, ...patch };
-  const navKey = `${state.screen}|${state.activeTab}|${state.modal}`;
-  if(opts.fromPopstate){
-    lastNavKey = navKey;
-  } else if(navKey !== lastNavKey){
-    history.pushState({ screen: state.screen, activeTab: state.activeTab, modal: state.modal }, '');
-    lastNavKey = navKey;
-  }
   render();
 }
-
-window.addEventListener('popstate', (e) => {
-  const target = e.state;
-  if(!target){
-    const fallback = state.currentUser
-      ? { screen:'app', activeTab: state.activeTab || 'today', modal:null }
-      : { screen:'authChoice', modal:null };
-    history.replaceState(fallback, '');
-    setState(fallback, { fromPopstate:true });
-    return;
-  }
-  if(state.currentUser && AUTH_ONLY_SCREENS.includes(target.screen)){
-    const fixed = { screen:'app', activeTab: state.activeTab || 'today', modal:null };
-    history.replaceState(fixed, '');
-    setState(fixed, { fromPopstate:true });
-    return;
-  }
-  setState({
-    screen: target.screen,
-    activeTab: target.activeTab || state.activeTab,
-    modal: target.modal || null,
-  }, { fromPopstate:true });
-});
 
 /* ============================================================ */
 /* Utilities                                                      */
@@ -381,23 +357,19 @@ async function restoreSession(){
   if(session){
     await loadAppData();
   } else {
-    history.replaceState({ screen:'authChoice', modal:null }, '');
-    lastNavKey = 'authChoice|today|null';
-    setState({ screen: 'authChoice' }, { fromPopstate:true });
+    setState({ screen: 'authChoice' });
   }
 }
 
 supabase.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
     unsubscribeChat();
-    const fresh = {
+    setState({
       currentUser:null, partnerUser:null, coupleId:null, goals:[], partnerGoals:[],
       updates:[], messages:[], partnerTyping:false,
       screen:'authChoice', authName:'', authCodeInput:'', authPassword:'',
-      authError:'', modal:null,
-    };
-    history.replaceState({ screen:'authChoice', modal:null }, '');
-    setState(fresh, { fromPopstate:true });
+      authError:'', modal:null, busy: false
+    });
   }
 });
 
@@ -413,14 +385,11 @@ async function loadAppData(){
       .from('profiles').select('*').eq('id', user.id).single();
     if(profileError) throw profileError;
 
-    history.replaceState({ screen:'app', activeTab:'today', modal:null }, '');
-    lastNavKey = 'app|today|null';
-    setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
+    setState({ currentUser: profile, screen: 'app', activeTab: 'today' });
     await loadUserData();
   }catch(err){
     console.error(err);
-    history.replaceState({ screen:'authChoice', modal:null }, '');
-    setState({ screen:'authChoice', authError: friendlyError(err) }, { fromPopstate:true });
+    setState({ screen:'authChoice', authError: friendlyError(err) });
   }
 }
 
@@ -585,7 +554,7 @@ async function sendChatMessage(){
 }
 
 /* ============================================================ */
-/* Auth actions — name + password only, no email shown anywhere    */
+/* Auth actions                                                 */
 /* ============================================================ */
 async function createAccount(){
   const name = state.authName.trim();
@@ -604,7 +573,7 @@ async function createAccount(){
   if(!data.session){
     setState({
       busy:false,
-      authError:'Signup needs "Confirm email" turned OFF in your Supabase project (Authentication → Settings → Email). See setup notes.',
+      authError:'Signup needs "Confirm email" turned OFF in your Supabase settings.',
       screen:'authChoice',
     });
     return;
@@ -640,6 +609,7 @@ function finishOnboarding(){
 }
 
 async function logout(){
+  setState({ modal: null, busy: true });
   await supabase.auth.signOut();
 }
 
@@ -783,7 +753,7 @@ function renderBottomNav(){
 }
 
 /* ============================================================ */
-/* Render: Loading                                                */
+/* Render screens                                               */
 /* ============================================================ */
 function renderLoading(){
   return `
@@ -793,9 +763,6 @@ function renderLoading(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Auth screens                                           */
-/* ============================================================ */
 function renderAuthChoice(){
   return `
     <div class="center-col">
@@ -856,9 +823,6 @@ function renderYourCode(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Today                                                  */
-/* ============================================================ */
 function renderGoalCard(g){
   const cat = CATEGORY_EMOJI[g.category] || '🌱';
   const done = !!g.is_done;
@@ -951,9 +915,6 @@ function renderToday(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Goals                                                  */
-/* ============================================================ */
 let goalsFilter = 'all';
 function renderGoals(){
   const filtered = state.goals.filter(g => goalsFilter==='all' ? true : goalsFilter==='done' ? g.is_done : !g.is_done);
@@ -972,9 +933,6 @@ function renderGoals(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Chat                                                   */
-/* ============================================================ */
 function renderChat(){
   if(!state.coupleId){
     return `
@@ -1015,9 +973,6 @@ function renderChat(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Updates                                                */
-/* ============================================================ */
 function renderUpdates(){
   const list = state.updates;
   const EMOJIS = ['❤️','🔥','🫶'];
@@ -1054,9 +1009,6 @@ function renderUpdates(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Progress                                               */
-/* ============================================================ */
 function renderProgress(){
   const goals = state.goals;
   const done = goals.filter(g=>g.is_done).length;
@@ -1100,9 +1052,6 @@ function renderProgress(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Together                                               */
-/* ============================================================ */
 function renderTogether(){
   const goals = state.goals, pGoals = state.partnerGoals;
   const myPct = goals.length ? Math.round((goals.filter(g=>g.is_done).length/goals.length)*100) : 0;
@@ -1139,7 +1088,7 @@ function renderTogether(){
 }
 
 /* ============================================================ */
-/* Render: Modals                                                 */
+/* Render Modals                                                */
 /* ============================================================ */
 function renderModal(){
   if(!state.modal) return '';
@@ -1276,7 +1225,6 @@ function render(){
           sendChatMessage();
         }
       });
-      chatInput.focus();
     }
   }
 }
@@ -1332,7 +1280,7 @@ document.addEventListener('click', async (e) => {
   else if(action==='open-add-update') setState({ modal:'addUpdate', pendingPhotoFile:null });
   else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
   else if(action==='open-settings') setState({ modal:'settings' });
-  else if(action==='close-modal') history.back();
+  else if(action==='close-modal') setState({ modal: null });
   else if(action==='do-logout') logout();
   else if(action==='disconnect-partner') disconnectPartner();
   else if(action==='filter-goals'){ goalsFilter = el.getAttribute('data-filter'); render(); }
