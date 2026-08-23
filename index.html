@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>CoupleFlow</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#9B87F5" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="CoupleFlow" />
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="icons/icon.svg" />
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg-grad: linear-gradient(160deg, #F6F2FF 0%, #FFF3FA 48%, #EEF5FF 100%);
+    --ink: #2B2640;
+    --ink-soft: #847CA0;
+    --ink-faint: #B0A8C8;
+    --glass: rgba(255,255,255,0.58);
+    --glass-strong: rgba(255,255,255,0.82);
+    --glass-border: rgba(255,255,255,0.9);
+    --solid: #FFFFFF;
+    --purple: #9B87F5;
+    --purple-deep: #7657E0;
+    --pink: #F2A6CE;
+    --pink-deep: #E8639F;
+    --blue: #9DC3F2;
+    --nav-bg: rgba(255,255,255,0.75);
+    --shadow: 0 20px 45px -20px rgba(118,87,224,0.28);
+    --shadow-soft: 0 10px 30px -14px rgba(118,87,224,0.22);
+    --frame-border: #1E1B2C;
+    --page-bg: #EDEAF7;
+  }
+  [data-theme="dark"]{
+    --bg-grad: linear-gradient(160deg, #191529 0%, #1E1726 48%, #161A26 100%);
+    --ink: #F2EEFB;
+    --ink-soft: #B4A9D4;
+    --ink-faint: #756D93;
+    --glass: rgba(46,38,68,0.55);
+    --glass-strong: rgba(52,43,76,0.78);
+    --glass-border: rgba(255,255,255,0.08);
+    --solid: #241D34;
+    --purple: #A997FF;
+    --purple-deep: #8B72F0;
+    --pink: #F0A8D2;
+    --pink-deep: #E37AB8;
+    --blue: #8FB8EE;
+    --nav-bg: rgba(30,24,46,0.8);
+    --shadow: 0 20px 45px -20px rgba(0,0,0,0.55);
+    --shadow-soft: 0 10px 30px -14px rgba(0,0,0,0.45);
+    --frame-border: #0F0C18;
+    --page-bg: #0F0C18;
+  }
+
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
+
+  html,body{ margin:0; height:100%; font-family:'Inter',sans-serif; }
+  body{
+    display:flex; align-items:center; justify-content:center;
+    background:var(--page-bg); padding:20px; min-height:100vh;
+    min-height:100dvh;
+  }
+
+  #phone{
+    position:relative; width:390px; height:844px; max-height:92vh; max-width:100%;
+    border-radius:44px; overflow:hidden; background:var(--bg-grad);
+    box-shadow:var(--shadow); border:10px solid var(--frame-border);
+  }
+  @media (display-mode: standalone){
+    body{ padding:0; }
+    #phone{ width:100vw; height:100dvh; max-height:100dvh; border-radius:0; border:none; }
+  }
+  .blob{ position:absolute; border-radius:50%; filter:blur(52px); pointer-events:none; }
+  .blob-1{ top:-60px; right:-60px; width:220px; height:220px; background:color-mix(in srgb, var(--purple) 30%, transparent); }
+  .blob-2{ bottom:100px; left:-70px; width:200px; height:200px; background:color-mix(in srgb, var(--pink) 28%, transparent); }
+
+  #screen{ position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  #screen::-webkit-scrollbar{ width:0; }
+
+  .glass{
+    background:var(--glass); border:1px solid var(--glass-border); border-radius:26px;
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); box-shadow:var(--shadow-soft);
+  }
+  .glass-strong{ background:var(--glass-strong); }
+
+  h1,h2,h3,.heading{ font-family:'Plus Jakarta Sans',sans-serif; color:var(--ink); margin:0; }
+  p,span,div,button,input,select,textarea,label{ color:var(--ink); }
+
+  .muted{ color:var(--ink-soft); }
+  .faint{ color:var(--ink-faint); }
+
+  button{ font-family:'Inter',sans-serif; cursor:pointer; }
+  input,select,textarea{ font-family:'Inter',sans-serif; }
+  ::placeholder{ color:var(--ink-faint); }
+
+  .btn-primary{
+    width:100%; padding:14px 0; border-radius:18px; border:none;
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff;
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:14.5px;
+    box-shadow:0 10px 24px -10px rgba(118,87,224,0.55);
+  }
+  .btn-secondary{
+    width:100%; padding:13px 0; border-radius:18px; cursor:pointer;
+    border:1px solid var(--glass-border); background:var(--glass); color:var(--ink);
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:14px;
+  }
+  .input{
+    width:100%; border:1px solid var(--glass-border); border-radius:16px; padding:13px 14px;
+    font-size:14px; color:var(--ink); background:var(--glass); outline:none; margin-bottom:12px;
+  }
+  .input:focus{ border-color:var(--purple); }
+
+  .tag{
+    font-size:11px; font-weight:600; padding:4px 10px; border-radius:999px;
+    display:inline-flex; align-items:center; gap:4px; background:color-mix(in srgb, var(--purple) 14%, transparent);
+  }
+  .tag.pink{ background:color-mix(in srgb, var(--pink) 20%, transparent); }
+  .tag.blue{ background:color-mix(in srgb, var(--blue) 22%, transparent); }
+
+  .icon-badge{
+    width:40px; height:40px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; font-size:18px; background:var(--glass-strong); border:1px solid var(--glass-border);
+  }
+  .icon-badge.done{
+    background:linear-gradient(135deg,var(--purple),var(--pink)); border:none;
+    box-shadow:0 6px 14px -6px rgba(118,87,224,0.5);
+  }
+
+  .checkbox-btn{
+    width:30px; height:30px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    border:2px solid var(--ink-faint); background:transparent; transition:all .25s;
+  }
+  .checkbox-btn.done{
+    border:none; background:linear-gradient(135deg,var(--purple),var(--pink));
+  }
+
+  #bottomnav{
+    position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:center;
+    padding-bottom:calc(14px + env(safe-area-inset-bottom)); z-index:30;
+  }
+  #navbar{
+    display:flex; align-items:center; gap:2px; padding:8px 10px;
+    background:var(--nav-bg); border-radius:26px; backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border); box-shadow:var(--shadow);
+  }
+  .navitem{
+    display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 10px;
+    border-radius:16px; border:none; background:transparent; min-width:52px;
+  }
+  .navitem.active{ background:color-mix(in srgb, var(--purple) 14%, transparent); }
+  .navitem .ic{ font-size:18px; line-height:1; }
+  .navitem .lb{ font-size:9.5px; font-weight:600; color:var(--ink-faint); }
+  .navitem.active .lb{ color:var(--purple-deep); }
+
+  #fab{
+    width:46px; height:46px; border-radius:50%; border:none; margin:0 2px;
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:22px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 10px 22px -8px rgba(118,87,224,0.6);
+  }
+
+  .topbar{
+    position:absolute; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between;
+    padding:calc(16px + env(safe-area-inset-top)) 18px 16px; z-index:20;
+  }
+  .round-btn{
+    width:36px; height:36px; border-radius:50%; border:1px solid var(--glass-border);
+    background:var(--glass); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:center;
+    font-size:15px;
+  }
+
+  .modal-overlay{
+    position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end;
+    background:rgba(20,15,35,0.35); backdrop-filter:blur(4px);
+  }
+  .modal-sheet{
+    width:100%; max-width:430px; margin:0 auto; background:var(--solid);
+    border-radius:28px 28px 0 0; padding:10px 20px calc(28px + env(safe-area-inset-bottom)); box-shadow:var(--shadow);
+    max-height:85vh; overflow-y:auto;
+  }
+  .drag-handle{ width:40px; height:4px; border-radius:999px; background:var(--glass-border); margin:6px auto 18px; }
+
+  .photo-placeholder{
+    width:100%; height:130px; border-radius:18px; margin-bottom:12px;
+    background:linear-gradient(135deg,color-mix(in srgb, var(--purple) 20%, transparent),color-mix(in srgb, var(--pink) 18%, transparent));
+    border:1.5px dashed var(--ink-faint);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+    font-size:26px;
+  }
+  .photo-note{ font-size:11px; color:var(--ink-faint); text-align:center; }
+
+  .empty-state{ text-align:center; padding:50px 20px; color:var(--ink-soft); }
+  .empty-state .em{ font-size:34px; margin-bottom:10px; }
+
+  .code-display{
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:32px; letter-spacing:6px;
+    text-align:center; color:var(--purple-deep); padding:18px 0;
+  }
+
+  .auth-tabs{ display:flex; gap:8px; margin-bottom:18px; }
+  .auth-tab{
+    flex:1; padding:10px 0; border-radius:14px; border:1px solid var(--glass-border);
+    background:var(--glass); font-weight:600; font-size:13px; color:var(--ink-soft);
+  }
+  .auth-tab.active{ background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border:none; }
+
+  .error-text{ color:var(--pink-deep); font-size:12.5px; margin:-4px 0 12px; font-weight:500; }
+  .center-col{ display:flex; flex-direction:column; justify-content:center; min-height:100%; padding:28px 24px; }
+
+  .avatar{
+    border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff;
+    font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
+  }
+</style>
+</head>
+<body>
+<div id="phone">
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+  <div id="screen"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+
+/* ============================================================ */
+/* Supabase client                                                */
+/* ============================================================ */
+const SUPABASE_URL = 'https://fccupuootvfonaynmhyh.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+});
+
+/* ============================================================ */
+/* State                                                          */
+/* ============================================================ */
+const CATEGORY_EMOJI = { study:'📚', fitness:'🏋️', code:'💻', creative:'🎨', learning:'🧠', habit:'🌱' };
+const CATEGORY_LABEL = { study:'Study', fitness:'Fitness', code:'Coding', creative:'Creative', learning:'Learning', habit:'Habit' };
+const AUTH_ONLY_SCREENS = ['loading','authChoice','create','login','yourCode'];
+
+let state = {
+  theme: 'light',
+  screen: 'loading',
+  loginMode: 'email',
+  authName: '',
+  authEmail: '',
+  authPassword: '',
+  authCodeInput: '',
+  authError: '',
+  busy: false,
+
+  currentUser: null,
+  partnerUser: null,
+
+  activeTab: 'today',
+  goals: [],
+  partnerGoals: [],
+  updates: [],
+  modal: null,
+  connectInput: '',
+  connectError: '',
+  pendingPhotoFile: null,
+};
+
+let lastNavKey = null;
+
+function setState(patch, opts={}){
+  state = { ...state, ...patch };
+  const navKey = `${state.screen}|${state.activeTab}|${state.modal}`;
+  if(opts.fromPopstate){
+    lastNavKey = navKey;
+  } else if(navKey !== lastNavKey){
+    history.pushState({ screen: state.screen, activeTab: state.activeTab, modal: state.modal }, '');
+    lastNavKey = navKey;
+  }
+  render();
+}
+
+window.addEventListener('popstate', (e) => {
+  const target = e.state;
+
+  if(!target){
+    const fallback = state.currentUser
+      ? { screen:'app', activeTab: state.activeTab || 'today', modal:null }
+      : { screen:'authChoice', modal:null };
+    history.replaceState(fallback, '');
+    setState(fallback, { fromPopstate:true });
+    return;
+  }
+
+  if(state.currentUser && AUTH_ONLY_SCREENS.includes(target.screen)){
+    const fixed = { screen:'app', activeTab: state.activeTab || 'today', modal:null };
+    history.replaceState(fixed, '');
+    setState(fixed, { fromPopstate:true });
+    return;
+  }
+
+  setState({
+    screen: target.screen,
+    activeTab: target.activeTab || state.activeTab,
+    modal: target.modal || null,
+  }, { fromPopstate:true });
+});
+
+/* ============================================================ */
+/* Utilities                                                      */
+/* ============================================================ */
+function genId(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function initials(name){ return (name||'?').trim()[0]?.toUpperCase() || '?'; }
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+function timeAgo(ts){
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff/60000);
+  if(m < 1) return 'Just now';
+  if(m < 60) return `${m}m ago`;
+  const h = Math.floor(m/60);
+  if(h < 24) return `${h}h ago`;
+  return new Date(ts).toLocaleDateString();
+}
+function friendlyError(error){
+  return error?.message || 'Something went wrong. Please try again.';
+}
+
+/* ============================================================ */
+/* Session restore                                                 */
+/* ============================================================ */
+async function restoreSession(){
+  const { data: { session } } = await supabase.auth.getSession();
+  if(session){
+    await loadAppData();
+  } else {
+    history.replaceState({ screen:'authChoice', modal:null }, '');
+    lastNavKey = 'authChoice|today|null';
+    setState({ screen: 'authChoice' }, { fromPopstate:true });
+  }
+}
+
+supabase.auth.onAuthStateChange((event) => {
+  if(event === 'SIGNED_OUT'){
+    const fresh = {
+      currentUser:null, partnerUser:null, goals:[], partnerGoals:[], updates:[],
+      screen:'authChoice', authName:'', authEmail:'', authPassword:'', authCodeInput:'',
+      authError:'', modal:null,
+    };
+    history.replaceState({ screen:'authChoice', modal:null }, '');
+    setState(fresh, { fromPopstate:true });
+  }
+});
+
+/* ============================================================ */
+/* Data loading                                                   */
+/* ============================================================ */
+async function loadAppData(){
+  try{
+    const { data: { user } } = await supabase.auth.getUser();
+    if(!user){ setState({ screen:'authChoice' }); return; }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles').select('*').eq('id', user.id).single();
+    if(profileError) throw profileError;
+
+    history.replaceState({ screen:'app', activeTab:'today', modal:null }, '');
+    lastNavKey = 'app|today|null';
+    setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
+    await loadUserData();
+  }catch(err){
+    console.error(err);
+    history.replaceState({ screen:'authChoice', modal:null }, '');
+    setState({ screen:'authChoice', authError: friendlyError(err) }, { fromPopstate:true });
+  }
+}
+
+async function loadUserData(){
+  const me = state.currentUser;
+  if(!me) return;
+
+  const [goals, partner] = await Promise.all([
+    getMyGoals(),
+    getPartnerProfile(),
+  ]);
+
+  let partnerGoals = [];
+  if(partner) partnerGoals = await getPartnerGoals(partner.id);
+
+  const updates = await getUpdatesFeed(me, partner);
+
+  setState({ goals, partnerUser: partner, partnerGoals, updates });
+}
+
+async function getMyGoals(){
+  const { data, error } = await supabase
+    .from('goals').select('*')
+    .eq('user_id', state.currentUser.id)
+    .order('created_at', { ascending:false });
+  if(error){ console.error(error); return []; }
+  return data;
+}
+
+async function getPartnerGoals(partnerId){
+  const { data, error } = await supabase
+    .from('goals').select('*')
+    .eq('user_id', partnerId)
+    .order('created_at', { ascending:false });
+  if(error){ console.error(error); return []; }
+  return data;
+}
+
+async function getPartnerProfile(){
+  const me = state.currentUser.id;
+  const { data: couple, error } = await supabase
+    .from('couples').select('user1_id, user2_id')
+    .or(`user1_id.eq.${me},user2_id.eq.${me}`)
+    .maybeSingle();
+  if(error || !couple) return null;
+  const partnerId = couple.user1_id === me ? couple.user2_id : couple.user1_id;
+  const { data: partner, error: pErr } = await supabase
+    .from('profiles').select('*').eq('id', partnerId).single();
+  if(pErr) return null;
+  return partner;
+}
+
+async function getUpdatesFeed(me, partner){
+  const ids = partner ? [me.id, partner.id] : [me.id];
+  const { data, error } = await supabase
+    .from('updates')
+    .select('*, update_photos(id, storage_path), reactions(id, emoji, user_id)')
+    .in('user_id', ids)
+    .order('created_at', { ascending:false })
+    .limit(50);
+  if(error){ console.error(error); return []; }
+
+  const withUrls = await Promise.all(data.map(async (u) => {
+    let photoUrl = null;
+    if(u.update_photos && u.update_photos.length){
+      const path = u.update_photos[0].storage_path;
+      const { data: signed } = await supabase.storage.from('photos').createSignedUrl(path, 3600);
+      photoUrl = signed?.signedUrl || null;
+    }
+    return {
+      ...u,
+      authorName: u.user_id === me.id ? me.name : (partner?.name || 'Partner'),
+      mine: u.user_id === me.id,
+      photoUrl,
+      reactions: u.reactions || [],
+    };
+  }));
+  return withUrls;
+}
+
+/* ============================================================ */
+/* Auth actions                                                   */
+/* ============================================================ */
+async function createAccount(){
+  const name = state.authName.trim();
+  const email = state.authEmail.trim();
+  const password = state.authPassword;
+
+  if(!name){ setState({ authError:'Enter your name.' }); return; }
+  if(!email){ setState({ authError:'Enter your email.' }); return; }
+  if(!password || password.length < 6){ setState({ authError:'Password must be at least 6 characters.' }); return; }
+
+  setState({ busy:true, authError:'' });
+  const { data, error } = await supabase.auth.signUp({
+    email, password, options: { data: { name } },
+  });
+  if(error){ setState({ busy:false, authError: friendlyError(error) }); return; }
+
+  if(!data.session){
+    setState({ busy:false, authError:'', screen:'authChoice' });
+    alert('Check your email to confirm your account, then log in.');
+    return;
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from('profiles').select('*').eq('id', data.user.id).single();
+  if(profileError){ setState({ busy:false, authError: friendlyError(profileError) }); return; }
+
+  setState({ busy:false, currentUser: profile, screen:'yourCode' });
+}
+
+async function loginWithPassword(){
+  const email = state.authEmail.trim();
+  const password = state.authPassword;
+  if(!email || !password){ setState({ authError:'Enter your email and password.' }); return; }
+
+  setState({ busy:true, authError:'' });
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if(error){ setState({ busy:false, authError: friendlyError(error) }); return; }
+
+  setState({ busy:false });
+  await loadAppData();
+}
+
+async function loginWithCode(){
+  const code = state.authCodeInput.trim().toUpperCase();
+  const password = state.authPassword;
+  if(!code){ setState({ authError:'Enter your code.' }); return; }
+  if(!password){ setState({ authError:'Enter your password.' }); return; }
+
+  setState({ busy:true, authError:'' });
+  const { data: email, error } = await supabase.rpc('get_email_for_code', { p_code: code });
+  if(error || !email){ setState({ busy:false, authError:'No account found with that code.' }); return; }
+
+  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+  if(signInError){ setState({ busy:false, authError: friendlyError(signInError) }); return; }
+
+  setState({ busy:false });
+  await loadAppData();
+}
+
+function finishOnboarding(){
+  setState({ screen:'app', activeTab:'today' });
+  loadUserData();
+}
+
+async function logout(){
+  await supabase.auth.signOut();
+}
+
+/* ============================================================ */
+/* Connect partner                                                 */
+/* ============================================================ */
+async function connectPartner(codeValue){
+  const code = (codeValue || '').trim().toUpperCase();
+  if(!code){ setState({ connectError:'Enter a code.' }); return; }
+
+  setState({ busy:true, connectError:'' });
+  const { error } = await supabase.rpc('connect_partner', { partner_code: code });
+  if(error){ setState({ busy:false, connectError: friendlyError(error) }); return; }
+
+  setState({ busy:false, modal:null, connectInput:'' });
+  await loadUserData();
+}
+
+async function disconnectPartner(){
+  setState({ busy:true });
+  const { error } = await supabase.rpc('disconnect_partner');
+  if(error){ console.error(error); }
+  setState({ busy:false, partnerUser:null, partnerGoals:[], modal:null });
+  await loadUserData();
+}
+
+/* ============================================================ */
+/* Goals                                                          */
+/* ============================================================ */
+async function addGoal(data){
+  const { data: goal, error } = await supabase.from('goals').insert({
+    user_id: state.currentUser.id,
+    title: data.title,
+    category: data.category,
+    priority: data.priority,
+    duration: data.duration || null,
+    is_private: !!data.private,
+  }).select().single();
+
+  if(error){ alert(friendlyError(error)); return; }
+  setState({ goals: [goal, ...state.goals], modal:null });
+}
+
+async function toggleGoal(id){
+  const goal = state.goals.find(g => g.id === id);
+  if(!goal) return;
+  const nextDone = !goal.is_done;
+
+  setState({ goals: state.goals.map(g => g.id===id ? { ...g, is_done: nextDone } : g) });
+
+  const { error } = await supabase.from('goals')
+    .update({ is_done: nextDone, completed_at: nextDone ? new Date().toISOString() : null })
+    .eq('id', id);
+
+  if(error){
+    console.error(error);
+    setState({ goals: state.goals.map(g => g.id===id ? { ...g, is_done: !nextDone } : g) });
+  }
+}
+
+async function deleteGoal(id){
+  const prev = state.goals;
+  setState({ goals: state.goals.filter(g => g.id !== id) });
+  const { error } = await supabase.from('goals').delete().eq('id', id);
+  if(error){ console.error(error); setState({ goals: prev }); }
+}
+
+/* ============================================================ */
+/* Updates + photo upload                                         */
+/* ============================================================ */
+async function postUpdate(caption, file){
+  if(!caption.trim() && !file) return;
+
+  const { data: update, error } = await supabase.from('updates').insert({
+    user_id: state.currentUser.id,
+    caption: caption.trim() || null,
+  }).select().single();
+
+  if(error){ alert(friendlyError(error)); return; }
+
+  if(file){
+    const path = `${state.currentUser.id}/updates/${update.id}/${Date.now()}-${file.name}`;
+    const { error: uploadError } = await supabase.storage.from('photos').upload(path, file);
+    if(uploadError){
+      console.error(uploadError);
+    } else {
+      await supabase.from('update_photos').insert({ update_id: update.id, storage_path: path });
+    }
+  }
+
+  setState({ modal:null, pendingPhotoFile:null });
+  await loadUserData();
+}
+
+async function addReaction(updateId, emoji){
+  const { error } = await supabase.from('reactions').insert({
+    update_id: updateId, user_id: state.currentUser.id, emoji,
+  });
+  if(error && error.code !== '23505') console.error(error);
+  await loadUserData();
+}
+
+/* ============================================================ */
+/* Render: shell pieces                                           */
+/* ============================================================ */
+function renderTopbar(){
+  return `
+    <div class="topbar">
+      <div></div>
+      <div style="display:flex; gap:8px;">
+        ${state.screen==='app' ? `<button class="round-btn" data-action="open-settings">⚙️</button>` : ''}
+        <button class="round-btn" data-action="toggle-theme">${state.theme==='dark' ? '☀️' : '🌙'}</button>
+      </div>
+    </div>`;
+}
+
+function renderBottomNav(){
+  const tabs = [
+    {id:'today', label:'Today', ic:'🏠'},
+    {id:'goals', label:'Goals', ic:'🎯'},
+    {id:'updates', label:'Updates', ic:'📸'},
+    {id:'progress', label:'Progress', ic:'📊'},
+    {id:'together', label:'Together', ic:'🫶'},
+  ];
+  const left = tabs.slice(0,2), right = tabs.slice(2);
+  const item = t => `
+    <button class="navitem ${state.activeTab===t.id?'active':''}" data-action="tab" data-tab="${t.id}">
+      <span class="ic">${t.ic}</span><span class="lb">${t.label}</span>
+    </button>`;
+  return `
+    <div id="bottomnav">
+      <div id="navbar">
+        ${left.map(item).join('')}
+        <button id="fab" data-action="open-add">+</button>
+        ${right.map(item).join('')}
+      </div>
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Loading                                                */
+/* ============================================================ */
+function renderLoading(){
+  return `
+    <div class="center-col" style="align-items:center; text-align:center;">
+      <div style="font-size:38px; margin-bottom:10px;">🫶</div>
+      <div class="muted" style="font-size:13px;">Loading your space…</div>
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Auth screens                                           */
+/* ============================================================ */
+function renderAuthChoice(){
+  return `
+    <div class="center-col">
+      <div style="text-align:center; margin-bottom:36px;">
+        <div style="font-size:40px; margin-bottom:10px;">🫶</div>
+        <h1 style="font-size:26px; font-weight:800; letter-spacing:-0.5px;">Your days, together.</h1>
+        <p class="muted" style="font-size:13.5px; margin-top:8px;">A private space to plan, track, and share little moments — just the two of you.</p>
+      </div>
+      ${state.authError ? `<div class="error-text" style="text-align:center;">${escapeHtml(state.authError)}</div>` : ''}
+      <button class="btn-primary" style="margin-bottom:12px;" data-action="goto-create">Create your account</button>
+      <button class="btn-secondary" data-action="goto-login">I already have an account</button>
+    </div>`;
+}
+
+function renderCreateForm(){
+  return `
+    <div class="center-col">
+      <button class="round-btn" style="position:absolute; top:16px; left:18px;" data-action="goto-choice">←</button>
+      <h2 style="font-size:22px; font-weight:800; margin-bottom:6px;">Let's set you up ✨</h2>
+      <p class="muted" style="font-size:13px; margin-bottom:20px;">Your name is what your partner will see.</p>
+      <input id="name-input" class="input" placeholder="Your name" value="${escapeHtml(state.authName)}" maxlength="24" />
+      <input id="email-input" class="input" type="email" placeholder="Email" value="${escapeHtml(state.authEmail)}" />
+      <input id="password-input" class="input" type="password" placeholder="Password (min 6 characters)" value="${escapeHtml(state.authPassword)}" />
+      ${state.authError ? `<div class="error-text">${escapeHtml(state.authError)}</div>` : ''}
+      <button class="btn-primary" data-action="submit-create" ${state.busy?'disabled':''}>${state.busy?'Creating…':'Create account'}</button>
+    </div>`;
+}
+
+function renderLoginForm(){
+  const isEmail = state.loginMode === 'email';
+  return `
+    <div class="center-col">
+      <button class="round-btn" style="position:absolute; top:16px; left:18px;" data-action="goto-choice">←</button>
+      <h2 style="font-size:22px; font-weight:800; margin-bottom:6px;">Welcome back 👋</h2>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">${isEmail ? 'Log in with your email and password.' : 'Log in with your code and password.'}</p>
+
+      <div class="auth-tabs">
+        <button class="auth-tab ${isEmail?'active':''}" data-action="login-mode" data-mode="email">Email</button>
+        <button class="auth-tab ${!isEmail?'active':''}" data-action="login-mode" data-mode="code">Code</button>
+      </div>
+
+      ${isEmail
+        ? `<input id="email-input" class="input" type="email" placeholder="Email" value="${escapeHtml(state.authEmail)}" />`
+        : `<input id="login-code-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Your code (e.g. SUN482)" value="${escapeHtml(state.authCodeInput)}" maxlength="10" />`}
+      <input id="password-input" class="input" type="password" placeholder="Password" value="${escapeHtml(state.authPassword)}" />
+      ${state.authError ? `<div class="error-text">${escapeHtml(state.authError)}</div>` : ''}
+      <button class="btn-primary" data-action="submit-login" ${state.busy?'disabled':''}>${state.busy?'Checking…':'Log in'}</button>
+    </div>`;
+}
+
+function renderYourCode(){
+  const code = state.currentUser.code;
+  return `
+    <div class="center-col">
+      <div style="text-align:center; margin-bottom:6px; font-size:32px;">🎉</div>
+      <h2 style="font-size:20px; font-weight:800; text-align:center;">You're in, ${escapeHtml(state.currentUser.name)}!</h2>
+      <p class="muted" style="font-size:13px; text-align:center; margin-top:6px;">This is your private code. Share it with your partner so they can connect — and use it any time to log in fast.</p>
+      <div class="glass glass-strong" style="margin:20px 0;">
+        <div class="code-display">${code}</div>
+      </div>
+      <button class="btn-secondary" style="margin-bottom:20px;" data-action="copy-code">📋 Copy code</button>
+
+      <p class="muted" style="font-size:12.5px; text-align:center; margin-bottom:8px;">Have your partner's code already?</p>
+      <input id="connect-now-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code (optional)" value="${escapeHtml(state.connectInput)}" maxlength="10" />
+      ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
+      <button class="btn-primary" style="margin-bottom:10px;" data-action="connect-now" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect & continue'}</button>
+      <button class="btn-secondary" data-action="skip-connect">Skip for now</button>
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Today                                                  */
+/* ============================================================ */
+function renderGoalCard(g){
+  const cat = CATEGORY_EMOJI[g.category] || '🌱';
+  const done = !!g.is_done;
+  return `
+    <div class="glass" style="padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+      <div class="icon-badge ${done?'done':''}">${cat}</div>
+      <div style="flex:1; min-width:0;">
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:14.5px; ${done?`color:var(--ink-faint); text-decoration:line-through;`:''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(g.title)}</div>
+        <div style="display:flex; gap:6px; margin-top:5px; align-items:center; flex-wrap:wrap;">
+          ${g.duration ? `<span class="faint" style="font-size:11px;">⏱ ${escapeHtml(g.duration)}</span>` : ''}
+          ${g.priority==='high' ? `<span class="tag pink">Priority</span>` : ''}
+          ${g.is_private ? `<span class="tag blue">🔒 Private</span>` : ''}
+        </div>
+      </div>
+      <button class="checkbox-btn ${done?'done':''}" data-action="toggle-goal" data-id="${g.id}">${done?'✓':''}</button>
+      <button class="round-btn" style="width:26px;height:26px;font-size:12px;margin-left:2px;" data-action="delete-goal" data-id="${g.id}">✕</button>
+    </div>`;
+}
+
+function renderPartnerGoalRow(g){
+  const done = !!g.is_done;
+  return `
+    <div style="display:flex; align-items:center; gap:8px; padding:6px 0; font-size:13px; ${done?'color:var(--ink-faint); text-decoration:line-through;':''}">
+      <span style="font-size:14px;">${CATEGORY_EMOJI[g.category]||'🌱'}</span> ${escapeHtml(g.title)}
+    </div>`;
+}
+
+function renderToday(){
+  const goals = state.goals;
+  const done = goals.filter(g=>g.is_done).length;
+  const pct = goals.length ? Math.round((done/goals.length)*100) : 0;
+  const partner = state.partnerUser;
+  const pGoals = state.partnerGoals;
+  const pDone = pGoals.filter(g=>g.is_done).length;
+  const pPct = pGoals.length ? Math.round((pDone/pGoals.length)*100) : 0;
+
+  const angle = (pct/100)*360;
+  const ringStyle = `background: conic-gradient(var(--purple) 0deg, var(--pink) ${angle}deg, var(--glass-border) ${angle}deg 360deg);`;
+
+  return `
+    <div style="padding:64px 18px 100px;">
+      <div style="margin-bottom:18px;">
+        <div class="muted" style="font-size:13px; font-weight:500;">Today</div>
+        <h1 style="font-size:24px; font-weight:800; margin-top:2px; letter-spacing:-0.5px;">Good to see you, ${escapeHtml(state.currentUser.name)} ✨</h1>
+      </div>
+
+      <div class="glass glass-strong" style="padding:24px; margin-bottom:18px; display:flex; flex-direction:column; align-items:center;">
+        <div class="muted" style="align-self:flex-start; font-size:13px; font-weight:600; margin-bottom:10px;">Today's Progress</div>
+        <div style="width:168px; height:168px; border-radius:50%; ${ringStyle} display:flex; align-items:center; justify-content:center; padding:14px;">
+          <div style="width:100%; height:100%; border-radius:50%; background:var(--solid); display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:36px; letter-spacing:-1px;">${pct}%</div>
+            <div class="faint" style="font-size:11px; margin-top:2px;">${done} / ${goals.length || 0} goals</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+        <h3 style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px;">🎯 Today's Goals</h3>
+        <span class="faint" style="font-size:12px; font-weight:600;">${goals.length - done} left</span>
+      </div>
+      ${goals.length===0
+        ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing planned yet</div><div style="font-size:13px;">Add something you want to accomplish today.</div></div>`
+        : goals.map(renderGoalCard).join('')}
+
+      <h3 style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px; margin-top:22px; margin-bottom:10px;">🫶 Their Day</h3>
+      ${!partner ? `
+        <div class="glass" style="padding:20px; text-align:center;">
+          <div style="font-size:26px; margin-bottom:8px;">🔗</div>
+          <div style="font-weight:600; font-size:14px; margin-bottom:4px;">Not connected yet</div>
+          <div class="muted" style="font-size:12.5px; margin-bottom:14px;">Share your code or enter theirs to start planning together.</div>
+          <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
+        </div>
+      ` : `
+        <div class="glass" style="padding:16px;">
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <div class="avatar" style="width:40px; height:40px; background:linear-gradient(135deg,var(--pink),var(--purple));">${initials(partner.name)}</div>
+            <div style="flex:1;">
+              <div style="font-size:14px; font-weight:700;">${escapeHtml(partner.name)}</div>
+              <div class="muted" style="font-size:12px;">${pPct}% complete</div>
+            </div>
+            <div style="width:46px; height:6px; border-radius:999px; background:var(--glass-border); overflow:hidden;">
+              <div style="width:${pPct}%; height:100%; background:linear-gradient(90deg,var(--pink),var(--purple)); border-radius:999px;"></div>
+            </div>
+          </div>
+          ${pGoals.length===0
+            ? `<div class="faint" style="font-size:12.5px;">No shared goals visible yet.</div>`
+            : pGoals.map(renderPartnerGoalRow).join('')}
+        </div>
+      `}
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Goals                                                  */
+/* ============================================================ */
+let goalsFilter = 'all';
+function renderGoals(){
+  const filtered = state.goals.filter(g => goalsFilter==='all' ? true : goalsFilter==='done' ? g.is_done : !g.is_done);
+  return `
+    <div style="padding:64px 18px 100px;">
+      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🎯 Goals</h1>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">Everything you're working toward</p>
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        ${['all','active','done'].map(f=>`
+          <button class="auth-tab ${goalsFilter===f?'active':''}" style="flex:none; padding:7px 16px; text-transform:capitalize;" data-action="filter-goals" data-filter="${f}">${f}</button>
+        `).join('')}
+      </div>
+      ${filtered.length===0
+        ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing here yet</div><div style="font-size:13px;">Add something you want to accomplish today.</div></div>`
+        : filtered.map(renderGoalCard).join('')}
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Updates                                                */
+/* ============================================================ */
+function renderUpdates(){
+  const list = state.updates;
+  const EMOJIS = ['❤️','🔥','🫶'];
+  return `
+    <div style="padding:64px 18px 100px;">
+      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">📸 Little moments</h1>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">Small glimpses into each other's day</p>
+      ${list.length===0
+        ? `<div class="empty-state"><div class="em">✨</div><div class="heading" style="font-weight:700; font-size:15px;">Your day is just beginning</div><div style="font-size:13px;">Tap + to share your first moment.</div></div>`
+        : list.map(u=>{
+          const counts = {};
+          (u.reactions||[]).forEach(r => counts[r.emoji] = (counts[r.emoji]||0)+1);
+          return `
+          <div class="glass glass-strong" style="padding:16px; margin-bottom:14px;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+              <div class="avatar" style="width:34px; height:34px; font-size:13px; background:linear-gradient(135deg,${u.mine?'var(--purple),var(--pink)':'var(--pink),var(--purple)'});">${initials(u.authorName)}</div>
+              <div style="flex:1;">
+                <div style="font-size:13px; font-weight:700;">${escapeHtml(u.authorName)}</div>
+                <div class="faint" style="font-size:11px;">${timeAgo(u.created_at)}</div>
+              </div>
+            </div>
+            ${u.photoUrl
+              ? `<img src="${u.photoUrl}" alt="" style="width:100%; height:150px; object-fit:cover; border-radius:18px; margin-bottom:10px;" />`
+              : `<div class="photo-placeholder" style="height:120px;">📷</div>`}
+            ${u.caption ? `<div style="font-size:14px; line-height:1.4; margin-bottom:10px;">${escapeHtml(u.caption)}</div>` : ''}
+            <div style="display:flex; gap:8px;">
+              ${EMOJIS.map(e=>`
+                <button class="glass" style="border-radius:999px; padding:5px 10px; font-size:13px; border-width:1px;" data-action="react" data-update-id="${u.id}" data-emoji="${e}">
+                  ${e}${counts[e] ? ` ${counts[e]}` : ''}
+                </button>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Progress                                               */
+/* ============================================================ */
+function renderProgress(){
+  const goals = state.goals;
+  const done = goals.filter(g=>g.is_done).length;
+  const pct = goals.length ? Math.round((done/goals.length)*100) : 0;
+  const byCat = {};
+  goals.forEach(g=>{ byCat[g.category] = byCat[g.category] || {total:0,done:0}; byCat[g.category].total++; if(g.is_done) byCat[g.category].done++; });
+
+  return `
+    <div style="padding:64px 18px 100px;">
+      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">📊 Your progress</h1>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">Based on the goals you've added</p>
+
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
+        <div class="glass" style="padding:16px;">
+          <div class="muted" style="font-size:12px; font-weight:600; margin-bottom:6px;">Today</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:26px;">${pct}%</div>
+        </div>
+        <div class="glass" style="padding:16px;">
+          <div class="muted" style="font-size:12px; font-weight:600; margin-bottom:6px;">Total goals done</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:26px;">${done}</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px; font-weight:700; margin-bottom:10px;">By category</h3>
+      ${Object.keys(byCat).length===0
+        ? `<div class="empty-state"><div class="em">📊</div><div style="font-size:13px;">Add goals to see your breakdown here.</div></div>`
+        : Object.entries(byCat).map(([cat,v])=>{
+            const p = v.total ? Math.round((v.done/v.total)*100) : 0;
+            return `
+              <div class="glass" style="padding:14px; margin-bottom:8px; display:flex; align-items:center; gap:12px;">
+                <div class="icon-badge done">${CATEGORY_EMOJI[cat]}</div>
+                <div style="flex:1;">
+                  <div style="font-size:13px; font-weight:600; margin-bottom:4px;">${CATEGORY_LABEL[cat]||cat}</div>
+                  <div style="width:100%; height:5px; border-radius:999px; background:var(--glass-border);">
+                    <div style="width:${p}%; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--purple),var(--pink));"></div>
+                  </div>
+                </div>
+                <div class="muted" style="font-size:12px; font-weight:700;">${v.done}/${v.total}</div>
+              </div>`;
+          }).join('')}
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Together                                               */
+/* ============================================================ */
+function renderTogether(){
+  const goals = state.goals, pGoals = state.partnerGoals;
+  const myPct = goals.length ? Math.round((goals.filter(g=>g.is_done).length/goals.length)*100) : 0;
+  const pPct = pGoals.length ? Math.round((pGoals.filter(g=>g.is_done).length/pGoals.length)*100) : 0;
+  const together = state.partnerUser ? Math.round((myPct+pPct)/2) : myPct;
+
+  return `
+    <div style="padding:64px 18px 100px;">
+      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🫶 Together</h1>
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">${state.partnerUser ? 'You and '+escapeHtml(state.partnerUser.name) : 'Connect with your partner to see this fill in'}</p>
+
+      <div class="glass glass-strong" style="padding:22px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-around; margin-bottom:16px;">
+          <div style="text-align:center;">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:24px; color:var(--purple-deep);">${myPct}%</div>
+            <div class="muted" style="font-size:11px; margin-top:2px;">You</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:24px;">${together}%</div>
+            <div class="muted" style="font-size:11px; margin-top:2px;">Together</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:24px; color:var(--pink-deep);">${pPct}%</div>
+            <div class="muted" style="font-size:11px; margin-top:2px;">${state.partnerUser ? escapeHtml(state.partnerUser.name) : 'Partner'}</div>
+          </div>
+        </div>
+        <div style="text-align:center; font-size:13.5px; font-weight:500; padding:12px 8px; border-radius:16px; background:linear-gradient(135deg,color-mix(in srgb, var(--purple) 12%, transparent),color-mix(in srgb, var(--pink) 12%, transparent));">
+          ${!state.partnerUser ? 'Connect to start building your week together ✨' : together>=70 ? 'You both had a great week ✨' : 'Every bit of progress counts 🌱'}
+        </div>
+      </div>
+
+      ${!state.partnerUser ? `<button class="btn-primary" data-action="open-connect">Connect with your partner</button>` : ''}
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Modals                                                 */
+/* ============================================================ */
+function renderModal(){
+  if(!state.modal) return '';
+
+  if(state.modal==='addChoice') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
+        <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>
+      </div>
+    </div>`;
+
+  if(state.modal==='addGoal') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
+        <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
+        <select id="goal-category" class="input">
+          ${Object.keys(CATEGORY_EMOJI).map(c=>`<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
+        </select>
+        <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
+        <select id="goal-priority" class="input">
+          <option value="medium">Medium priority</option>
+          <option value="high">High priority</option>
+          <option value="low">Low priority</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
+          <input type="checkbox" id="goal-private" /> 🔒 Keep this private from my partner
+        </label>
+        <button class="btn-primary" data-action="submit-goal">Add goal</button>
+      </div>
+    </div>`;
+
+  if(state.modal==='addUpdate') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
+        <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
+          ${state.pendingPhotoFile ? '✅' : '🖼️'}
+          <span class="photo-note" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
+        </label>
+        <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
+        <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
+        <button class="btn-primary" data-action="submit-update">Share this moment</button>
+      </div>
+    </div>`;
+
+  if(state.modal==='connect') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
+        <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
+        <input id="connect-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code" maxlength="10" />
+        ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
+        <button class="btn-primary" data-action="submit-connect" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect'}</button>
+      </div>
+    </div>`;
+
+  if(state.modal==='settings') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
+        <div class="glass" style="padding:16px; margin-bottom:12px;">
+          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your name</div>
+          <div style="font-weight:600; font-size:14px; margin-bottom:12px;">${escapeHtml(state.currentUser.name)}</div>
+          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
+          <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
+        </div>
+        <div class="glass" style="padding:16px; margin-bottom:16px;">
+          <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
+          ${state.partnerUser ? `
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-weight:600; font-size:14px;">${escapeHtml(state.partnerUser.name)}</span>
+              <button class="tag pink" style="border:none; cursor:pointer;" data-action="disconnect-partner">Disconnect</button>
+            </div>
+          ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
+        </div>
+        <button class="btn-secondary" data-action="do-logout">Log out</button>
+      </div>
+    </div>`;
+
+  return '';
+}
+
+/* ============================================================ */
+/* Master render                                                  */
+/* ============================================================ */
+function render(){
+  const root = document.getElementById('screen');
+  document.getElementById('phone').setAttribute('data-theme', state.theme);
+
+  let body = '';
+  if(state.screen==='loading') body = renderLoading();
+  else if(state.screen==='authChoice') body = renderAuthChoice();
+  else if(state.screen==='create') body = renderCreateForm();
+  else if(state.screen==='login') body = renderLoginForm();
+  else if(state.screen==='yourCode') body = renderYourCode();
+  else if(state.screen==='app'){
+    const screens = { today:renderToday, goals:renderGoals, updates:renderUpdates, progress:renderProgress, together:renderTogether };
+    body = (screens[state.activeTab]||renderToday)();
+  }
+
+  const withTopbar = ['create','login','app','yourCode','authChoice'].includes(state.screen);
+  root.innerHTML = `
+    ${withTopbar ? renderTopbar() : ''}
+    ${body}
+    ${state.screen==='app' ? renderBottomNav() : ''}
+    ${renderModal()}
+  `;
+
+  bindInputs();
+}
+
+/* ============================================================ */
+/* Input bindings                                                 */
+/* ============================================================ */
+function bindInputs(){
+  const nameInput = document.getElementById('name-input');
+  if(nameInput) nameInput.addEventListener('input', e => state.authName = e.target.value);
+
+  const emailInput = document.getElementById('email-input');
+  if(emailInput) emailInput.addEventListener('input', e => state.authEmail = e.target.value);
+
+  const passwordInput = document.getElementById('password-input');
+  if(passwordInput) passwordInput.addEventListener('input', e => state.authPassword = e.target.value);
+
+  const loginCodeInput = document.getElementById('login-code-input');
+  if(loginCodeInput) loginCodeInput.addEventListener('input', e => state.authCodeInput = e.target.value);
+
+  const connectNow = document.getElementById('connect-now-input');
+  if(connectNow) connectNow.addEventListener('input', e => state.connectInput = e.target.value);
+
+  const photoInput = document.getElementById('update-photo-input');
+  if(photoInput) photoInput.addEventListener('change', e => {
+    state.pendingPhotoFile = e.target.files[0] || null;
+    render();
+  });
+}
+
+/* ============================================================ */
+/* Event delegation                                               */
+/* ============================================================ */
+document.addEventListener('click', async (e) => {
+  const el = e.target.closest('[data-action]');
+  if(!el) return;
+  const action = el.getAttribute('data-action');
+
+  if(action==='toggle-theme') setState({ theme: state.theme==='dark'?'light':'dark' });
+  else if(action==='goto-create') setState({ screen:'create', authError:'' });
+  else if(action==='goto-login') setState({ screen:'login', authError:'' });
+  else if(action==='goto-choice') setState({ screen:'authChoice', authError:'' });
+  else if(action==='login-mode') setState({ loginMode: el.getAttribute('data-mode'), authError:'' });
+  else if(action==='submit-create') createAccount();
+  else if(action==='submit-login'){
+    if(state.loginMode==='email') loginWithPassword(); else loginWithCode();
+  }
+  else if(action==='copy-code'){
+    try{ await navigator.clipboard.writeText(state.currentUser.code); }catch(_){}
+  }
+  else if(action==='connect-now'){
+    await connectPartner(state.connectInput);
+    if(!state.connectError) finishOnboarding();
+  }
+  else if(action==='skip-connect') finishOnboarding();
+  else if(action==='tab') setState({ activeTab: el.getAttribute('data-tab') });
+  else if(action==='open-add') setState({ modal:'addChoice' });
+  else if(action==='open-add-goal') setState({ modal:'addGoal' });
+  else if(action==='open-add-update') setState({ modal:'addUpdate', pendingPhotoFile:null });
+  else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
+  else if(action==='open-settings') setState({ modal:'settings' });
+  else if(action==='close-modal') history.back();
+  else if(action==='do-logout') logout();
+  else if(action==='disconnect-partner') disconnectPartner();
+  else if(action==='filter-goals'){ goalsFilter = el.getAttribute('data-filter'); render(); }
+  else if(action==='toggle-goal') toggleGoal(el.getAttribute('data-id'));
+  else if(action==='delete-goal') deleteGoal(el.getAttribute('data-id'));
+  else if(action==='react') addReaction(el.getAttribute('data-update-id'), el.getAttribute('data-emoji'));
+  else if(action==='submit-connect'){
+    const val = document.getElementById('connect-input')?.value || '';
+    connectPartner(val);
+  }
+  else if(action==='submit-goal'){
+    const title = document.getElementById('goal-title')?.value.trim();
+    if(!title) return;
+    const category = document.getElementById('goal-category')?.value;
+    const duration = document.getElementById('goal-duration')?.value.trim();
+    const priority = document.getElementById('goal-priority')?.value;
+    const priv = document.getElementById('goal-private')?.checked;
+    addGoal({ title, category, duration, priority, private:priv });
+  }
+  else if(action==='submit-update'){
+    const caption = document.getElementById('update-caption')?.value || '';
+    postUpdate(caption, state.pendingPhotoFile);
+  }
+});
+
+/* ============================================================ */
+/* PWA: register service worker                                   */
+/* ============================================================ */
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch(err => console.error('SW registration failed', err));
+  });
+}
+
+/* ============================================================ */
+/* Init                                                           */
+/* ============================================================ */
+render();
+restoreSession();
+
+})();
+</script>
+</body>
+</html>
