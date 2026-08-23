@@ -8,6 +8,7 @@
 <!-- PWA -->
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#9B87F5" />
+<meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="CoupleFlow" />
@@ -64,8 +65,7 @@
   html,body{ margin:0; height:100%; font-family:'Inter',sans-serif; }
   body{
     display:flex; align-items:center; justify-content:center;
-    background:var(--page-bg); padding:20px; min-height:100vh;
-    min-height:100dvh;
+    background:var(--page-bg); padding:20px; min-height:100vh; min-height:100dvh;
   }
 
   #phone{
@@ -146,24 +146,24 @@
     padding-bottom:calc(14px + env(safe-area-inset-bottom)); z-index:30;
   }
   #navbar{
-    display:flex; align-items:center; gap:2px; padding:8px 10px;
+    display:flex; align-items:center; gap:2px; padding:8px 8px;
     background:var(--nav-bg); border-radius:26px; backdrop-filter:blur(20px);
     border:1px solid var(--glass-border); box-shadow:var(--shadow);
   }
   .navitem{
-    display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 10px;
-    border-radius:16px; border:none; background:transparent; min-width:52px;
+    display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 8px;
+    border-radius:16px; border:none; background:transparent; min-width:44px;
   }
   .navitem.active{ background:color-mix(in srgb, var(--purple) 14%, transparent); }
-  .navitem .ic{ font-size:18px; line-height:1; }
-  .navitem .lb{ font-size:9.5px; font-weight:600; color:var(--ink-faint); }
+  .navitem .ic{ font-size:17px; line-height:1; }
+  .navitem .lb{ font-size:9px; font-weight:600; color:var(--ink-faint); }
   .navitem.active .lb{ color:var(--purple-deep); }
 
   #fab{
-    width:46px; height:46px; border-radius:50%; border:none; margin:0 2px;
-    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:22px;
+    width:44px; height:44px; border-radius:50%; border:none; margin:0 2px;
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:20px;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 10px 22px -8px rgba(118,87,224,0.6);
+    box-shadow:0 10px 22px -8px rgba(118,87,224,0.6); flex-shrink:0;
   }
 
   .topbar{
@@ -218,6 +218,39 @@
     border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff;
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
+
+  /* Chat */
+  .chat-msg{ display:flex; margin-bottom:10px; animation: msgIn .2s ease; }
+  @keyframes msgIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
+  .chat-msg.mine{ justify-content:flex-end; }
+  .chat-bubble{
+    max-width:75%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.4;
+    word-wrap:break-word;
+  }
+  .chat-msg.mine .chat-bubble{
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border-bottom-right-radius:4px;
+  }
+  .chat-msg.theirs .chat-bubble{
+    background:var(--glass-strong); border:1px solid var(--glass-border); border-bottom-left-radius:4px;
+  }
+  .chat-time{ font-size:9.5px; color:var(--ink-faint); margin-top:3px; }
+  .chat-msg.mine .chat-time{ text-align:right; }
+  #chat-input-bar{
+    position:absolute; left:0; right:0; bottom:86px; padding:10px 14px; z-index:25;
+    display:flex; gap:8px; align-items:flex-end;
+  }
+  #chat-input{
+    flex:1; border:1px solid var(--glass-border); border-radius:20px; padding:11px 16px;
+    font-size:14px; background:var(--glass-strong); color:var(--ink); outline:none; resize:none;
+    max-height:90px; font-family:'Inter',sans-serif;
+  }
+  #chat-send{
+    width:42px; height:42px; border-radius:50%; border:none; flex-shrink:0;
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:16px;
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 8px 18px -8px rgba(118,87,224,0.55);
+  }
+  .typing-indicator{ font-size:12px; color:var(--ink-faint); padding:4px 4px 8px; font-style:italic; }
 </style>
 </head>
 <body>
@@ -240,6 +273,12 @@ const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
 
+function makeInternalEmail(name){
+  const slug = (name||'user').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20) || 'user';
+  const rand = Math.random().toString(36).slice(2,10);
+  return `${slug}.${rand}@coupleflow.internal`;
+}
+
 /* ============================================================ */
 /* State                                                          */
 /* ============================================================ */
@@ -250,21 +289,23 @@ const AUTH_ONLY_SCREENS = ['loading','authChoice','create','login','yourCode'];
 let state = {
   theme: 'light',
   screen: 'loading',
-  loginMode: 'email',
   authName: '',
-  authEmail: '',
-  authPassword: '',
   authCodeInput: '',
+  authPassword: '',
   authError: '',
   busy: false,
 
   currentUser: null,
   partnerUser: null,
+  coupleId: null,
 
   activeTab: 'today',
   goals: [],
   partnerGoals: [],
   updates: [],
+  messages: [],
+  partnerTyping: false,
+
   modal: null,
   connectInput: '',
   connectError: '',
@@ -287,7 +328,6 @@ function setState(patch, opts={}){
 
 window.addEventListener('popstate', (e) => {
   const target = e.state;
-
   if(!target){
     const fallback = state.currentUser
       ? { screen:'app', activeTab: state.activeTab || 'today', modal:null }
@@ -296,14 +336,12 @@ window.addEventListener('popstate', (e) => {
     setState(fallback, { fromPopstate:true });
     return;
   }
-
   if(state.currentUser && AUTH_ONLY_SCREENS.includes(target.screen)){
     const fixed = { screen:'app', activeTab: state.activeTab || 'today', modal:null };
     history.replaceState(fixed, '');
     setState(fixed, { fromPopstate:true });
     return;
   }
-
   setState({
     screen: target.screen,
     activeTab: target.activeTab || state.activeTab,
@@ -328,6 +366,9 @@ function timeAgo(ts){
   if(h < 24) return `${h}h ago`;
   return new Date(ts).toLocaleDateString();
 }
+function timeShort(ts){
+  return new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+}
 function friendlyError(error){
   return error?.message || 'Something went wrong. Please try again.';
 }
@@ -348,9 +389,11 @@ async function restoreSession(){
 
 supabase.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
+    unsubscribeChat();
     const fresh = {
-      currentUser:null, partnerUser:null, goals:[], partnerGoals:[], updates:[],
-      screen:'authChoice', authName:'', authEmail:'', authPassword:'', authCodeInput:'',
+      currentUser:null, partnerUser:null, coupleId:null, goals:[], partnerGoals:[],
+      updates:[], messages:[], partnerTyping:false,
+      screen:'authChoice', authName:'', authCodeInput:'', authPassword:'',
       authError:'', modal:null,
     };
     history.replaceState({ screen:'authChoice', modal:null }, '');
@@ -381,21 +424,38 @@ async function loadAppData(){
   }
 }
 
+async function getCoupleAndPartner(){
+  const me = state.currentUser.id;
+  const { data: couple, error } = await supabase
+    .from('couples').select('id, user1_id, user2_id')
+    .or(`user1_id.eq.${me},user2_id.eq.${me}`)
+    .maybeSingle();
+  if(error || !couple) return { couple:null, partner:null };
+  const partnerId = couple.user1_id === me ? couple.user2_id : couple.user1_id;
+  const { data: partner, error: pErr } = await supabase
+    .from('profiles').select('*').eq('id', partnerId).single();
+  if(pErr) return { couple, partner:null };
+  return { couple, partner };
+}
+
 async function loadUserData(){
   const me = state.currentUser;
   if(!me) return;
 
-  const [goals, partner] = await Promise.all([
+  const [goals, { couple, partner }] = await Promise.all([
     getMyGoals(),
-    getPartnerProfile(),
+    getCoupleAndPartner(),
   ]);
 
   let partnerGoals = [];
   if(partner) partnerGoals = await getPartnerGoals(partner.id);
 
   const updates = await getUpdatesFeed(me, partner);
+  const messages = couple ? await loadMessages(couple.id) : [];
 
-  setState({ goals, partnerUser: partner, partnerGoals, updates });
+  setState({ goals, partnerUser: partner, partnerGoals, updates, coupleId: couple ? couple.id : null, messages });
+
+  if(couple) subscribeToChat(couple.id); else unsubscribeChat();
 }
 
 async function getMyGoals(){
@@ -414,20 +474,6 @@ async function getPartnerGoals(partnerId){
     .order('created_at', { ascending:false });
   if(error){ console.error(error); return []; }
   return data;
-}
-
-async function getPartnerProfile(){
-  const me = state.currentUser.id;
-  const { data: couple, error } = await supabase
-    .from('couples').select('user1_id, user2_id')
-    .or(`user1_id.eq.${me},user2_id.eq.${me}`)
-    .maybeSingle();
-  if(error || !couple) return null;
-  const partnerId = couple.user1_id === me ? couple.user2_id : couple.user1_id;
-  const { data: partner, error: pErr } = await supabase
-    .from('profiles').select('*').eq('id', partnerId).single();
-  if(pErr) return null;
-  return partner;
 }
 
 async function getUpdatesFeed(me, partner){
@@ -459,26 +505,108 @@ async function getUpdatesFeed(me, partner){
 }
 
 /* ============================================================ */
-/* Auth actions                                                   */
+/* Chat                                                            */
+/* ============================================================ */
+let chatChannel = null;
+let subscribedCoupleId = null;
+let lastRenderedMessageCount = 0;
+let typingHideTimer = null;
+
+async function loadMessages(coupleId){
+  const { data, error } = await supabase
+    .from('messages').select('*')
+    .eq('couple_id', coupleId)
+    .order('created_at', { ascending:true })
+    .limit(300);
+  if(error){ console.error(error); return []; }
+  return data;
+}
+
+function subscribeToChat(coupleId){
+  if(subscribedCoupleId === coupleId && chatChannel) return;
+  unsubscribeChat();
+
+  chatChannel = supabase
+    .channel(`couple-${coupleId}`)
+    .on('postgres_changes',
+      { event:'INSERT', schema:'public', table:'messages', filter:`couple_id=eq.${coupleId}` },
+      (payload) => {
+        if(payload.new.sender_id === state.currentUser.id) return;
+        setState({ messages: [...state.messages, payload.new], partnerTyping:false });
+      }
+    )
+    .on('broadcast', { event:'typing' }, (payload) => {
+      if(payload.payload?.userId === state.currentUser.id) return;
+      setState({ partnerTyping:true });
+      clearTimeout(typingHideTimer);
+      typingHideTimer = setTimeout(() => setState({ partnerTyping:false }), 2500);
+    })
+    .subscribe();
+
+  subscribedCoupleId = coupleId;
+}
+
+function unsubscribeChat(){
+  if(chatChannel){ supabase.removeChannel(chatChannel); chatChannel = null; }
+  subscribedCoupleId = null;
+}
+
+let typingSentAt = 0;
+function notifyTyping(){
+  if(!chatChannel) return;
+  const now = Date.now();
+  if(now - typingSentAt < 1500) return;
+  typingSentAt = now;
+  chatChannel.send({ type:'broadcast', event:'typing', payload:{ userId: state.currentUser.id } });
+}
+
+async function sendChatMessage(){
+  const input = document.getElementById('chat-input');
+  const body = (input?.value || '').trim();
+  if(!body || !state.coupleId) return;
+
+  const optimisticId = genId();
+  const optimistic = {
+    id: optimisticId, couple_id: state.coupleId, sender_id: state.currentUser.id,
+    body, created_at: new Date().toISOString(),
+  };
+  setState({ messages: [...state.messages, optimistic] });
+  if(input) input.value = '';
+
+  const { data, error } = await supabase.from('messages')
+    .insert({ couple_id: state.coupleId, sender_id: state.currentUser.id, body })
+    .select().single();
+
+  if(error){
+    console.error(error);
+    return;
+  }
+  setState({ messages: state.messages.map(m => m.id === optimisticId ? data : m) });
+}
+
+/* ============================================================ */
+/* Auth actions — name + password only, no email shown anywhere    */
 /* ============================================================ */
 async function createAccount(){
   const name = state.authName.trim();
-  const email = state.authEmail.trim();
   const password = state.authPassword;
 
   if(!name){ setState({ authError:'Enter your name.' }); return; }
-  if(!email){ setState({ authError:'Enter your email.' }); return; }
   if(!password || password.length < 6){ setState({ authError:'Password must be at least 6 characters.' }); return; }
 
   setState({ busy:true, authError:'' });
+  const internalEmail = makeInternalEmail(name);
   const { data, error } = await supabase.auth.signUp({
-    email, password, options: { data: { name } },
+    email: internalEmail, password, options: { data: { name } },
   });
   if(error){ setState({ busy:false, authError: friendlyError(error) }); return; }
 
   if(!data.session){
-    setState({ busy:false, authError:'', screen:'authChoice' });
-    alert('Check your email to confirm your account, then log in.');
+    setState({
+      busy:false,
+      authError:'Signup needs "Confirm email" turned OFF in your Supabase project (Authentication → Settings → Email). See setup notes.',
+      screen:'authChoice',
+    });
     return;
   }
 
@@ -487,19 +615,6 @@ async function createAccount(){
   if(profileError){ setState({ busy:false, authError: friendlyError(profileError) }); return; }
 
   setState({ busy:false, currentUser: profile, screen:'yourCode' });
-}
-
-async function loginWithPassword(){
-  const email = state.authEmail.trim();
-  const password = state.authPassword;
-  if(!email || !password){ setState({ authError:'Enter your email and password.' }); return; }
-
-  setState({ busy:true, authError:'' });
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if(error){ setState({ busy:false, authError: friendlyError(error) }); return; }
-
-  setState({ busy:false });
-  await loadAppData();
 }
 
 async function loginWithCode(){
@@ -547,7 +662,8 @@ async function disconnectPartner(){
   setState({ busy:true });
   const { error } = await supabase.rpc('disconnect_partner');
   if(error){ console.error(error); }
-  setState({ busy:false, partnerUser:null, partnerGoals:[], modal:null });
+  unsubscribeChat();
+  setState({ busy:false, partnerUser:null, partnerGoals:[], coupleId:null, messages:[], modal:null });
   await loadUserData();
 }
 
@@ -642,14 +758,16 @@ function renderTopbar(){
 }
 
 function renderBottomNav(){
-  const tabs = [
+  const left = [
     {id:'today', label:'Today', ic:'🏠'},
     {id:'goals', label:'Goals', ic:'🎯'},
+    {id:'chat', label:'Chat', ic:'💬'},
+  ];
+  const right = [
     {id:'updates', label:'Updates', ic:'📸'},
     {id:'progress', label:'Progress', ic:'📊'},
     {id:'together', label:'Together', ic:'🫶'},
   ];
-  const left = tabs.slice(0,2), right = tabs.slice(2);
   const item = t => `
     <button class="navitem ${state.activeTab===t.id?'active':''}" data-action="tab" data-tab="${t.id}">
       <span class="ic">${t.ic}</span><span class="lb">${t.label}</span>
@@ -697,9 +815,8 @@ function renderCreateForm(){
     <div class="center-col">
       <button class="round-btn" style="position:absolute; top:16px; left:18px;" data-action="goto-choice">←</button>
       <h2 style="font-size:22px; font-weight:800; margin-bottom:6px;">Let's set you up ✨</h2>
-      <p class="muted" style="font-size:13px; margin-bottom:20px;">Your name is what your partner will see.</p>
+      <p class="muted" style="font-size:13px; margin-bottom:20px;">Just a name and a password — no email needed.</p>
       <input id="name-input" class="input" placeholder="Your name" value="${escapeHtml(state.authName)}" maxlength="24" />
-      <input id="email-input" class="input" type="email" placeholder="Email" value="${escapeHtml(state.authEmail)}" />
       <input id="password-input" class="input" type="password" placeholder="Password (min 6 characters)" value="${escapeHtml(state.authPassword)}" />
       ${state.authError ? `<div class="error-text">${escapeHtml(state.authError)}</div>` : ''}
       <button class="btn-primary" data-action="submit-create" ${state.busy?'disabled':''}>${state.busy?'Creating…':'Create account'}</button>
@@ -707,21 +824,12 @@ function renderCreateForm(){
 }
 
 function renderLoginForm(){
-  const isEmail = state.loginMode === 'email';
   return `
     <div class="center-col">
       <button class="round-btn" style="position:absolute; top:16px; left:18px;" data-action="goto-choice">←</button>
       <h2 style="font-size:22px; font-weight:800; margin-bottom:6px;">Welcome back 👋</h2>
-      <p class="muted" style="font-size:13px; margin-bottom:16px;">${isEmail ? 'Log in with your email and password.' : 'Log in with your code and password.'}</p>
-
-      <div class="auth-tabs">
-        <button class="auth-tab ${isEmail?'active':''}" data-action="login-mode" data-mode="email">Email</button>
-        <button class="auth-tab ${!isEmail?'active':''}" data-action="login-mode" data-mode="code">Code</button>
-      </div>
-
-      ${isEmail
-        ? `<input id="email-input" class="input" type="email" placeholder="Email" value="${escapeHtml(state.authEmail)}" />`
-        : `<input id="login-code-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Your code (e.g. SUN482)" value="${escapeHtml(state.authCodeInput)}" maxlength="10" />`}
+      <p class="muted" style="font-size:13px; margin-bottom:16px;">Log in with your code and password.</p>
+      <input id="login-code-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Your code (e.g. SUN482)" value="${escapeHtml(state.authCodeInput)}" maxlength="10" />
       <input id="password-input" class="input" type="password" placeholder="Password" value="${escapeHtml(state.authPassword)}" />
       ${state.authError ? `<div class="error-text">${escapeHtml(state.authError)}</div>` : ''}
       <button class="btn-primary" data-action="submit-login" ${state.busy?'disabled':''}>${state.busy?'Checking…':'Log in'}</button>
@@ -734,7 +842,7 @@ function renderYourCode(){
     <div class="center-col">
       <div style="text-align:center; margin-bottom:6px; font-size:32px;">🎉</div>
       <h2 style="font-size:20px; font-weight:800; text-align:center;">You're in, ${escapeHtml(state.currentUser.name)}!</h2>
-      <p class="muted" style="font-size:13px; text-align:center; margin-top:6px;">This is your private code. Share it with your partner so they can connect — and use it any time to log in fast.</p>
+      <p class="muted" style="font-size:13px; text-align:center; margin-top:6px;">This is your private code. Share it with your partner so they can connect — and use it any time to log in.</p>
       <div class="glass glass-strong" style="margin:20px 0;">
         <div class="code-display">${code}</div>
       </div>
@@ -861,6 +969,49 @@ function renderGoals(){
       ${filtered.length===0
         ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing here yet</div><div style="font-size:13px;">Add something you want to accomplish today.</div></div>`
         : filtered.map(renderGoalCard).join('')}
+    </div>`;
+}
+
+/* ============================================================ */
+/* Render: Chat                                                   */
+/* ============================================================ */
+function renderChat(){
+  if(!state.coupleId){
+    return `
+      <div style="padding:64px 18px 100px;">
+        <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">💬 Chat</h1>
+        <div class="empty-state">
+          <div class="em">🔗</div>
+          <div class="heading" style="font-weight:700; font-size:15px;">Connect with your partner first</div>
+          <div style="font-size:13px; margin-bottom:16px;">Once you're connected, your chat shows up here — live, on both sides.</div>
+          <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
+        </div>
+      </div>`;
+  }
+
+  const partnerName = state.partnerUser ? escapeHtml(state.partnerUser.name) : 'Partner';
+  const msgs = state.messages.map(m => {
+    const mine = m.sender_id === state.currentUser.id;
+    return `
+      <div class="chat-msg ${mine?'mine':'theirs'}">
+        <div>
+          <div class="chat-bubble">${escapeHtml(m.body)}</div>
+          <div class="chat-time">${timeShort(m.created_at)}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  return `
+    <div style="padding:64px 18px 170px;">
+      <h1 style="font-size:20px; font-weight:800; margin-bottom:14px;">💬 ${partnerName}</h1>
+      <div id="chat-list">
+        ${msgs || `<div class="empty-state"><div class="em">💬</div><div style="font-size:13px;">Say hi — this is just between you two.</div></div>`}
+        ${state.partnerTyping ? `<div class="typing-indicator">${partnerName} is typing…</div>` : ''}
+      </div>
+    </div>
+    <div id="chat-input-bar">
+      <textarea id="chat-input" rows="1" placeholder="Type a message…"></textarea>
+      <button id="chat-send" data-action="send-chat">➤</button>
     </div>`;
 }
 
@@ -1092,7 +1243,7 @@ function render(){
   else if(state.screen==='login') body = renderLoginForm();
   else if(state.screen==='yourCode') body = renderYourCode();
   else if(state.screen==='app'){
-    const screens = { today:renderToday, goals:renderGoals, updates:renderUpdates, progress:renderProgress, together:renderTogether };
+    const screens = { today:renderToday, goals:renderGoals, chat:renderChat, updates:renderUpdates, progress:renderProgress, together:renderTogether };
     body = (screens[state.activeTab]||renderToday)();
   }
 
@@ -1105,6 +1256,29 @@ function render(){
   `;
 
   bindInputs();
+
+  if(state.screen==='app' && state.activeTab==='chat'){
+    const list = document.getElementById('chat-list');
+    if(list && state.messages.length !== lastRenderedMessageCount){
+      list.scrollTop = list.scrollHeight;
+      lastRenderedMessageCount = state.messages.length;
+    }
+    const chatInput = document.getElementById('chat-input');
+    if(chatInput){
+      chatInput.addEventListener('input', () => {
+        notifyTyping();
+        chatInput.style.height = 'auto';
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 90) + 'px';
+      });
+      chatInput.addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' && !e.shiftKey){
+          e.preventDefault();
+          sendChatMessage();
+        }
+      });
+      chatInput.focus();
+    }
+  }
 }
 
 /* ============================================================ */
@@ -1113,9 +1287,6 @@ function render(){
 function bindInputs(){
   const nameInput = document.getElementById('name-input');
   if(nameInput) nameInput.addEventListener('input', e => state.authName = e.target.value);
-
-  const emailInput = document.getElementById('email-input');
-  if(emailInput) emailInput.addEventListener('input', e => state.authEmail = e.target.value);
 
   const passwordInput = document.getElementById('password-input');
   if(passwordInput) passwordInput.addEventListener('input', e => state.authPassword = e.target.value);
@@ -1145,11 +1316,8 @@ document.addEventListener('click', async (e) => {
   else if(action==='goto-create') setState({ screen:'create', authError:'' });
   else if(action==='goto-login') setState({ screen:'login', authError:'' });
   else if(action==='goto-choice') setState({ screen:'authChoice', authError:'' });
-  else if(action==='login-mode') setState({ loginMode: el.getAttribute('data-mode'), authError:'' });
   else if(action==='submit-create') createAccount();
-  else if(action==='submit-login'){
-    if(state.loginMode==='email') loginWithPassword(); else loginWithCode();
-  }
+  else if(action==='submit-login') loginWithCode();
   else if(action==='copy-code'){
     try{ await navigator.clipboard.writeText(state.currentUser.code); }catch(_){}
   }
@@ -1171,6 +1339,7 @@ document.addEventListener('click', async (e) => {
   else if(action==='toggle-goal') toggleGoal(el.getAttribute('data-id'));
   else if(action==='delete-goal') deleteGoal(el.getAttribute('data-id'));
   else if(action==='react') addReaction(el.getAttribute('data-update-id'), el.getAttribute('data-emoji'));
+  else if(action==='send-chat') sendChatMessage();
   else if(action==='submit-connect'){
     const val = document.getElementById('connect-input')?.value || '';
     connectPartner(val);
