@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>CoupleFlow</title>
 
-<!-- PWA -->
 <link rel="manifest" href="manifest.json" />
 <meta name="theme-color" content="#9B87F5" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -64,7 +63,6 @@
 
   html,body{ margin:0; height:100%; font-family:'Inter',sans-serif; }
   
-  /* RESPONSIVE LAYOUT ENGINE */
   body{
     display:flex; align-items:center; justify-content:center;
     background:var(--page-bg); padding:0; min-height:100vh; min-height:100dvh;
@@ -76,7 +74,6 @@
     box-shadow:none; border:none;
   }
 
-  /* DESKTOP DEVICE SIMULATION */
   @media (min-width: 600px) {
     body { padding: 20px; }
     #phone {
@@ -187,10 +184,12 @@
 
   .modal-overlay{
     position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end;
-    background:rgba(20,15,35,0.35); backdrop-filter:blur(4px);
+  }
+  .modal-backdrop{
+    position:absolute; inset:0; background:rgba(20,15,35,0.4); backdrop-filter:blur(4px); z-index:1;
   }
   .modal-sheet{
-    width:100%; max-width:430px; margin:0 auto; background:var(--solid);
+    position:relative; z-index:2; width:100%; max-width:430px; margin:0 auto; background:var(--solid);
     border-radius:28px 28px 0 0; padding:10px 20px calc(28px + env(safe-area-inset-bottom)); box-shadow:var(--shadow);
     max-height:85vh; overflow-y:auto;
   }
@@ -213,7 +212,6 @@
     text-align:center; color:var(--purple-deep); padding:18px 0;
   }
 
-  .auth-tabs{ display:flex; gap:8px; margin-bottom:18px; }
   .auth-tab{
     flex:1; padding:10px 0; border-radius:14px; border:1px solid var(--glass-border);
     background:var(--glass); font-weight:600; font-size:13px; color:var(--ink-soft);
@@ -228,7 +226,6 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
-  /* Chat */
   .chat-msg{ display:flex; margin-bottom:10px; animation: msgIn .2s ease; }
   @keyframes msgIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
   .chat-msg.mine{ justify-content:flex-end; }
@@ -273,11 +270,8 @@
 <script>
 (function(){
 
-/* ============================================================ */
-/* Supabase client                                                */
-/* ============================================================ */
 const SUPABASE_URL = 'https://fccupuootvfonaynmhyh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInRefiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -288,9 +282,6 @@ function makeInternalEmail(name){
   return `${slug}.${rand}@coupleflow.internal`;
 }
 
-/* ============================================================ */
-/* State                                                          */
-/* ============================================================ */
 const CATEGORY_EMOJI = { study:'📚', fitness:'🏋️', code:'💻', creative:'🎨', learning:'🧠', habit:'🌱' };
 const CATEGORY_LABEL = { study:'Study', fitness:'Fitness', code:'Coding', creative:'Creative', learning:'Learning', habit:'Habit' };
 
@@ -325,9 +316,6 @@ function setState(patch){
   render();
 }
 
-/* ============================================================ */
-/* Utilities                                                      */
-/* ============================================================ */
 function genId(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function initials(name){ return (name||'?').trim()[0]?.toUpperCase() || '?'; }
 function escapeHtml(s){
@@ -349,9 +337,6 @@ function friendlyError(error){
   return error?.message || 'Something went wrong. Please try again.';
 }
 
-/* ============================================================ */
-/* Session restore                                                 */
-/* ============================================================ */
 async function restoreSession(){
   const { data: { session } } = await supabase.auth.getSession();
   if(session){
@@ -373,9 +358,6 @@ supabase.auth.onAuthStateChange((event) => {
   }
 });
 
-/* ============================================================ */
-/* Data loading                                                   */
-/* ============================================================ */
 async function loadAppData(){
   try{
     const { data: { user } } = await supabase.auth.getUser();
@@ -473,9 +455,6 @@ async function getUpdatesFeed(me, partner){
   return withUrls;
 }
 
-/* ============================================================ */
-/* Chat                                                            */
-/* ============================================================ */
 let chatChannel = null;
 let subscribedCoupleId = null;
 let lastRenderedMessageCount = 0;
@@ -553,9 +532,6 @@ async function sendChatMessage(){
   setState({ messages: state.messages.map(m => m.id === optimisticId ? data : m) });
 }
 
-/* ============================================================ */
-/* Auth actions                                                 */
-/* ============================================================ */
 async function createAccount(){
   const name = state.authName.trim();
   const password = state.authPassword;
@@ -613,9 +589,6 @@ async function logout(){
   await supabase.auth.signOut();
 }
 
-/* ============================================================ */
-/* Connect partner                                                 */
-/* ============================================================ */
 async function connectPartner(codeValue){
   const code = (codeValue || '').trim().toUpperCase();
   if(!code){ setState({ connectError:'Enter a code.' }); return; }
@@ -637,9 +610,6 @@ async function disconnectPartner(){
   await loadUserData();
 }
 
-/* ============================================================ */
-/* Goals                                                          */
-/* ============================================================ */
 async function addGoal(data){
   const { data: goal, error } = await supabase.from('goals').insert({
     user_id: state.currentUser.id,
@@ -678,9 +648,6 @@ async function deleteGoal(id){
   if(error){ console.error(error); setState({ goals: prev }); }
 }
 
-/* ============================================================ */
-/* Updates + photo upload                                         */
-/* ============================================================ */
 async function postUpdate(caption, file){
   if(!caption.trim() && !file) return;
 
@@ -713,9 +680,6 @@ async function addReaction(updateId, emoji){
   await loadUserData();
 }
 
-/* ============================================================ */
-/* Render: shell pieces                                           */
-/* ============================================================ */
 function renderTopbar(){
   return `
     <div class="topbar">
@@ -752,9 +716,6 @@ function renderBottomNav(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render screens                                               */
-/* ============================================================ */
 function renderLoading(){
   return `
     <div class="center-col" style="align-items:center; text-align:center;">
@@ -879,7 +840,7 @@ function renderToday(){
         </div>
       </div>
 
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; justify-space-between; margin-bottom:10px;">
         <h3 style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px;">🎯 Today's Goals</h3>
         <span class="faint" style="font-size:12px; font-weight:600;">${goals.length - done} left</span>
       </div>
@@ -1087,100 +1048,84 @@ function renderTogether(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render Modals                                                */
-/* ============================================================ */
 function renderModal(){
   if(!state.modal) return '';
 
-  if(state.modal==='addChoice') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="drag-handle"></div>
-        <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
-        <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>
+  let sheetContent = '';
+
+  if(state.modal==='addChoice'){
+    sheetContent = `
+      <div class="drag-handle"></div>
+      <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
+      <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>`;
+  } else if(state.modal==='addGoal'){
+    sheetContent = `
+      <div class="drag-handle"></div>
+      <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
+      <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
+      <select id="goal-category" class="input">
+        ${Object.keys(CATEGORY_EMOJI).map(c=>`<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
+      </select>
+      <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
+      <select id="goal-priority" class="input">
+        <option value="medium">Medium priority</option>
+        <option value="high">High priority</option>
+        <option value="low">Low priority</option>
+      </select>
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
+        <input type="checkbox" id="goal-private" /> 🔒 Keep this private from my partner
+      </label>
+      <button class="btn-primary" data-action="submit-goal">Add goal</button>`;
+  } else if(state.modal==='addUpdate'){
+    sheetContent = `
+      <div class="drag-handle"></div>
+      <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
+      <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
+        <span id="photo-status-icon">${state.pendingPhotoFile ? '✅' : '🖼️'}</span>
+        <span class="photo-note" id="photo-status-text" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
+      </label>
+      <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
+      <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
+      <button class="btn-primary" data-action="submit-update">Share this moment</button>`;
+  } else if(state.modal==='connect'){
+    sheetContent = `
+      <div class="drag-handle"></div>
+      <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
+      <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
+      <input id="connect-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code" maxlength="10" />
+      ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
+      <button class="btn-primary" data-action="submit-connect" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect'}</button>`;
+  } else if(state.modal==='settings'){
+    sheetContent = `
+      <div class="drag-handle"></div>
+      <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
+      <div class="glass" style="padding:16px; margin-bottom:12px;">
+        <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your name</div>
+        <div style="font-weight:600; font-size:14px; margin-bottom:12px;">${escapeHtml(state.currentUser.name)}</div>
+        <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
+        <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
+      </div>
+      <div class="glass" style="padding:16px; margin-bottom:16px;">
+        <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
+        ${state.partnerUser ? `
+          <div style="display:flex; align-items:center; justify-content:space-between;">
+            <span style="font-weight:600; font-size:14px;">${escapeHtml(state.partnerUser.name)}</span>
+            <button class="tag pink" style="border:none; cursor:pointer;" data-action="disconnect-partner">Disconnect</button>
+          </div>
+        ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
+      </div>
+      <button class="btn-secondary" data-action="do-logout">Log out</button>`;
+  }
+
+  return `
+    <div class="modal-overlay">
+      <div class="modal-backdrop" data-action="close-modal"></div>
+      <div class="modal-sheet">
+        ${sheetContent}
       </div>
     </div>`;
-
-  if(state.modal==='addGoal') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
-        <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
-        <select id="goal-category" class="input">
-          ${Object.keys(CATEGORY_EMOJI).map(c=>`<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
-        </select>
-        <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
-        <select id="goal-priority" class="input">
-          <option value="medium">Medium priority</option>
-          <option value="high">High priority</option>
-          <option value="low">Low priority</option>
-        </select>
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
-          <input type="checkbox" id="goal-private" /> 🔒 Keep this private from my partner
-        </label>
-        <button class="btn-primary" data-action="submit-goal">Add goal</button>
-      </div>
-    </div>`;
-
-  if(state.modal==='addUpdate') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
-        <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
-          ${state.pendingPhotoFile ? '✅' : '🖼️'}
-          <span class="photo-note" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
-        </label>
-        <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
-        <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
-        <button class="btn-primary" data-action="submit-update">Share this moment</button>
-      </div>
-    </div>`;
-
-  if(state.modal==='connect') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
-        <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
-        <input id="connect-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code" maxlength="10" />
-        ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
-        <button class="btn-primary" data-action="submit-connect" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect'}</button>
-      </div>
-    </div>`;
-
-  if(state.modal==='settings') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-        <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
-        <div class="glass" style="padding:16px; margin-bottom:12px;">
-          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your name</div>
-          <div style="font-weight:600; font-size:14px; margin-bottom:12px;">${escapeHtml(state.currentUser.name)}</div>
-          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
-          <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
-        </div>
-        <div class="glass" style="padding:16px; margin-bottom:16px;">
-          <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
-          ${state.partnerUser ? `
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-              <span style="font-weight:600; font-size:14px;">${escapeHtml(state.partnerUser.name)}</span>
-              <button class="tag pink" style="border:none; cursor:pointer;" data-action="disconnect-partner">Disconnect</button>
-            </div>
-          ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
-        </div>
-        <button class="btn-secondary" data-action="do-logout">Log out</button>
-      </div>
-    </div>`;
-
-  return '';
 }
 
-/* ============================================================ */
-/* Master render                                                  */
-/* ============================================================ */
 function render(){
   const root = document.getElementById('screen');
   document.getElementById('phone').setAttribute('data-theme', state.theme);
@@ -1229,9 +1174,6 @@ function render(){
   }
 }
 
-/* ============================================================ */
-/* Input bindings                                                 */
-/* ============================================================ */
 function bindInputs(){
   const nameInput = document.getElementById('name-input');
   if(nameInput) nameInput.addEventListener('input', e => state.authName = e.target.value);
@@ -1248,13 +1190,13 @@ function bindInputs(){
   const photoInput = document.getElementById('update-photo-input');
   if(photoInput) photoInput.addEventListener('change', e => {
     state.pendingPhotoFile = e.target.files[0] || null;
-    render();
+    const icon = document.getElementById('photo-status-icon');
+    const text = document.getElementById('photo-status-text');
+    if(icon) icon.textContent = state.pendingPhotoFile ? '✅' : '🖼️';
+    if(text) text.textContent = state.pendingPhotoFile ? state.pendingPhotoFile.name : 'Tap to choose a photo';
   });
 }
 
-/* ============================================================ */
-/* Event delegation                                               */
-/* ============================================================ */
 document.addEventListener('click', async (e) => {
   const el = e.target.closest('[data-action]');
   if(!el) return;
@@ -1307,18 +1249,12 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-/* ============================================================ */
-/* PWA: register service worker                                   */
-/* ============================================================ */
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js').catch(err => console.error('SW registration failed', err));
   });
 }
 
-/* ============================================================ */
-/* Init                                                           */
-/* ============================================================ */
 render();
 restoreSession();
 
