@@ -215,14 +215,48 @@
     font-size:15px;
   }
 
+  /* Modals sit ABOVE the bottom nav, but the nav keeps its own visible space.
+     This prevents Settings / Connect content from being hidden behind it. */
   .modal-overlay{
-    position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end;
-    background:rgba(20,15,35,0.35); backdrop-filter:blur(4px);
+    position:fixed;
+    left:0; right:0; top:0;
+    bottom:calc(86px + env(safe-area-inset-bottom));
+    z-index:150;
+    display:flex;
+    align-items:flex-end;
+    background:rgba(20,15,35,0.35);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
   }
   .modal-sheet{
-    width:100%; max-width:430px; margin:0 auto; background:var(--solid);
-    border-radius:28px 28px 0 0; padding:10px 20px calc(28px + env(safe-area-inset-bottom)); box-shadow:var(--shadow);
-    max-height:85vh; overflow-y:auto;
+    width:100%; max-width:430px; margin:0 auto;
+    background:var(--solid);
+    border-radius:28px 28px 0 0;
+    padding:10px 20px 24px;
+    box-shadow:var(--shadow);
+    max-height:100%;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .notification-card{
+    padding:16px;
+    margin-bottom:12px;
+  }
+  .notification-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .notification-action{
+    width:auto;
+    min-width:118px;
+    padding:10px 14px;
+    border-radius:14px;
+    border:1px solid var(--glass-border);
+    background:var(--glass-strong);
+    font-weight:700;
+    font-size:12px;
   }
   .drag-handle{ width:40px; height:4px; border-radius:999px; background:var(--glass-border); margin:6px auto 18px; }
 
@@ -373,6 +407,7 @@
 /* ============================================================ */
 const SUPABASE_URL = 'https://fccupuootvfonaynmhyh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
+const VAPID_PUBLIC_KEY = 'REPLACE_WITH_YOUR_VAPID_PUBLIC_KEY';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -414,6 +449,11 @@ let state = {
   connectInput: '',
   connectError: '',
   pendingPhotoFile: null,
+
+  notificationPermission: 'default',
+  notificationStatus: 'unknown',
+  notificationBusy: false,
+  notificationError: '',
 };
 
 let lastNavKey = null;
@@ -477,6 +517,156 @@ function friendlyError(error){
   return error?.message || 'Something went wrong. Please try again.';
 }
 
+function getInitialTab(){
+  const tab = new URLSearchParams(location.search).get('tab');
+  return ['today','goals','chat','updates','progress','together'].includes(tab) ? tab : 'today';
+}
+
+/* ============================================================ */
+/* Web push notifications                                       */
+/* ============================================================ */
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+}
+
+function pushSupported(){
+  return 'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window;
+}
+
+async function loadPushStatus(){
+  if(!state.currentUser){
+    return;
+  }
+
+  if(!pushSupported()){
+    setState({ notificationPermission:'unsupported', notificationStatus:'unsupported' });
+    return;
+  }
+
+  const permission = Notification.permission;
+  let status = permission === 'denied' ? 'blocked' : 'off';
+
+  try{
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+    if(subscription) status = 'enabled';
+  }catch(error){
+    console.warn('Unable to inspect push subscription:', error);
+  }
+
+  setState({
+    notificationPermission: permission,
+    notificationStatus: status,
+    notificationError:''
+  });
+}
+
+async function enablePushNotifications(){
+  if(!state.currentUser || !pushSupported()) return;
+
+  if(!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.startsWith('REPLACE_')){
+    setState({
+      notificationError:'Add your VAPID public key to index.html first.',
+      notificationStatus:'off'
+    });
+    return;
+  }
+
+  setState({ notificationBusy:true, notificationError:'' });
+
+  try{
+    const permission = await Notification.requestPermission();
+
+    if(permission !== 'granted'){
+      setState({
+        notificationBusy:false,
+        notificationPermission:permission,
+        notificationStatus:permission === 'denied' ? 'blocked' : 'off',
+        notificationError:permission === 'denied'
+          ? 'Notifications are blocked in your browser. Allow them for CoupleFlow in site settings.'
+          : ''
+      });
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if(!subscription){
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+
+    const subscriptionJson = subscription.toJSON();
+
+    const { error } = await supabase
+      .from('push_subscriptions')
+      .upsert({
+        user_id: state.currentUser.id,
+        endpoint: subscription.endpoint,
+        subscription: subscriptionJson,
+        updated_at: new Date().toISOString()
+      }, { onConflict:'endpoint' });
+
+    if(error) throw error;
+
+    setState({
+      notificationBusy:false,
+      notificationPermission:'granted',
+      notificationStatus:'enabled',
+      notificationError:''
+    });
+  }catch(error){
+    console.error('Push subscription failed:', error);
+    setState({
+      notificationBusy:false,
+      notificationStatus:'off',
+      notificationError:friendlyError(error)
+    });
+  }
+}
+
+async function disablePushNotifications(){
+  if(!state.currentUser || !pushSupported()) return;
+
+  setState({ notificationBusy:true, notificationError:'' });
+
+  try{
+    const registration = await navigator.serviceWorker.ready;
+    const subscription = await registration.pushManager.getSubscription();
+
+    if(subscription){
+      await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('endpoint', subscription.endpoint)
+        .eq('user_id', state.currentUser.id);
+
+      await subscription.unsubscribe();
+    }
+
+    setState({
+      notificationBusy:false,
+      notificationStatus:'off',
+      notificationPermission:Notification.permission,
+      notificationError:''
+    });
+  }catch(error){
+    console.error('Push unsubscribe failed:', error);
+    setState({
+      notificationBusy:false,
+      notificationError:friendlyError(error)
+    });
+  }
+}
+
 /* ============================================================ */
 /* Session restore — self-healing: a broken/expired local session  */
 /* used to silently 401 every authenticated call forever. Now we   */
@@ -535,10 +725,12 @@ async function loadAppData(){
       .from('profiles').select('*').eq('id', user.id).single();
     if(profileError) throw profileError;
 
-    history.replaceState({ screen:'app', activeTab:'today', modal:null }, '');
-    lastNavKey = 'app|today|null';
-    setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
+    const initialTab = getInitialTab();
+    history.replaceState({ screen:'app', activeTab:initialTab, modal:null }, '');
+    lastNavKey = `app|${initialTab}|null`;
+    setState({ currentUser: profile, screen: 'app', activeTab: initialTab }, { fromPopstate:true });
     await loadUserData();
+    await loadPushStatus();
   }catch(err){
     console.error(err);
     try{ await supabase.auth.signOut({ scope:'local' }); }catch(_){}
@@ -1337,7 +1529,7 @@ function renderModal(){
           <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
           <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
         </div>
-        <div class="glass" style="padding:16px; margin-bottom:16px;">
+        <div class="glass" style="padding:16px; margin-bottom:12px;">
           <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
           ${state.partnerUser ? `
             <div style="display:flex; align-items:center; justify-content:space-between;">
@@ -1346,6 +1538,30 @@ function renderModal(){
             </div>
           ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
         </div>
+
+        <div class="glass notification-card">
+          <div class="notification-row">
+            <div style="min-width:0;">
+              <div style="font-size:13px; font-weight:700;">🔔 Notifications</div>
+              <div class="muted" style="font-size:11.5px; margin-top:4px;">
+                ${state.notificationStatus==='enabled'
+                  ? 'Enabled on this device'
+                  : state.notificationStatus==='blocked'
+                    ? 'Blocked by your browser'
+                    : state.notificationStatus==='unsupported'
+                      ? 'Not supported by this browser'
+                      : 'Get alerts when your partner messages you'}
+              </div>
+            </div>
+            ${state.notificationStatus==='enabled'
+              ? `<button class="notification-action" data-action="disable-notifications" ${state.notificationBusy?'disabled':''}>${state.notificationBusy?'Turning off…':'Turn off'}</button>`
+              : state.notificationStatus==='unsupported'
+                ? ''
+                : `<button class="notification-action" data-action="enable-notifications" ${state.notificationBusy?'disabled':''}>${state.notificationBusy?'Enabling…':'Enable'}</button>`}
+          </div>
+          ${state.notificationError ? `<div class="error-text" style="margin-top:10px; margin-bottom:0;">${escapeHtml(state.notificationError)}</div>` : ''}
+        </div>
+
         <button class="btn-secondary" data-action="do-logout">Log out</button>
       </div>
     </div>`;
@@ -1476,7 +1692,12 @@ document.addEventListener('click', async (e) => {
   else if(action==='open-add-goal') setState({ modal:'addGoal' });
   else if(action==='open-add-update') setState({ modal:'addUpdate', pendingPhotoFile:null });
   else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
-  else if(action==='open-settings') setState({ modal:'settings' });
+  else if(action==='open-settings') {
+    setState({ modal:'settings' });
+    loadPushStatus();
+  }
+  else if(action==='enable-notifications') enablePushNotifications();
+  else if(action==='disable-notifications') disablePushNotifications();
   else if(action==='close-modal') history.back();
   else if(action==='do-logout') logout();
   else if(action==='disconnect-partner') disconnectPartner();
