@@ -4,13 +4,20 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>CoupleFlow</title>
-<link rel="manifest" href="/manifest.json" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="apple-mobile-web-app-title" content="CoupleFlow" />
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%239B87F5'/%3E%3Cstop offset='1' stop-color='%23F2A6CE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Cpath d='M50 78 C20 55 8 38 8 24 C8 12 18 4 28 4 C36 4 44 9 50 18 C56 9 64 4 72 4 C82 4 92 12 92 24 C92 38 80 55 50 78 Z' fill='white'/%3E%3C/svg%3E" type="image/svg+xml" />
+<link rel="manifest" href="/manifest.json">
 
+<meta name="theme-color" content="#8b5cf6">
+
+<!-- Android / general PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- iOS -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="CoupleFlow">
+
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
@@ -77,7 +84,12 @@
   .blob-1{ top:-80px; right:-60px; width:280px; height:280px; background:color-mix(in srgb, var(--purple) 30%, transparent); }
   .blob-2{ bottom:0; left:-90px; width:260px; height:260px; background:color-mix(in srgb, var(--pink) 28%, transparent); }
 
-  #screen{ position:relative; flex:1; z-index:1; }
+#screen{
+  position:relative;
+  flex:1;
+  z-index:1;
+  padding-bottom:90px;
+}
 
   .glass{
     background:var(--glass); border:1px solid var(--glass-border); border-radius:26px;
@@ -136,19 +148,50 @@
     border:none; background:linear-gradient(135deg,var(--purple),var(--pink));
   }
 
-  #bottomnav{
-    position:sticky; bottom:0; left:0; right:0; display:flex; justify-content:center;
-    padding:10px 0 calc(14px + env(safe-area-inset-bottom)); z-index:30;
-  }
-  #navbar{
-    display:flex; align-items:center; gap:2px; padding:8px 8px;
-    background:var(--nav-bg); border-radius:26px; backdrop-filter:blur(20px);
-    border:1px solid var(--glass-border); box-shadow:var(--shadow);
-  }
+ #bottomnav{
+  position:fixed;
+  left:50%;
+  bottom:0;
+  transform:translateX(-50%);
+  width:min(560px, 100%);
+  display:flex;
+  justify-content:center;
+  padding:10px 8px calc(14px + env(safe-area-inset-bottom));
+  z-index:100;
+  pointer-events:none;
+}
+
+#navbar{
+  width:100%;
+  max-width:560px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:2px;
+  padding:8px 8px;
+  background:var(--nav-bg);
+  border-radius:26px;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--shadow);
+  pointer-events:auto;
+}
+  
   .navitem{
-    display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 8px;
-    border-radius:16px; border:none; background:transparent; min-width:44px;
-  }
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  padding:6px 4px;
+  border-radius:16px;
+  border:none;
+  background:transparent;
+}
+
   .navitem.active{ background:color-mix(in srgb, var(--purple) 14%, transparent); }
   .navitem .ic{ font-size:17px; line-height:1; }
   .navitem .lb{ font-size:9px; font-weight:600; color:var(--ink-faint); }
@@ -215,178 +258,38 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
-  /* Chat — scoped only to the Chat screen */
-  .chat-page{
-    height:100%;
-    min-height:0;
-    display:flex;
-    flex-direction:column;
-    padding:0 18px;
-    overflow:hidden;
-  }
-
-  .chat-page .chat-header{
-    flex:0 0 auto;
-    padding:2px 0 12px;
-  }
-
-  .chat-page .chat-header h1{
-    font-size:20px;
-    font-weight:800;
-    margin:0;
-    line-height:1.25;
-  }
-
-  .chat-page #chat-list{
-    flex:1 1 auto;
-    min-height:0;
-    overflow-y:auto;
-    overflow-x:hidden;
-    padding:2px 2px 12px;
-    -webkit-overflow-scrolling:touch;
-    overscroll-behavior:contain;
-    scrollbar-width:none;
-  }
-
-  .chat-page #chat-list::-webkit-scrollbar{
-    display:none;
-  }
-
-  .chat-msg{
-    width:100%;
-    display:flex;
-    margin-bottom:10px;
-    animation:msgIn .2s ease;
-  }
-
-  @keyframes msgIn{
-    from{ opacity:0; transform:translateY(6px); }
-    to{ opacity:1; transform:translateY(0); }
-  }
-
-  .chat-msg.mine{
-    justify-content:flex-end;
-  }
-
-  .chat-msg.theirs{
-    justify-content:flex-start;
-  }
-
-  .chat-msg > div{
-    min-width:0;
-    max-width:75%;
-  }
-
+  /* Chat */
+  .chat-msg{ display:flex; margin-bottom:10px; animation: msgIn .2s ease; }
+  @keyframes msgIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
+  .chat-msg.mine{ justify-content:flex-end; }
   .chat-bubble{
-    display:block;
-    width:max-content;
-    max-width:100%;
-    min-width:0;
-    padding:10px 14px;
-    border-radius:18px;
-    font-size:14px;
-    line-height:1.4;
-    overflow-wrap:anywhere;
-    word-break:normal;
-    white-space:pre-wrap;
+    max-width:75%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.4;
+    word-wrap:break-word;
   }
-
   .chat-msg.mine .chat-bubble{
-    margin-left:auto;
-    background:linear-gradient(135deg,var(--purple),var(--pink));
-    color:#fff;
-    border-bottom-right-radius:4px;
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border-bottom-right-radius:4px;
   }
-
   .chat-msg.theirs .chat-bubble{
-    margin-right:auto;
-    background:var(--glass-strong);
-    border:1px solid var(--glass-border);
-    border-bottom-left-radius:4px;
+    background:var(--glass-strong); border:1px solid var(--glass-border); border-bottom-left-radius:4px;
   }
-
-  .chat-time{
-    font-size:9.5px;
-    line-height:1.2;
-    color:var(--ink-faint);
-    margin-top:3px;
+  .chat-time{ font-size:9.5px; color:var(--ink-faint); margin-top:3px; }
+  .chat-msg.mine .chat-time{ text-align:right; }
+  #chat-input-bar{
+    position:sticky; bottom:76px; left:0; right:0; padding:10px 14px; z-index:25;
+    display:flex; gap:8px; align-items:flex-end;
   }
-
-  .chat-msg.mine .chat-time{
-    text-align:right;
+  #chat-input{
+    flex:1; border:1px solid var(--glass-border); border-radius:20px; padding:11px 16px;
+    font-size:14px; background:var(--glass-strong); color:var(--ink); outline:none; resize:none;
+    max-height:90px; font-family:'Inter',sans-serif;
   }
-
-  .chat-msg.theirs .chat-time{
-    text-align:left;
-  }
-
-  .chat-page #chat-input-bar{
-    flex:0 0 auto;
-    position:static;
-    width:100%;
-    padding:8px 0 10px;
-    z-index:1;
-    display:flex;
-    gap:8px;
-    align-items:center;
-    background:transparent;
-  }
-
-  .chat-page #chat-input{
-    flex:1 1 auto;
-    min-width:0;
-    width:auto;
-    height:42px;
-    min-height:42px;
-    border:1px solid var(--glass-border);
-    border-radius:21px;
-    padding:10px 15px;
-    font-size:14px;
-    line-height:20px;
-    background:var(--glass-strong);
-    color:var(--ink);
-    outline:none;
-    resize:none;
-    max-height:90px;
-    overflow-y:auto;
-    font-family:'Inter',sans-serif;
-  }
-
-  .chat-page #chat-input:focus{
-    border-color:var(--purple);
-  }
-
-  .chat-page #chat-send{
-    width:42px;
-    height:42px;
-    border-radius:50%;
-    border:none;
-    flex:0 0 42px;
-    background:linear-gradient(135deg,var(--purple),var(--pink));
-    color:#fff;
-    font-size:16px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:0;
+  #chat-send{
+    width:42px; height:42px; border-radius:50%; border:none; flex-shrink:0;
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:16px;
+    display:flex; align-items:center; justify-content:center;
     box-shadow:0 8px 18px -8px rgba(118,87,224,0.55);
   }
-
-  .typing-indicator{
-    font-size:12px;
-    color:var(--ink-faint);
-    padding:4px 4px 8px;
-    font-style:italic;
-  }
-
-  .chat-page .chat-empty{
-    flex:1;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:30px 20px;
-  }
-
+  .typing-indicator{ font-size:12px; color:var(--ink-faint); padding:4px 4px 8px; font-style:italic; }
 </style>
 </head>
 <body>
@@ -404,7 +307,6 @@
 /* Supabase client                                                */
 /* ============================================================ */
 const SUPABASE_URL = 'https://fccupuootvfonaynmhyh.supabase.co';
-const VAPID_PUBLIC_KEY = 'qCc3U7BG4ZxFdmhBP1_Ev3qPuOsYQOzc_4eykGqD4HoSfHatjamy6Btz2qNX_QJQWUkkFfxsDQWmagP-nuxlnA';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
@@ -738,129 +640,6 @@ async function sendChatMessage(){
     return;
   }
   setState({ messages: state.messages.map(m => m.id === optimisticId ? data : m) });
-
-  await notifyPartner('message', {
-    title: `💬 New message from ${state.currentUser.name}`,
-    body: body.length > 100 ? body.slice(0, 97) + '…' : body,
-    url: '/?tab=chat',
-  });
-}
-
-/* ============================================================ */
-/* Phone push notifications                                      */
-/* ============================================================ */
-let pushRegistrationPromise = null;
-
-function pushSupported(){
-  return 'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window;
-}
-
-function urlBase64ToUint8Array(base64String){
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding)
-    .replace(/-/g, '+')
-    .replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  return Uint8Array.from([...rawData].map(ch => ch.charCodeAt(0)));
-}
-
-async function getPushRegistration(){
-  if(!('serviceWorker' in navigator)) return null;
-  if(!pushRegistrationPromise){
-    pushRegistrationPromise = navigator.serviceWorker.register('/sw.js', { scope:'/' })
-      .then(async registration => {
-        await navigator.serviceWorker.ready;
-        return registration;
-      })
-      .catch(err => {
-        console.error('Service worker registration failed:', err);
-        pushRegistrationPromise = null;
-        return null;
-      });
-  }
-  return pushRegistrationPromise;
-}
-
-async function enablePushNotifications(){
-  if(!state.currentUser){ return; }
-
-  if(!pushSupported()){
-    alert('Push notifications are not supported by this browser.');
-    return;
-  }
-
-  if(VAPID_PUBLIC_KEY.startsWith('REPLACE_')){
-    alert('Push notifications are not configured yet. Add the VAPID public key to index.html and the VAPID secrets to Supabase.');
-    return;
-  }
-
-  if(Notification.permission === 'denied'){
-    alert('Notifications are blocked for CoupleFlow. Enable notifications for CoupleFlow in your phone/browser settings, then try again.');
-    return;
-  }
-
-  try{
-    const permission = Notification.permission === 'granted'
-      ? 'granted'
-      : await Notification.requestPermission();
-
-    if(permission !== 'granted'){
-      alert('Notification permission was not granted.');
-      return;
-    }
-
-    const registration = await getPushRegistration();
-    if(!registration) throw new Error('Could not register the CoupleFlow service worker.');
-
-    let subscription = await registration.pushManager.getSubscription();
-
-    if(!subscription){
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly:true,
-        applicationServerKey:urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-    }
-
-    const { error } = await supabase.functions.invoke('push-notifications', {
-      body:{
-        action:'subscribe',
-        subscription:subscription.toJSON(),
-      },
-    });
-
-    if(error) throw error;
-
-    alert('🔔 Phone notifications are enabled!');
-    render();
-  }catch(err){
-    console.error('Enable notifications failed:', err);
-    alert('Could not enable notifications. Check the browser permission and Supabase push setup.');
-  }
-}
-
-async function registerPushWorkerSilently(){
-  // Registration itself does not ask for notification permission.
-  // Permission is requested only after the user taps Enable notifications.
-  try{ await getPushRegistration(); }catch(_){ }
-}
-
-async function notifyPartner(eventType, payload={}){
-  if(!state.currentUser || !state.coupleId) return;
-
-  try{
-    await supabase.functions.invoke('push-notifications', {
-      body:{
-        action:'notify',
-        eventType,
-        ...payload,
-      },
-    });
-  }catch(err){
-    // Push failure must never break the main CoupleFlow action.
-    console.warn('Push notification could not be sent:', err);
-  }
 }
 
 /* ============================================================ */
@@ -961,14 +740,6 @@ async function addGoal(data){
 
   if(error){ alert(friendlyError(error)); return; }
   setState({ goals: [goal, ...state.goals], modal:null });
-
-  if(!goal.is_private){
-    await notifyPartner('goal', {
-      title: `🎯 ${state.currentUser.name} added a goal`,
-      body: goal.title,
-      url: '/?tab=goals',
-    });
-  }
 }
 
 async function toggleGoal(id){
@@ -1021,12 +792,6 @@ async function postUpdate(caption, file){
 
   setState({ modal:null, pendingPhotoFile:null });
   await loadUserData();
-
-  await notifyPartner('update', {
-    title: `📸 ${state.currentUser.name} shared a moment`,
-    body: caption.trim() || 'Your partner shared a new moment with you.',
-    url: '/?tab=updates',
-  });
 }
 
 async function addReaction(updateId, emoji){
@@ -1272,27 +1037,20 @@ function renderGoals(){
 function renderChat(){
   if(!state.coupleId){
     return `
-      <div class="chat-page">
-        <div class="chat-header">
-          <h1>💬 Chat</h1>
-        </div>
-
-        <div class="chat-empty">
-          <div class="empty-state" style="padding:20px;">
-            <div class="em">🔗</div>
-            <div class="heading" style="font-weight:700; font-size:15px;">Connect with your partner first</div>
-            <div style="font-size:13px; margin-bottom:16px;">Once you're connected, your chat shows up here — live, on both sides.</div>
-            <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
-          </div>
+      <div style="padding:18px 18px 30px;">
+        <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">💬 Chat</h1>
+        <div class="empty-state">
+          <div class="em">🔗</div>
+          <div class="heading" style="font-weight:700; font-size:15px;">Connect with your partner first</div>
+          <div style="font-size:13px; margin-bottom:16px;">Once you're connected, your chat shows up here — live, on both sides.</div>
+          <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
         </div>
       </div>`;
   }
 
   const partnerName = state.partnerUser ? escapeHtml(state.partnerUser.name) : 'Partner';
-
   const msgs = state.messages.map(m => {
     const mine = m.sender_id === state.currentUser.id;
-
     return `
       <div class="chat-msg ${mine?'mine':'theirs'}">
         <div>
@@ -1303,46 +1061,16 @@ function renderChat(){
   }).join('');
 
   return `
-    <div class="chat-page">
-
-      <div class="chat-header">
-        <h1>💬 ${partnerName}</h1>
-      </div>
-
+    <div style="padding:18px 18px 10px;">
+      <h1 style="font-size:20px; font-weight:800; margin-bottom:14px;">💬 ${partnerName}</h1>
       <div id="chat-list">
-        ${
-          msgs ||
-          `<div class="chat-empty">
-             <div style="text-align:center;">
-               <div class="em">💬</div>
-               <div style="font-size:13px;">Say hi — this is just between you two.</div>
-             </div>
-           </div>`
-        }
-
-        ${
-          state.partnerTyping
-            ? `<div class="typing-indicator">${partnerName} is typing…</div>`
-            : ''
-        }
+        ${msgs || `<div class="empty-state"><div class="em">💬</div><div style="font-size:13px;">Say hi — this is just between you two.</div></div>`}
+        ${state.partnerTyping ? `<div class="typing-indicator">${partnerName} is typing…</div>` : ''}
       </div>
-
-      <div id="chat-input-bar">
-        <textarea
-          id="chat-input"
-          rows="1"
-          placeholder="Type a message…"
-          autocomplete="off"
-          spellcheck="true"
-        ></textarea>
-
-        <button
-          id="chat-send"
-          data-action="send-chat"
-          aria-label="Send message"
-        >➤</button>
-      </div>
-
+    </div>
+    <div id="chat-input-bar">
+      <textarea id="chat-input" rows="1" placeholder="Type a message…"></textarea>
+      <button id="chat-send" data-action="send-chat">➤</button>
     </div>`;
 }
 
@@ -1553,9 +1281,6 @@ function renderModal(){
             </div>
           ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
         </div>
-        <button class="btn-secondary" style="margin-bottom:10px;" data-action="enable-notifications">
-          🔔 &nbsp; ${pushSupported() && Notification.permission === 'granted' ? 'Notifications enabled' : 'Enable phone notifications'}
-        </button>
         <button class="btn-secondary" data-action="do-logout">Log out</button>
       </div>
     </div>`;
@@ -1594,29 +1319,24 @@ function render(){
 
   if(state.screen==='app' && state.activeTab==='chat'){
     const list = document.getElementById('chat-list');
-
     if(list && state.messages.length !== lastRenderedMessageCount){
-      requestAnimationFrame(() => {
-        list.scrollTop = list.scrollHeight;
-      });
+      list.scrollIntoView({ block:'end' });
       lastRenderedMessageCount = state.messages.length;
     }
-
     const chatInput = document.getElementById('chat-input');
-
     if(chatInput){
       chatInput.addEventListener('input', () => {
         notifyTyping();
-        chatInput.style.height = '42px';
+        chatInput.style.height = 'auto';
         chatInput.style.height = Math.min(chatInput.scrollHeight, 90) + 'px';
       });
-
       chatInput.addEventListener('keydown', (e) => {
         if(e.key === 'Enter' && !e.shiftKey){
           e.preventDefault();
           sendChatMessage();
         }
       });
+      chatInput.focus();
     }
   }
 }
@@ -1694,7 +1414,6 @@ document.addEventListener('click', async (e) => {
   else if(action==='open-settings') setState({ modal:'settings' });
   else if(action==='close-modal') history.back();
   else if(action==='do-logout') logout();
-  else if(action==='enable-notifications') enablePushNotifications();
   else if(action==='disconnect-partner') disconnectPartner();
   else if(action==='filter-goals'){ goalsFilter = el.getAttribute('data-filter'); render(); }
   else if(action==='toggle-goal') toggleGoal(el.getAttribute('data-id'));
@@ -1724,10 +1443,29 @@ document.addEventListener('click', async (e) => {
 /* Init                                                           */
 /* ============================================================ */
 render();
-registerPushWorkerSilently();
 restoreSession();
 
 })();
+</script>
+  <script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then(registration => {
+        console.log(
+          "CoupleFlow service worker registered:",
+          registration.scope
+        );
+      })
+      .catch(error => {
+        console.error(
+          "CoupleFlow service worker registration failed:",
+          error
+        );
+      });
+  });
+}
 </script>
 </body>
 </html>
