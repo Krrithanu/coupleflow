@@ -1157,7 +1157,7 @@ function renderModal(){
 
   if(state.modal==='addChoice') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet" >
         <div class="drag-handle"></div>
         <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
         <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>
@@ -1166,7 +1166,7 @@ function renderModal(){
 
   if(state.modal==='addGoal') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet" >
         <div class="drag-handle"></div>
         <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
         <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
@@ -1188,7 +1188,7 @@ function renderModal(){
 
   if(state.modal==='addUpdate') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet" >
         <div class="drag-handle"></div>
         <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
         <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
@@ -1203,7 +1203,7 @@ function renderModal(){
 
   if(state.modal==='connect') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet" >
         <div class="drag-handle"></div>
         <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
         <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
@@ -1215,7 +1215,7 @@ function renderModal(){
 
   if(state.modal==='settings') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet" >
         <div class="drag-handle"></div>
         <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
         <div class="glass" style="padding:16px; margin-bottom:12px;">
@@ -1331,7 +1331,22 @@ document.addEventListener('click', async (e) => {
   else if(action==='submit-create') createAccount();
   else if(action==='submit-login') loginWithCode();
   else if(action==='copy-code'){
-    try{ await navigator.clipboard.writeText(state.currentUser.code); }catch(_){}
+    const code = state.currentUser?.code || '';
+    try{
+      await navigator.clipboard.writeText(code);
+      alert('Code copied!');
+    }catch(_){
+      // Clipboard API can be unavailable on file:// or insecure contexts.
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try{ document.execCommand('copy'); alert('Code copied!'); }
+      catch(e){ alert('Your code is: ' + code); }
+      ta.remove();
+    }
   }
   else if(action==='connect-now'){
     await connectPartner(state.connectInput);
