@@ -4,15 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>CoupleFlow</title>
-
-<link rel="manifest" href="manifest.json" />
-<meta name="theme-color" content="#9B87F5" />
-<meta name="mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="CoupleFlow" />
-<link rel="icon" href="icon.svg" type="image/svg+xml" />
-<link rel="apple-touch-icon" href="icons/icon.svg" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%239B87F5'/%3E%3Cstop offset='1' stop-color='%23F2A6CE'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='url(%23g)'/%3E%3Cpath d='M50 78 C20 55 8 38 8 24 C8 12 18 4 28 4 C36 4 44 9 50 18 C56 9 64 4 72 4 C82 4 92 12 92 24 C92 38 80 55 50 78 Z' fill='white'/%3E%3C/svg%3E" type="image/svg+xml" />
 
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
@@ -34,8 +26,6 @@
     --nav-bg: rgba(255,255,255,0.75);
     --shadow: 0 20px 45px -20px rgba(118,87,224,0.28);
     --shadow-soft: 0 10px 30px -14px rgba(118,87,224,0.22);
-    --frame-border: #1E1B2C;
-    --page-bg: #EDEAF7;
   }
   [data-theme="dark"]{
     --bg-grad: linear-gradient(160deg, #191529 0%, #1E1726 48%, #161A26 100%);
@@ -54,41 +44,35 @@
     --nav-bg: rgba(30,24,46,0.8);
     --shadow: 0 20px 45px -20px rgba(0,0,0,0.55);
     --shadow-soft: 0 10px 30px -14px rgba(0,0,0,0.45);
-    --frame-border: #0F0C18;
-    --page-bg: #0F0C18;
   }
 
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
 
-  html,body{ margin:0; height:100%; font-family:'Inter',sans-serif; }
-  
+  html{ min-height:100%; }
+  html,body{ margin:0; font-family:'Inter',sans-serif; }
   body{
-    display:flex; align-items:center; justify-content:center;
-    background:var(--page-bg); padding:0; min-height:100vh; min-height:100dvh;
+    min-height:100dvh;
+    background:var(--bg-grad);
   }
 
-  #phone{
-    position:relative; width:100vw; height:100dvh; max-height:100dvh; max-width:100%;
-    border-radius:0; overflow:hidden; background:var(--bg-grad);
-    box-shadow:none; border:none;
+  /* Full responsive page — no phone mockup. Content centers in a
+     readable column on wide screens, fills the width on mobile. */
+  #app{
+    position:relative;
+    width:100%;
+    max-width:560px;
+    margin:0 auto;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
   }
 
-  @media (min-width: 600px) {
-    body { padding: 20px; }
-    #phone {
-      width: 390px; height: 844px; max-height: 92vh;
-      border-radius: 44px; border: 10px solid var(--frame-border);
-      box-shadow: var(--shadow);
-    }
-  }
+  .blob{ position:fixed; border-radius:50%; filter:blur(60px); pointer-events:none; z-index:0; }
+  .blob-1{ top:-80px; right:-60px; width:280px; height:280px; background:color-mix(in srgb, var(--purple) 30%, transparent); }
+  .blob-2{ bottom:0; left:-90px; width:260px; height:260px; background:color-mix(in srgb, var(--pink) 28%, transparent); }
 
-  .blob{ position:absolute; border-radius:50%; filter:blur(52px); pointer-events:none; }
-  .blob-1{ top:-60px; right:-60px; width:220px; height:220px; background:color-mix(in srgb, var(--purple) 30%, transparent); }
-  .blob-2{ bottom:100px; left:-70px; width:200px; height:200px; background:color-mix(in srgb, var(--pink) 28%, transparent); }
-
-  #screen{ position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; }
-  #screen::-webkit-scrollbar{ width:0; }
+  #screen{ position:relative; flex:1; z-index:1; }
 
   .glass{
     background:var(--glass); border:1px solid var(--glass-border); border-radius:26px;
@@ -148,8 +132,8 @@
   }
 
   #bottomnav{
-    position:absolute; bottom:0; left:0; right:0; display:flex; justify-content:center;
-    padding-bottom:calc(14px + env(safe-area-inset-bottom)); z-index:30;
+    position:sticky; bottom:0; left:0; right:0; display:flex; justify-content:center;
+    padding:10px 0 calc(14px + env(safe-area-inset-bottom)); z-index:30;
   }
   #navbar{
     display:flex; align-items:center; gap:2px; padding:8px 8px;
@@ -173,8 +157,9 @@
   }
 
   .topbar{
-    position:absolute; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between;
     padding:calc(16px + env(safe-area-inset-top)) 18px 16px; z-index:20;
+    background:linear-gradient(180deg, var(--bg-grad) 60%, transparent);
   }
   .round-btn{
     width:36px; height:36px; border-radius:50%; border:1px solid var(--glass-border);
@@ -184,12 +169,10 @@
 
   .modal-overlay{
     position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end;
-  }
-  .modal-backdrop{
-    position:absolute; inset:0; background:rgba(20,15,35,0.4); backdrop-filter:blur(4px); z-index:1;
+    background:rgba(20,15,35,0.35); backdrop-filter:blur(4px);
   }
   .modal-sheet{
-    position:relative; z-index:2; width:100%; max-width:430px; margin:0 auto; background:var(--solid);
+    width:100%; max-width:430px; margin:0 auto; background:var(--solid);
     border-radius:28px 28px 0 0; padding:10px 20px calc(28px + env(safe-area-inset-bottom)); box-shadow:var(--shadow);
     max-height:85vh; overflow-y:auto;
   }
@@ -212,6 +195,7 @@
     text-align:center; color:var(--purple-deep); padding:18px 0;
   }
 
+  .auth-tabs{ display:flex; gap:8px; margin-bottom:18px; }
   .auth-tab{
     flex:1; padding:10px 0; border-radius:14px; border:1px solid var(--glass-border);
     background:var(--glass); font-weight:600; font-size:13px; color:var(--ink-soft);
@@ -219,13 +203,14 @@
   .auth-tab.active{ background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border:none; }
 
   .error-text{ color:var(--pink-deep); font-size:12.5px; margin:-4px 0 12px; font-weight:500; }
-  .center-col{ display:flex; flex-direction:column; justify-content:center; min-height:100%; padding:28px 24px; }
+  .center-col{ display:flex; flex-direction:column; justify-content:center; min-height:100dvh; padding:28px 24px; }
 
   .avatar{
     border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff;
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
+  /* Chat */
   .chat-msg{ display:flex; margin-bottom:10px; animation: msgIn .2s ease; }
   @keyframes msgIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
   .chat-msg.mine{ justify-content:flex-end; }
@@ -242,7 +227,7 @@
   .chat-time{ font-size:9.5px; color:var(--ink-faint); margin-top:3px; }
   .chat-msg.mine .chat-time{ text-align:right; }
   #chat-input-bar{
-    position:absolute; left:0; right:0; bottom:86px; padding:10px 14px; z-index:25;
+    position:sticky; bottom:76px; left:0; right:0; padding:10px 14px; z-index:25;
     display:flex; gap:8px; align-items:flex-end;
   }
   #chat-input{
@@ -260,9 +245,9 @@
 </style>
 </head>
 <body>
-<div id="phone">
-  <div class="blob blob-1"></div>
-  <div class="blob blob-2"></div>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div id="app">
   <div id="screen"></div>
 </div>
 
@@ -270,8 +255,11 @@
 <script>
 (function(){
 
+/* ============================================================ */
+/* Supabase client                                                */
+/* ============================================================ */
 const SUPABASE_URL = 'https://fccupuootvfonaynmhyh.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInRefiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
@@ -282,8 +270,12 @@ function makeInternalEmail(name){
   return `${slug}.${rand}@coupleflow.internal`;
 }
 
+/* ============================================================ */
+/* State                                                          */
+/* ============================================================ */
 const CATEGORY_EMOJI = { study:'📚', fitness:'🏋️', code:'💻', creative:'🎨', learning:'🧠', habit:'🌱' };
 const CATEGORY_LABEL = { study:'Study', fitness:'Fitness', code:'Coding', creative:'Creative', learning:'Learning', habit:'Habit' };
+const AUTH_ONLY_SCREENS = ['loading','authChoice','create','login','yourCode'];
 
 let state = {
   theme: 'light',
@@ -311,11 +303,46 @@ let state = {
   pendingPhotoFile: null,
 };
 
-function setState(patch){
+let lastNavKey = null;
+
+function setState(patch, opts={}){
   state = { ...state, ...patch };
+  const navKey = `${state.screen}|${state.activeTab}|${state.modal}`;
+  if(opts.fromPopstate){
+    lastNavKey = navKey;
+  } else if(navKey !== lastNavKey){
+    history.pushState({ screen: state.screen, activeTab: state.activeTab, modal: state.modal }, '');
+    lastNavKey = navKey;
+  }
   render();
 }
 
+window.addEventListener('popstate', (e) => {
+  const target = e.state;
+  if(!target){
+    const fallback = state.currentUser
+      ? { screen:'app', activeTab: state.activeTab || 'today', modal:null }
+      : { screen:'authChoice', modal:null };
+    history.replaceState(fallback, '');
+    setState(fallback, { fromPopstate:true });
+    return;
+  }
+  if(state.currentUser && AUTH_ONLY_SCREENS.includes(target.screen)){
+    const fixed = { screen:'app', activeTab: state.activeTab || 'today', modal:null };
+    history.replaceState(fixed, '');
+    setState(fixed, { fromPopstate:true });
+    return;
+  }
+  setState({
+    screen: target.screen,
+    activeTab: target.activeTab || state.activeTab,
+    modal: target.modal || null,
+  }, { fromPopstate:true });
+});
+
+/* ============================================================ */
+/* Utilities                                                      */
+/* ============================================================ */
 function genId(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function initials(name){ return (name||'?').trim()[0]?.toUpperCase() || '?'; }
 function escapeHtml(s){
@@ -337,41 +364,73 @@ function friendlyError(error){
   return error?.message || 'Something went wrong. Please try again.';
 }
 
+/* ============================================================ */
+/* Session restore — self-healing: a broken/expired local session  */
+/* used to silently 401 every authenticated call forever. Now we   */
+/* validate it against the server on load and wipe it if invalid.  */
+/* ============================================================ */
 async function restoreSession(){
-  const { data: { session } } = await supabase.auth.getSession();
-  if(session){
+  try{
+    const { data: { session } } = await supabase.auth.getSession();
+    if(!session){ showAuthChoice(); return; }
+
+    const { data: { user }, error } = await supabase.auth.getUser();
+    if(error || !user){
+      console.warn('Stale session detected, clearing it.', error);
+      await supabase.auth.signOut({ scope: 'local' });
+      showAuthChoice();
+      return;
+    }
+
     await loadAppData();
-  } else {
-    setState({ screen: 'authChoice' });
+  }catch(err){
+    console.error('Session check failed, clearing local session.', err);
+    try{ await supabase.auth.signOut({ scope: 'local' }); }catch(_){}
+    showAuthChoice();
   }
+}
+
+function showAuthChoice(){
+  history.replaceState({ screen:'authChoice', modal:null }, '');
+  lastNavKey = 'authChoice|today|null';
+  setState({ screen: 'authChoice' }, { fromPopstate:true });
 }
 
 supabase.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
     unsubscribeChat();
-    setState({
+    const fresh = {
       currentUser:null, partnerUser:null, coupleId:null, goals:[], partnerGoals:[],
       updates:[], messages:[], partnerTyping:false,
       screen:'authChoice', authName:'', authCodeInput:'', authPassword:'',
-      authError:'', modal:null, busy: false
-    });
+      authError:'', modal:null,
+    };
+    history.replaceState({ screen:'authChoice', modal:null }, '');
+    setState(fresh, { fromPopstate:true });
   }
 });
 
+/* ============================================================ */
+/* Data loading                                                   */
+/* ============================================================ */
 async function loadAppData(){
   try{
     const { data: { user } } = await supabase.auth.getUser();
-    if(!user){ setState({ screen:'authChoice' }); return; }
+    if(!user){ showAuthChoice(); return; }
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles').select('*').eq('id', user.id).single();
     if(profileError) throw profileError;
 
-    setState({ currentUser: profile, screen: 'app', activeTab: 'today' });
+    history.replaceState({ screen:'app', activeTab:'today', modal:null }, '');
+    lastNavKey = 'app|today|null';
+    setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
     await loadUserData();
   }catch(err){
     console.error(err);
-    setState({ screen:'authChoice', authError: friendlyError(err) });
+    try{ await supabase.auth.signOut({ scope:'local' }); }catch(_){}
+    history.replaceState({ screen:'authChoice', modal:null }, '');
+    setState({ screen:'authChoice', authError: friendlyError(err) }, { fromPopstate:true });
   }
 }
 
@@ -455,6 +514,9 @@ async function getUpdatesFeed(me, partner){
   return withUrls;
 }
 
+/* ============================================================ */
+/* Chat                                                            */
+/* ============================================================ */
 let chatChannel = null;
 let subscribedCoupleId = null;
 let lastRenderedMessageCount = 0;
@@ -532,6 +594,9 @@ async function sendChatMessage(){
   setState({ messages: state.messages.map(m => m.id === optimisticId ? data : m) });
 }
 
+/* ============================================================ */
+/* Auth actions — name + password only, no email shown anywhere    */
+/* ============================================================ */
 async function createAccount(){
   const name = state.authName.trim();
   const password = state.authPassword;
@@ -549,7 +614,7 @@ async function createAccount(){
   if(!data.session){
     setState({
       busy:false,
-      authError:'Signup needs "Confirm email" turned OFF in your Supabase settings.',
+      authError:'Signup needs "Confirm email" turned OFF in your Supabase project (Authentication → Settings → Email).',
       screen:'authChoice',
     });
     return;
@@ -585,10 +650,12 @@ function finishOnboarding(){
 }
 
 async function logout(){
-  setState({ modal: null, busy: true });
   await supabase.auth.signOut();
 }
 
+/* ============================================================ */
+/* Connect partner                                                 */
+/* ============================================================ */
 async function connectPartner(codeValue){
   const code = (codeValue || '').trim().toUpperCase();
   if(!code){ setState({ connectError:'Enter a code.' }); return; }
@@ -610,6 +677,9 @@ async function disconnectPartner(){
   await loadUserData();
 }
 
+/* ============================================================ */
+/* Goals                                                          */
+/* ============================================================ */
 async function addGoal(data){
   const { data: goal, error } = await supabase.from('goals').insert({
     user_id: state.currentUser.id,
@@ -637,6 +707,7 @@ async function toggleGoal(id){
 
   if(error){
     console.error(error);
+    alert(friendlyError(error));
     setState({ goals: state.goals.map(g => g.id===id ? { ...g, is_done: !nextDone } : g) });
   }
 }
@@ -648,6 +719,9 @@ async function deleteGoal(id){
   if(error){ console.error(error); setState({ goals: prev }); }
 }
 
+/* ============================================================ */
+/* Updates + photo upload                                         */
+/* ============================================================ */
 async function postUpdate(caption, file){
   if(!caption.trim() && !file) return;
 
@@ -680,6 +754,9 @@ async function addReaction(updateId, emoji){
   await loadUserData();
 }
 
+/* ============================================================ */
+/* Render: shell pieces                                           */
+/* ============================================================ */
 function renderTopbar(){
   return `
     <div class="topbar">
@@ -716,6 +793,9 @@ function renderBottomNav(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Loading                                                */
+/* ============================================================ */
 function renderLoading(){
   return `
     <div class="center-col" style="align-items:center; text-align:center;">
@@ -724,6 +804,9 @@ function renderLoading(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Auth screens                                           */
+/* ============================================================ */
 function renderAuthChoice(){
   return `
     <div class="center-col">
@@ -784,6 +867,9 @@ function renderYourCode(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Today                                                  */
+/* ============================================================ */
 function renderGoalCard(g){
   const cat = CATEGORY_EMOJI[g.category] || '🌱';
   const done = !!g.is_done;
@@ -824,7 +910,7 @@ function renderToday(){
   const ringStyle = `background: conic-gradient(var(--purple) 0deg, var(--pink) ${angle}deg, var(--glass-border) ${angle}deg 360deg);`;
 
   return `
-    <div style="padding:64px 18px 100px;">
+    <div style="padding:18px 18px 30px;">
       <div style="margin-bottom:18px;">
         <div class="muted" style="font-size:13px; font-weight:500;">Today</div>
         <h1 style="font-size:24px; font-weight:800; margin-top:2px; letter-spacing:-0.5px;">Good to see you, ${escapeHtml(state.currentUser.name)} ✨</h1>
@@ -840,7 +926,7 @@ function renderToday(){
         </div>
       </div>
 
-      <div style="display:flex; align-items:center; justify-space-between; margin-bottom:10px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
         <h3 style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px;">🎯 Today's Goals</h3>
         <span class="faint" style="font-size:12px; font-weight:600;">${goals.length - done} left</span>
       </div>
@@ -876,11 +962,14 @@ function renderToday(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Goals                                                  */
+/* ============================================================ */
 let goalsFilter = 'all';
 function renderGoals(){
   const filtered = state.goals.filter(g => goalsFilter==='all' ? true : goalsFilter==='done' ? g.is_done : !g.is_done);
   return `
-    <div style="padding:64px 18px 100px;">
+    <div style="padding:18px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🎯 Goals</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Everything you're working toward</p>
       <div style="display:flex; gap:8px; margin-bottom:16px;">
@@ -894,10 +983,13 @@ function renderGoals(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Chat                                                   */
+/* ============================================================ */
 function renderChat(){
   if(!state.coupleId){
     return `
-      <div style="padding:64px 18px 100px;">
+      <div style="padding:18px 18px 30px;">
         <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">💬 Chat</h1>
         <div class="empty-state">
           <div class="em">🔗</div>
@@ -921,7 +1013,7 @@ function renderChat(){
   }).join('');
 
   return `
-    <div style="padding:64px 18px 170px;">
+    <div style="padding:18px 18px 10px;">
       <h1 style="font-size:20px; font-weight:800; margin-bottom:14px;">💬 ${partnerName}</h1>
       <div id="chat-list">
         ${msgs || `<div class="empty-state"><div class="em">💬</div><div style="font-size:13px;">Say hi — this is just between you two.</div></div>`}
@@ -934,11 +1026,14 @@ function renderChat(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Updates                                                */
+/* ============================================================ */
 function renderUpdates(){
   const list = state.updates;
   const EMOJIS = ['❤️','🔥','🫶'];
   return `
-    <div style="padding:64px 18px 100px;">
+    <div style="padding:18px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">📸 Little moments</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Small glimpses into each other's day</p>
       ${list.length===0
@@ -970,6 +1065,9 @@ function renderUpdates(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Progress                                               */
+/* ============================================================ */
 function renderProgress(){
   const goals = state.goals;
   const done = goals.filter(g=>g.is_done).length;
@@ -978,7 +1076,7 @@ function renderProgress(){
   goals.forEach(g=>{ byCat[g.category] = byCat[g.category] || {total:0,done:0}; byCat[g.category].total++; if(g.is_done) byCat[g.category].done++; });
 
   return `
-    <div style="padding:64px 18px 100px;">
+    <div style="padding:18px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">📊 Your progress</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Based on the goals you've added</p>
 
@@ -1013,6 +1111,9 @@ function renderProgress(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Together                                               */
+/* ============================================================ */
 function renderTogether(){
   const goals = state.goals, pGoals = state.partnerGoals;
   const myPct = goals.length ? Math.round((goals.filter(g=>g.is_done).length/goals.length)*100) : 0;
@@ -1020,7 +1121,7 @@ function renderTogether(){
   const together = state.partnerUser ? Math.round((myPct+pPct)/2) : myPct;
 
   return `
-    <div style="padding:64px 18px 100px;">
+    <div style="padding:18px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🫶 Together</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">${state.partnerUser ? 'You and '+escapeHtml(state.partnerUser.name) : 'Connect with your partner to see this fill in'}</p>
 
@@ -1048,87 +1149,104 @@ function renderTogether(){
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Modals                                                 */
+/* ============================================================ */
 function renderModal(){
   if(!state.modal) return '';
 
-  let sheetContent = '';
-
-  if(state.modal==='addChoice'){
-    sheetContent = `
-      <div class="drag-handle"></div>
-      <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
-      <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>`;
-  } else if(state.modal==='addGoal'){
-    sheetContent = `
-      <div class="drag-handle"></div>
-      <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
-      <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
-      <select id="goal-category" class="input">
-        ${Object.keys(CATEGORY_EMOJI).map(c=>`<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
-      </select>
-      <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
-      <select id="goal-priority" class="input">
-        <option value="medium">Medium priority</option>
-        <option value="high">High priority</option>
-        <option value="low">Low priority</option>
-      </select>
-      <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
-        <input type="checkbox" id="goal-private" /> 🔒 Keep this private from my partner
-      </label>
-      <button class="btn-primary" data-action="submit-goal">Add goal</button>`;
-  } else if(state.modal==='addUpdate'){
-    sheetContent = `
-      <div class="drag-handle"></div>
-      <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
-      <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
-        <span id="photo-status-icon">${state.pendingPhotoFile ? '✅' : '🖼️'}</span>
-        <span class="photo-note" id="photo-status-text" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
-      </label>
-      <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
-      <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
-      <button class="btn-primary" data-action="submit-update">Share this moment</button>`;
-  } else if(state.modal==='connect'){
-    sheetContent = `
-      <div class="drag-handle"></div>
-      <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
-      <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
-      <input id="connect-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code" maxlength="10" />
-      ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
-      <button class="btn-primary" data-action="submit-connect" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect'}</button>`;
-  } else if(state.modal==='settings'){
-    sheetContent = `
-      <div class="drag-handle"></div>
-      <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
-      <div class="glass" style="padding:16px; margin-bottom:12px;">
-        <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your name</div>
-        <div style="font-weight:600; font-size:14px; margin-bottom:12px;">${escapeHtml(state.currentUser.name)}</div>
-        <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
-        <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
-      </div>
-      <div class="glass" style="padding:16px; margin-bottom:16px;">
-        <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
-        ${state.partnerUser ? `
-          <div style="display:flex; align-items:center; justify-content:space-between;">
-            <span style="font-weight:600; font-size:14px;">${escapeHtml(state.partnerUser.name)}</span>
-            <button class="tag pink" style="border:none; cursor:pointer;" data-action="disconnect-partner">Disconnect</button>
-          </div>
-        ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
-      </div>
-      <button class="btn-secondary" data-action="do-logout">Log out</button>`;
-  }
-
-  return `
-    <div class="modal-overlay">
-      <div class="modal-backdrop" data-action="close-modal"></div>
-      <div class="modal-sheet">
-        ${sheetContent}
+  if(state.modal==='addChoice') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
+        <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>
       </div>
     </div>`;
+
+  if(state.modal==='addGoal') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
+        <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
+        <select id="goal-category" class="input">
+          ${Object.keys(CATEGORY_EMOJI).map(c=>`<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
+        </select>
+        <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
+        <select id="goal-priority" class="input">
+          <option value="medium">Medium priority</option>
+          <option value="high">High priority</option>
+          <option value="low">Low priority</option>
+        </select>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
+          <input type="checkbox" id="goal-private" /> 🔒 Keep this private from my partner
+        </label>
+        <button class="btn-primary" data-action="submit-goal">Add goal</button>
+      </div>
+    </div>`;
+
+  if(state.modal==='addUpdate') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
+        <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
+          ${state.pendingPhotoFile ? '✅' : '🖼️'}
+          <span class="photo-note" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
+        </label>
+        <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
+        <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
+        <button class="btn-primary" data-action="submit-update">Share this moment</button>
+      </div>
+    </div>`;
+
+  if(state.modal==='connect') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
+        <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
+        <input id="connect-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code" maxlength="10" />
+        ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
+        <button class="btn-primary" data-action="submit-connect" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect'}</button>
+      </div>
+    </div>`;
+
+  if(state.modal==='settings') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet" onclick="event.stopPropagation()">
+        <div class="drag-handle"></div>
+        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
+        <div class="glass" style="padding:16px; margin-bottom:12px;">
+          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your name</div>
+          <div style="font-weight:600; font-size:14px; margin-bottom:12px;">${escapeHtml(state.currentUser.name)}</div>
+          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
+          <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
+        </div>
+        <div class="glass" style="padding:16px; margin-bottom:16px;">
+          <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
+          ${state.partnerUser ? `
+            <div style="display:flex; align-items:center; justify-content:space-between;">
+              <span style="font-weight:600; font-size:14px;">${escapeHtml(state.partnerUser.name)}</span>
+              <button class="tag pink" style="border:none; cursor:pointer;" data-action="disconnect-partner">Disconnect</button>
+            </div>
+          ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
+        </div>
+        <button class="btn-secondary" data-action="do-logout">Log out</button>
+      </div>
+    </div>`;
+
+  return '';
 }
 
+/* ============================================================ */
+/* Master render                                                  */
+/* ============================================================ */
 function render(){
   const root = document.getElementById('screen');
-  document.getElementById('phone').setAttribute('data-theme', state.theme);
+  document.getElementById('app').setAttribute('data-theme', state.theme);
+  document.documentElement.setAttribute('data-theme', state.theme);
 
   let body = '';
   if(state.screen==='loading') body = renderLoading();
@@ -1141,7 +1259,7 @@ function render(){
     body = (screens[state.activeTab]||renderToday)();
   }
 
-  const withTopbar = ['create','login','app','yourCode','authChoice'].includes(state.screen);
+  const withTopbar = ['app'].includes(state.screen);
   root.innerHTML = `
     ${withTopbar ? renderTopbar() : ''}
     ${body}
@@ -1154,7 +1272,7 @@ function render(){
   if(state.screen==='app' && state.activeTab==='chat'){
     const list = document.getElementById('chat-list');
     if(list && state.messages.length !== lastRenderedMessageCount){
-      list.scrollTop = list.scrollHeight;
+      list.scrollIntoView({ block:'end' });
       lastRenderedMessageCount = state.messages.length;
     }
     const chatInput = document.getElementById('chat-input');
@@ -1170,10 +1288,14 @@ function render(){
           sendChatMessage();
         }
       });
+      chatInput.focus();
     }
   }
 }
 
+/* ============================================================ */
+/* Input bindings                                                 */
+/* ============================================================ */
 function bindInputs(){
   const nameInput = document.getElementById('name-input');
   if(nameInput) nameInput.addEventListener('input', e => state.authName = e.target.value);
@@ -1190,13 +1312,13 @@ function bindInputs(){
   const photoInput = document.getElementById('update-photo-input');
   if(photoInput) photoInput.addEventListener('change', e => {
     state.pendingPhotoFile = e.target.files[0] || null;
-    const icon = document.getElementById('photo-status-icon');
-    const text = document.getElementById('photo-status-text');
-    if(icon) icon.textContent = state.pendingPhotoFile ? '✅' : '🖼️';
-    if(text) text.textContent = state.pendingPhotoFile ? state.pendingPhotoFile.name : 'Tap to choose a photo';
+    render();
   });
 }
 
+/* ============================================================ */
+/* Event delegation                                               */
+/* ============================================================ */
 document.addEventListener('click', async (e) => {
   const el = e.target.closest('[data-action]');
   if(!el) return;
@@ -1222,7 +1344,7 @@ document.addEventListener('click', async (e) => {
   else if(action==='open-add-update') setState({ modal:'addUpdate', pendingPhotoFile:null });
   else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
   else if(action==='open-settings') setState({ modal:'settings' });
-  else if(action==='close-modal') setState({ modal: null });
+  else if(action==='close-modal') history.back();
   else if(action==='do-logout') logout();
   else if(action==='disconnect-partner') disconnectPartner();
   else if(action==='filter-goals'){ goalsFilter = el.getAttribute('data-filter'); render(); }
@@ -1249,12 +1371,9 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-if('serviceWorker' in navigator){
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch(err => console.error('SW registration failed', err));
-  });
-}
-
+/* ============================================================ */
+/* Init                                                           */
+/* ============================================================ */
 render();
 restoreSession();
 
