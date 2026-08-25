@@ -84,7 +84,12 @@
   .blob-1{ top:-80px; right:-60px; width:280px; height:280px; background:color-mix(in srgb, var(--purple) 30%, transparent); }
   .blob-2{ bottom:0; left:-90px; width:260px; height:260px; background:color-mix(in srgb, var(--pink) 28%, transparent); }
 
-  #screen{ position:relative; flex:1; z-index:1; }
+#screen{
+  position:relative;
+  flex:1;
+  z-index:1;
+  padding-bottom:90px;
+}
 
   .glass{
     background:var(--glass); border:1px solid var(--glass-border); border-radius:26px;
@@ -143,45 +148,60 @@
     border:none; background:linear-gradient(135deg,var(--purple),var(--pink));
   }
 
-  /* Bottom navigation — evenly distributed and centered on every screen width */
-  #bottomnav{
-    position:sticky; bottom:0; left:0; right:0; width:100%;
-    display:flex; justify-content:center; align-items:center;
-    padding:10px 12px calc(14px + env(safe-area-inset-bottom));
-    z-index:30;
-  }
-  #navbar{
-    width:100%; max-width:390px;
-    display:flex; align-items:center; justify-content:space-between;
-    gap:0; padding:7px 7px;
-    background:var(--nav-bg); border-radius:26px; backdrop-filter:blur(20px);
-    border:1px solid var(--glass-border); box-shadow:var(--shadow);
-  }
+ #bottomnav{
+  position:fixed;
+  left:50%;
+  bottom:0;
+  transform:translateX(-50%);
+  width:min(560px, 100%);
+  display:flex;
+  justify-content:center;
+  padding:10px 8px calc(14px + env(safe-area-inset-bottom));
+  z-index:100;
+  pointer-events:none;
+}
+
+#navbar{
+  width:100%;
+  max-width:560px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:2px;
+  padding:8px 8px;
+  background:var(--nav-bg);
+  border-radius:26px;
+  backdrop-filter:blur(20px);
+  -webkit-backdrop-filter:blur(20px);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--shadow);
+  pointer-events:auto;
+}
+  
   .navitem{
-    flex:1 1 0; min-width:0; width:0;
-    display:flex; flex-direction:column; align-items:center; justify-content:center;
-    gap:3px; padding:6px 2px;
-    border-radius:16px; border:none; background:transparent;
-  }
+  flex:1;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:2px;
+  padding:6px 4px;
+  border-radius:16px;
+  border:none;
+  background:transparent;
+}
+
   .navitem.active{ background:color-mix(in srgb, var(--purple) 14%, transparent); }
-  .navitem .ic{
-    display:block; width:20px; height:20px;
-    font-size:17px; line-height:20px; text-align:center;
-  }
-  .navitem .lb{
-    display:block; width:100%;
-    font-size:9px; line-height:11px; font-weight:600;
-    color:var(--ink-faint); text-align:center;
-    white-space:nowrap;
-  }
+  .navitem .ic{ font-size:17px; line-height:1; }
+  .navitem .lb{ font-size:9px; font-weight:600; color:var(--ink-faint); }
   .navitem.active .lb{ color:var(--purple-deep); }
 
   #fab{
-    flex:0 0 44px; width:44px; height:44px;
-    border-radius:50%; border:none; margin:0 4px;
+    width:44px; height:44px; border-radius:50%; border:none; margin:0 2px;
     background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:20px;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 10px 22px -8px rgba(118,87,224,0.6);
+    box-shadow:0 10px 22px -8px rgba(118,87,224,0.6); flex-shrink:0;
   }
 
   .topbar{
@@ -238,57 +258,25 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
-  /* Chat — stable message widths/alignment on narrow mobile screens */
-  .chat-screen{
-    display:flex; flex-direction:column;
-    min-height:calc(100dvh - 76px);
-    padding-bottom:0 !important;
-  }
-  #chat-list{
-    width:100%;
-    display:flex; flex-direction:column;
-    padding-bottom:8px;
-  }
-  .chat-msg{
-    display:flex; width:100%; margin-bottom:10px;
-    animation:msgIn .2s ease;
-  }
-  .chat-msg > div{
-    width:auto; max-width:75%; min-width:0;
-  }
-  @keyframes msgIn{
-    from{ opacity:0; transform:translateY(6px);}
-    to{ opacity:1; transform:translateY(0);}
-  }
+  /* Chat */
+  .chat-msg{ display:flex; margin-bottom:10px; animation: msgIn .2s ease; }
+  @keyframes msgIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
   .chat-msg.mine{ justify-content:flex-end; }
   .chat-bubble{
-    display:block;
-    width:fit-content; max-width:100%; min-width:42px;
-    padding:10px 14px; border-radius:18px;
-    font-size:14px; line-height:1.4;
-    white-space:pre-wrap; overflow-wrap:anywhere; word-break:normal;
+    max-width:75%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.4;
+    word-wrap:break-word;
   }
   .chat-msg.mine .chat-bubble{
-    margin-left:auto;
-    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff;
-    border-bottom-right-radius:4px;
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border-bottom-right-radius:4px;
   }
   .chat-msg.theirs .chat-bubble{
-    margin-right:auto;
-    background:var(--glass-strong); border:1px solid var(--glass-border);
-    border-bottom-left-radius:4px;
+    background:var(--glass-strong); border:1px solid var(--glass-border); border-bottom-left-radius:4px;
   }
-  .chat-time{
-    font-size:9.5px; line-height:12px;
-    color:var(--ink-faint); margin-top:3px;
-  }
+  .chat-time{ font-size:9.5px; color:var(--ink-faint); margin-top:3px; }
   .chat-msg.mine .chat-time{ text-align:right; }
-  .chat-msg.theirs .chat-time{ text-align:left; }
   #chat-input-bar{
-    position:sticky; bottom:76px; left:0; right:0; width:100%;
-    padding:10px 14px; z-index:25;
+    position:sticky; bottom:76px; left:0; right:0; padding:10px 14px; z-index:25;
     display:flex; gap:8px; align-items:flex-end;
-    background:linear-gradient(180deg, transparent, var(--bg-grad) 28%);
   }
   #chat-input{
     flex:1; border:1px solid var(--glass-border); border-radius:20px; padding:11px 16px;
@@ -1073,7 +1061,7 @@ function renderChat(){
   }).join('');
 
   return `
-    <div class="chat-screen" style="padding:18px 18px 10px;">
+    <div style="padding:18px 18px 10px;">
       <h1 style="font-size:20px; font-weight:800; margin-bottom:14px;">💬 ${partnerName}</h1>
       <div id="chat-list">
         ${msgs || `<div class="empty-state"><div class="em">💬</div><div style="font-size:13px;">Say hi — this is just between you two.</div></div>`}
