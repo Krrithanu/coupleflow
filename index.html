@@ -258,22 +258,87 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
-  /* Chat */
-  .chat-msg{ display:flex; margin-bottom:10px; animation: msgIn .2s ease; }
-  @keyframes msgIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
-  .chat-msg.mine{ justify-content:flex-end; }
-  .chat-bubble{
-    max-width:75%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.4;
-    word-wrap:break-word;
-  }
-  .chat-msg.mine .chat-bubble{
-    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border-bottom-right-radius:4px;
-  }
-  .chat-msg.theirs .chat-bubble{
-    background:var(--glass-strong); border:1px solid var(--glass-border); border-bottom-left-radius:4px;
-  }
-  .chat-time{ font-size:9.5px; color:var(--ink-faint); margin-top:3px; }
-  .chat-msg.mine .chat-time{ text-align:right; }
+  /* Chat *//* =========================
+   CHAT INPUT
+   ========================= */
+
+#chat-input-bar{
+  position:sticky;
+  bottom:82px;
+  left:0;
+  right:0;
+
+  display:flex;
+  align-items:center;
+  gap:10px;
+
+  padding:12px 18px;
+}
+
+#chat-input{
+  flex:1;
+
+  min-height:50px;
+  max-height:110px;
+
+  padding:14px 18px;
+
+  border:none;
+  outline:none;
+
+  border-radius:28px;
+
+  background:var(--glass-strong);
+  backdrop-filter:blur(18px);
+
+  font-size:14px;
+  color:var(--ink);
+
+  resize:none;
+
+  box-shadow:
+    0 8px 24px rgba(0,0,0,0.06);
+}
+
+#chat-input:focus{
+  border:1px solid rgba(155,135,245,.4);
+}
+
+#chat-send{
+  width:52px;
+  height:52px;
+
+  border:none;
+  border-radius:50%;
+
+  flex-shrink:0;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background:linear-gradient(
+    135deg,
+    var(--purple),
+    var(--pink)
+  );
+
+  color:white;
+  font-size:18px;
+
+  box-shadow:
+    0 10px 25px rgba(118,87,224,.35);
+
+  transition:.2s;
+}
+
+#chat-send:hover{
+  transform:scale(1.05);
+}
+
+#chat-send:active{
+  transform:scale(.95);
+}
   #chat-input-bar{
     position:sticky; bottom:76px; left:0; right:0; padding:10px 14px; z-index:25;
     display:flex; gap:8px; align-items:flex-end;
@@ -1070,7 +1135,7 @@ function renderChat(){
     </div>
     <div id="chat-input-bar">
       <textarea id="chat-input" rows="1" placeholder="Type a message…"></textarea>
-      <button id="chat-send" data-action="send-chat">➤</button>
+      <button id="chat-send" data-action="send-chat">✈</button>
     </div>`;
 }
 
