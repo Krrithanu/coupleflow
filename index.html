@@ -1324,6 +1324,11 @@ document.addEventListener('click', async (e) => {
   if(!el) return;
   const action = el.getAttribute('data-action');
 
+  // Only the overlay background itself should close a modal.
+  // Prevent clicks on inputs/selects inside the modal from being
+  // interpreted as a click on the overlay.
+  if(action==='close-modal' && e.target !== el) return;
+
   if(action==='toggle-theme') setState({ theme: state.theme==='dark'?'light':'dark' });
   else if(action==='goto-create') setState({ screen:'create', authError:'' });
   else if(action==='goto-login') setState({ screen:'login', authError:'' });
