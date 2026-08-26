@@ -1658,32 +1658,71 @@ async function deleteGoal(id){
 async function postUpdate(caption, file){
   if(!caption.trim() && !file) return;
 
-  const { data: update, error } = await supabase.from('updates').insert({
-    user_id: state.currentUser.id,
-    caption: caption.trim() || null,
-  }).select().single();
+  const { data: update, error } = await supabase
+    .from('updates')
+    .insert({
+      user_id: state.currentUser.id,
+      caption: caption.trim() || null,
+    })
+    .select()
+    .single();
 
-  if(error){ alert(friendlyError(error)); return; }
+  if(error){
+    console.error(error);
+    alert(friendlyError(error));
+    return;
+  }
 
   if(file){
-    const path = `${state.currentUser.id}/updates/${update.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage.from('photos').upload(path, file);
+
+    // Make the filename safe for Supabase Storage
+    const safeName = file.name
+      .normalize('NFKD')
+      .replace(/[^\w.-]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 120);
+
+    const fileName = `${Date.now()}-${safeName || 'photo.jpg'}`;
+
+    const path =
+      `${state.currentUser.id}/updates/${update.id}/${fileName}`;
+
+    console.log('Uploading photo:', path);
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from('photos')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || 'image/jpeg'
+      });
+
     if(uploadError){
-      console.error(uploadError);
-    } else {
-      await supabase.from('update_photos').insert({ update_id: update.id, storage_path: path });
+      console.error('PHOTO UPLOAD ERROR:', uploadError);
+      alert('Could not upload the photo. Please try again.');
+      return;
+    }
+
+    const { error: photoDbError } = await supabase
+      .from('update_photos')
+      .insert({
+        update_id: update.id,
+        storage_path: path
+      });
+
+    if(photoDbError){
+      console.error('PHOTO DATABASE ERROR:', photoDbError);
+      return;
     }
   }
 
-  setState({ modal:null, pendingPhotoFile:null });
-  await loadUserData();
-}
-
-async function addReaction(updateId, emoji){
-  const { error } = await supabase.from('reactions').insert({
-    update_id: updateId, user_id: state.currentUser.id, emoji,
+  setState({
+    modal: null,
+    pendingPhotoFile: null
   });
-  if(error && error.code !== '23505') console.error(error);
+
   await loadUserData();
 }
 
