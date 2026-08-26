@@ -962,25 +962,101 @@ function updateTypingStatusUI(){
 async function sendChatMessage(){
   const input = document.getElementById('chat-input');
   const body = (input?.value || '').trim();
-  if(!body || !state.coupleId) return;
+
+  if(!body || !state.coupleId || !state.partnerUser) return;
 
   const optimisticId = genId();
+
   const optimistic = {
-    id: optimisticId, couple_id: state.coupleId, sender_id: state.currentUser.id,
-    body, created_at: new Date().toISOString(),
+    id: optimisticId,
+    couple_id: state.coupleId,
+    sender_id: state.currentUser.id,
+    body,
+    created_at: new Date().toISOString(),
   };
+
   state.messages = [...state.messages, optimistic];
   refreshChatList();
-  if(input){ input.value = ''; input.style.height = 'auto'; }
 
-  const { data, error } = await supabase.from('messages')
-    .insert({ couple_id: state.coupleId, sender_id: state.currentUser.id, body })
-    .select().single();
+  if(input){
+    input.value = '';
+    input.style.height = 'auto';
+  }
 
-  if(error){ console.error(error); return; }
+  /*
+   * 1. Save the message
+   */
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      couple_id: state.coupleId,
+      sender_id: state.currentUser.id,
+      body
+    })
+    .select()
+    .single();
 
-  state.messages = state.messages.map(m => m.id === optimisticId ? data : m);
+  if(error){
+    console.error('Message send failed:', error);
+    return;
+  }
+
+  /*
+   * Replace optimistic message with
+   * the real database message.
+   */
+  state.messages = state.messages.map(m =>
+    m.id === optimisticId ? data : m
+  );
+
   refreshChatList();
+
+  /*
+   * 2. Send push notification to partner
+   */
+  try{
+
+    const { data: pushResult, error: pushError } =
+      await supabase.functions.invoke('push-notifications', {
+        body: {
+          recipient_id: state.partnerUser.id,
+
+          type: 'message',
+
+          actor_id: state.currentUser.id,
+
+          actor_name: state.currentUser.name,
+
+          message: body,
+
+          title: `New message from ${state.currentUser.name}`,
+
+          body: body,
+
+          url: '/?tab=chat'
+        }
+      });
+
+    if(pushError){
+      console.error(
+        'Push notification failed:',
+        pushError
+      );
+    }else{
+      console.log(
+        'Chat notification result:',
+        pushResult
+      );
+    }
+
+  }catch(pushError){
+
+    console.error(
+      'Could not trigger push notification:',
+      pushError
+    );
+
+  }
 }
 
 /* ============================================================ */
