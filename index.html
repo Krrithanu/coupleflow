@@ -399,6 +399,183 @@
   }
 
   .typing-indicator{ font-size:12px; color:var(--ink-faint); padding:4px 4px 8px; font-style:italic; }
+
+
+/* ============================================================
+   FINAL PHONE CHAT LAYOUT
+   ============================================================ */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+input, textarea, select { font-size: 16px !important; }
+
+#app {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+}
+
+.chat-screen {
+  height: calc(100dvh - 62px);
+  max-height: calc(100dvh - 62px);
+  min-height: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 12px 78px;
+}
+
+.chat-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 5px 5px 12px;
+}
+
+.chat-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg,var(--purple),var(--pink));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 7px 18px rgba(118,87,224,.22);
+}
+
+.chat-header-info { min-width: 0; flex: 1; }
+.chat-header-name { font-size: 16px; font-weight: 800; line-height: 1.2; }
+.chat-header-status { margin-top: 3px; font-size: 10.5px; color: var(--ink-faint); }
+
+#chat-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 3px 12px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+#chat-list::-webkit-scrollbar { display:none; width:0; }
+
+.chat-msg { display:flex; width:100%; margin:3px 0; }
+.chat-msg.mine { justify-content:flex-end; }
+.chat-msg.theirs { justify-content:flex-start; }
+.chat-msg > div { max-width:78%; }
+
+.chat-bubble {
+  display:inline-block;
+  padding:10px 13px;
+  border-radius:18px;
+  font-size:14px;
+  line-height:1.4;
+  word-break:break-word;
+  white-space:pre-wrap;
+  box-shadow:0 4px 14px rgba(50,35,80,.06);
+}
+.chat-msg.mine .chat-bubble {
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;
+  border-bottom-right-radius:5px;
+}
+.chat-msg.theirs .chat-bubble {
+  background:var(--glass-strong);
+  color:var(--ink);
+  border:1px solid var(--glass-border);
+  border-bottom-left-radius:5px;
+}
+.chat-time { margin-top:3px; padding:0 4px; font-size:9px; color:var(--ink-faint); }
+.chat-msg.mine .chat-time { text-align:right; }
+
+.chat-empty-content {
+  min-height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.typing-indicator { flex:0 0 auto; padding:2px 7px 5px; font-size:10.5px; color:var(--ink-faint); font-style:italic; }
+
+#chat-input-bar {
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  flex:0 0 auto;
+  width:100%;
+  box-sizing:border-box;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  padding:7px 2px calc(8px + env(safe-area-inset-bottom));
+  z-index:30;
+}
+
+#chat-input {
+  flex:1 1 auto;
+  min-width:0;
+  min-height:44px;
+  max-height:96px;
+  box-sizing:border-box;
+  padding:11px 14px;
+  border:1px solid var(--glass-border);
+  border-radius:22px;
+  outline:none;
+  resize:none;
+  background:var(--glass-strong);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-size:16px !important;
+  line-height:1.35;
+  -webkit-appearance:none;
+  appearance:none;
+  box-shadow:0 6px 18px rgba(60,40,90,.06);
+}
+#chat-input:focus { border-color:rgba(155,135,245,.45); }
+
+#chat-send {
+  flex:0 0 44px;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;
+  font-size:17px;
+  line-height:1;
+  box-shadow:0 8px 18px rgba(118,87,224,.28);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#chat-send:hover { transform:none; }
+#chat-send:active { transform:scale(.94); }
+
+@media(max-width:380px){
+  .chat-screen { padding:0 9px; }
+  .chat-msg > div { max-width:82%; }
+  #chat-input-bar { padding-left:1px; padding-right:1px; }
+}
 </style>
 </head>
 <body>
@@ -1146,23 +1323,32 @@ function renderGoals(){
 function renderChat(){
   if(!state.coupleId){
     return `
-      <div style="padding:18px 18px 30px;">
-        <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">💬 Chat</h1>
-        <div class="empty-state">
-          <div class="em">🔗</div>
-          <div class="heading" style="font-weight:700; font-size:15px;">Connect with your partner first</div>
-          <div style="font-size:13px; margin-bottom:16px;">Once you're connected, your chat shows up here — live, on both sides.</div>
-          <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
+      <div class="chat-screen chat-empty-screen">
+        <div class="chat-header">
+          <div class="chat-avatar">♡</div>
+          <div class="chat-header-info">
+            <div class="chat-header-name">Chat</div>
+            <div class="chat-header-status">Private space for two</div>
+          </div>
+        </div>
+        <div class="chat-empty-content">
+          <div class="empty-state">
+            <div class="em">🔗</div>
+            <div class="heading" style="font-weight:700;font-size:15px;">Connect with your partner first</div>
+            <div style="font-size:13px;margin-bottom:16px;">Once you're connected, your private chat will appear here.</div>
+            <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
+          </div>
         </div>
       </div>`;
   }
 
   const partnerName = state.partnerUser ? escapeHtml(state.partnerUser.name) : 'Partner';
   const partnerInitial = state.partnerUser?.name ? initials(state.partnerUser.name) : '♡';
+
   const msgs = state.messages.map(m => {
     const mine = m.sender_id === state.currentUser.id;
     return `
-      <div class="chat-msg ${mine?'mine':'theirs'}">
+      <div class="chat-msg ${mine ? 'mine' : 'theirs'}">
         <div>
           <div class="chat-bubble">${escapeHtml(m.body)}</div>
           <div class="chat-time">${timeShort(m.created_at)}</div>
@@ -1176,12 +1362,20 @@ function renderChat(){
         <div class="chat-avatar">${escapeHtml(partnerInitial)}</div>
         <div class="chat-header-info">
           <div class="chat-header-name">${partnerName}</div>
-          <div class="chat-header-status">${state.partnerTyping ? 'typing…' : 'Private chat · just you two'}</div>
+          <div class="chat-header-status">
+            ${state.partnerTyping ? 'typing…' : 'Private chat · just you two'}
+          </div>
         </div>
       </div>
 
       <div id="chat-list">
-        ${msgs || `<div style="height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:30px; box-sizing:border-box;"><div><div class="em" style="font-size:34px; margin-bottom:10px;">💬</div><div style="font-size:13px;">Say hi — this is just between you two.</div></div></div>`}
+        ${msgs || `
+          <div class="chat-empty-content">
+            <div class="empty-state">
+              <div class="em">💬</div>
+              <div style="font-size:13px;font-weight:600;">Say hi — this is just between you two.</div>
+            </div>
+          </div>`}
       </div>
 
       ${state.partnerTyping ? `<div class="typing-indicator">${partnerName} is typing…</div>` : ''}
