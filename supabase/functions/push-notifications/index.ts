@@ -9,6 +9,13 @@ const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY")!;
 const vapidSubject =
   Deno.env.get("VAPID_SUBJECT") || "mailto:your-email@example.com";
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "https://coupleflow.vercel.app",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
 webpush.setVapidDetails(
   vapidSubject,
   vapidPublicKey,
@@ -22,6 +29,14 @@ const supabaseAdmin = createClient(
 
 Deno.serve(async (request) => {
   try {
+
+    // CORS preflight
+    if (request.method === "OPTIONS") {
+      return new Response("ok", {
+        headers: corsHeaders,
+      });
+    }
+
     if (request.method !== "POST") {
       return new Response(
         JSON.stringify({
@@ -30,6 +45,7 @@ Deno.serve(async (request) => {
         {
           status: 405,
           headers: {
+            ...corsHeaders,
             "Content-Type": "application/json"
           }
         }
@@ -37,18 +53,6 @@ Deno.serve(async (request) => {
     }
 
     const payload = await request.json();
-
-    /*
-     * Your CoupleFlow frontend sends:
-     *
-     * recipient_id
-     * type
-     * actor_id
-     * actor_name
-     * ...
-     *
-     * So use recipient_id as the notification target.
-     */
 
     const notification = payload.record || payload;
 
@@ -65,16 +69,12 @@ Deno.serve(async (request) => {
         {
           status: 400,
           headers: {
+            ...corsHeaders,
             "Content-Type": "application/json"
           }
         }
       );
     }
-
-    /*
-     * Find all push subscriptions belonging
-     * to the recipient.
-     */
 
     const {
       data: subscriptions,
@@ -88,10 +88,6 @@ Deno.serve(async (request) => {
       throw subscriptionError;
     }
 
-    /*
-     * User has no registered phone/browser.
-     */
-
     if (!subscriptions || subscriptions.length === 0) {
       return new Response(
         JSON.stringify({
@@ -102,22 +98,19 @@ Deno.serve(async (request) => {
         {
           status: 200,
           headers: {
+            ...corsHeaders,
             "Content-Type": "application/json"
           }
         }
       );
     }
 
-    /*
-     * Build notification text.
-     */
+    let title =
+      notification.title || "CoupleFlow";
 
-    let title = notification.title || "CoupleFlow";
-    let body = notification.body || "You have a new notification.";
-
-    /*
-     * Message notification
-     */
+    let body =
+      notification.body ||
+      "You have a new notification.";
 
     if (notification.type === "message") {
       title =
@@ -130,10 +123,6 @@ Deno.serve(async (request) => {
         notification.message ||
         "You received a new message.";
     }
-
-    /*
-     * Goal notification
-     */
 
     if (
       notification.type === "goal" ||
@@ -149,10 +138,6 @@ Deno.serve(async (request) => {
         "A new goal was added.";
     }
 
-    /*
-     * Goal update / completion
-     */
-
     if (
       notification.type === "goal_update" ||
       notification.type === "goal_completed"
@@ -166,10 +151,6 @@ Deno.serve(async (request) => {
         notification.message ||
         "A goal was updated.";
     }
-
-    /*
-     * Update notification
-     */
 
     if (
       notification.type === "update" ||
@@ -210,12 +191,9 @@ Deno.serve(async (request) => {
     let sent = 0;
     let removed = 0;
 
-    /*
-     * Send to every registered device for this user.
-     */
-
     for (const row of subscriptions) {
       try {
+
         await webpush.sendNotification(
           row.subscription,
           notificationPayload
@@ -228,20 +206,17 @@ Deno.serve(async (request) => {
         );
 
       } catch (error: any) {
+
         console.error(
           "Push notification error:",
           error
         );
 
-        /*
-         * 404 / 410 means the subscription
-         * is no longer valid.
-         */
-
         if (
           error?.statusCode === 404 ||
           error?.statusCode === 410
         ) {
+
           await supabaseAdmin
             .from("push_subscriptions")
             .delete()
@@ -267,12 +242,14 @@ Deno.serve(async (request) => {
       {
         status: 200,
         headers: {
+          ...corsHeaders,
           "Content-Type": "application/json"
         }
       }
     );
 
   } catch (error) {
+
     console.error(
       "Push notification function error:",
       error
@@ -286,6 +263,7 @@ Deno.serve(async (request) => {
       {
         status: 500,
         headers: {
+          ...corsHeaders,
           "Content-Type": "application/json"
         }
       }
