@@ -68,8 +68,6 @@
     background:var(--bg-grad);
   }
 
-  /* Full responsive page — no phone mockup. Content centers in a
-     readable column on wide screens, fills the width on mobile. */
   #app{
     position:relative;
     width:100%;
@@ -258,10 +256,6 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
-  /* =========================================================
-     CHAT — MOBILE-FIRST, STABLE PHONE LAYOUT
-     ========================================================= */
-
   .chat-screen{
     height:calc(100dvh - 78px);
     min-height:0;
@@ -383,7 +377,7 @@
   #chat-send:hover{box-shadow:0 10px 22px rgba(118,87,224,.34);}
   #chat-send:active{transform:none;}
 
-   input,textarea,select{font-size:16px;}
+  input,textarea,select{font-size:16px;}
 
   @media(max-width:380px){
     .chat-screen{padding:0 9px;}
@@ -394,10 +388,6 @@
 
   .typing-indicator{ font-size:12px; color:var(--ink-faint); padding:4px 4px 8px; font-style:italic; }
 
-
-/* ============================================================
-   FINAL PHONE CHAT LAYOUT
-   ============================================================ */
 html, body {
   width: 100%;
   height: 100%;
@@ -409,8 +399,6 @@ html, body {
 
 input, textarea, select { font-size: 16px !important; }
 
-/* Only lock the viewport + hide overflow while the chat tab is open —
-   every other tab needs the page to scroll normally. */
 #app.chat-mode { height: 100dvh; overflow: hidden; }
 #app.chat-mode #screen { display:flex; flex-direction:column; overflow:hidden; }
 #app.chat-mode .topbar { flex:0 0 auto; }
@@ -585,9 +573,6 @@ input, textarea, select { font-size: 16px !important; }
 <script>
 (function(){
 
-/* ============================================================ */
-/* Supabase client                                                */
-/* ============================================================ */
 const SUPABASE_URL = 'https://fccupuootvfonaynmhyh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -610,9 +595,6 @@ function makeInternalEmail(name){
   return `${slug}.${rand}@coupleflow.internal`;
 }
 
-/* ============================================================ */
-/* State                                                          */
-/* ============================================================ */
 const CATEGORY_EMOJI = { study:'📚', fitness:'🏋️', code:'💻', creative:'🎨', learning:'🧠', habit:'🌱' };
 const CATEGORY_LABEL = { study:'Study', fitness:'Fitness', code:'Coding', creative:'Creative', learning:'Learning', habit:'Habit' };
 const AUTH_ONLY_SCREENS = ['loading','authChoice','create','login','yourCode'];
@@ -681,9 +663,6 @@ window.addEventListener('popstate', (e) => {
   }, { fromPopstate:true });
 });
 
-/* ============================================================ */
-/* Utilities                                                      */
-/* ============================================================ */
 function genId(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function initials(name){ return (name||'?').trim()[0]?.toUpperCase() || '?'; }
 function escapeHtml(s){
@@ -705,11 +684,6 @@ function friendlyError(error){
   return error?.message || 'Something went wrong. Please try again.';
 }
 
-/* ============================================================ */
-/* Session restore — self-healing: a broken/expired local session  */
-/* used to silently 401 every authenticated call forever. Now we   */
-/* validate it against the server on load and wipe it if invalid.  */
-/* ============================================================ */
 async function restoreSession(){
   try{
     const { data: { session } } = await supabase.auth.getSession();
@@ -751,9 +725,6 @@ supabase.auth.onAuthStateChange((event) => {
   }
 });
 
-/* ============================================================ */
-/* Data loading                                                   */
-/* ============================================================ */
 async function loadAppData(){
   try{
     const { data: { user } } = await supabase.auth.getUser();
@@ -768,13 +739,10 @@ async function loadAppData(){
     setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
     await loadUserData();
     try{
-  await syncExistingPushSubscription();
-}catch(error){
-  console.warn(
-    'Initial push synchronization failed:',
-    error
-  );
-}
+      await syncExistingPushSubscription();
+    }catch(error){
+      console.warn('Initial push synchronization failed:', error);
+    }
   }catch(err){
     console.error(err);
     try{ await supabase.auth.signOut({ scope:'local' }); }catch(_){}
@@ -863,9 +831,6 @@ async function getUpdatesFeed(me, partner){
   return withUrls;
 }
 
-/* ============================================================ */
-/* Chat                                                            */
-/* ============================================================ */
 let chatChannel = null;
 let subscribedCoupleId = null;
 let lastRenderedMessageCount = 0;
@@ -887,7 +852,7 @@ function subscribeToChat(coupleId){
 
   chatChannel = supabase
     .channel(`couple-${coupleId}`)
-       .on('postgres_changes',
+    .on('postgres_changes',
       { event:'INSERT', schema:'public', table:'messages', filter:`couple_id=eq.${coupleId}` },
       (payload) => {
         if(payload.new.sender_id === state.currentUser.id) return;
@@ -984,9 +949,6 @@ async function sendChatMessage(){
     input.focus({ preventScroll: true });
   }
 
-  /*
-   * 1. Save the message
-   */
   const { data, error } = await supabase
     .from('messages')
     .insert({
@@ -1002,67 +964,35 @@ async function sendChatMessage(){
     return;
   }
 
-  /*
-   * Replace optimistic message with
-   * the real database message.
-   */
   state.messages = state.messages.map(m =>
     m.id === optimisticId ? data : m
   );
 
   refreshChatList();
 
-  /*
-   * 2. Send push notification to partner
-   */
   try{
-
     const { data: pushResult, error: pushError } =
       await supabase.functions.invoke('push-notifications', {
         body: {
           recipient_id: state.partnerUser.id,
-
           type: 'message',
-
           actor_id: state.currentUser.id,
-
           actor_name: state.currentUser.name,
-
           message: body,
-
           title: `New message from ${state.currentUser.name}`,
-
           body: body,
-
           url: '/?tab=chat'
         }
       });
 
     if(pushError){
-      console.error(
-        'Push notification failed:',
-        pushError
-      );
-    }else{
-      console.log(
-        'Chat notification result:',
-        pushResult
-      );
+      console.error('Push notification failed:', pushError);
     }
-
   }catch(pushError){
-
-    console.error(
-      'Could not trigger push notification:',
-      pushError
-    );
-
+    console.error('Could not trigger push notification:', pushError);
   }
 }
 
-/* ============================================================ */
-/* Auth actions — name + password only, no email shown anywhere    */
-/* ============================================================ */
 async function createAccount(){
   const name = state.authName.trim();
   const password = state.authPassword;
@@ -1119,9 +1049,6 @@ async function logout(){
   await supabase.auth.signOut();
 }
 
-/* ============================================================ */
-/* Connect partner                                                 */
-/* ============================================================ */
 async function connectPartner(codeValue){
   const code = (codeValue || '').trim().toUpperCase();
   if(!code){ setState({ connectError:'Enter a code.' }); return; }
@@ -1143,13 +1070,6 @@ async function disconnectPartner(){
   await loadUserData();
 }
 
-/* ============================================================ */
-/* Push notifications                                             */
-/* ============================================================ */
-/* ============================================================ */
-/* Push notifications                                           */
-/* ============================================================ */
-
 function pushIsSupported(){
   return (
     'serviceWorker' in navigator &&
@@ -1158,87 +1078,42 @@ function pushIsSupported(){
   );
 }
 
-
-/*
- * Get the active service worker.
- */
 async function getPushRegistration(){
   if(!('serviceWorker' in navigator)){
     throw new Error('Service workers are not supported.');
   }
-
   return await navigator.serviceWorker.ready;
 }
 
-
-/*
- * Check the REAL notification state.
- *
- * IMPORTANT:
- * Notification.permission is controlled by iOS/browser.
- * CoupleFlow cannot turn the iPhone Settings switch off.
- */
 async function checkPushSubscriptionStatus(){
-
   if(!pushIsSupported()){
     state.pushSubscribed = false;
     return;
   }
 
   try{
-
     const permission = Notification.permission;
+    const registration = await getPushRegistration();
+    const subscription = await registration.pushManager.getSubscription();
 
-    const registration =
-      await getPushRegistration();
-
-    const subscription =
-      await registration.pushManager.getSubscription();
-
-    /*
-     * CoupleFlow = ON only when BOTH exist:
-     *
-     * permission = granted
-     * subscription = exists
-     */
-    state.pushSubscribed =
-      permission === 'granted' &&
-      !!subscription;
-
+    state.pushSubscribed = permission === 'granted' && !!subscription;
   }catch(error){
-
-    console.warn(
-      'Push status check failed:',
-      error
-    );
-
+    console.warn('Push status check failed:', error);
     state.pushSubscribed = false;
   }
 }
 
-
-/*
- * Save/update the current subscription in Supabase.
- *
- * Endpoint identifies the specific device/browser subscription.
- */
 async function savePushSubscription(subscription){
-
   if(!state.currentUser){
     throw new Error('You must be logged in first.');
   }
 
   const subJson = subscription.toJSON();
-
   if(!subJson?.endpoint){
-    throw new Error(
-      'Push subscription does not contain an endpoint.'
-    );
+    throw new Error('Push subscription does not contain an endpoint.');
   }
 
-  const {
-    error
-  } = await supabase
+  const { error } = await supabase
     .from('push_subscriptions')
     .upsert(
       {
@@ -1247,322 +1122,130 @@ async function savePushSubscription(subscription){
         subscription: subJson,
         updated_at: new Date().toISOString()
       },
-      {
-        onConflict: 'endpoint'
-      }
+      { onConflict: 'endpoint' }
     );
 
-  if(error){
-    throw error;
-  }
-
-  console.log(
-    'CoupleFlow push subscription synchronized.'
-  );
+  if(error) throw error;
 }
 
-
-/*
- * Synchronize an already-existing subscription.
- *
- * IMPORTANT:
- * This DOES NOT request notification permission.
- *
- * It is safe to run when CoupleFlow starts.
- */
 async function syncExistingPushSubscription(){
-
-  if(!pushIsSupported()){
-    state.pushSubscribed = false;
-    return false;
-  }
-
-  if(!state.currentUser){
+  if(!pushIsSupported() || !state.currentUser){
     state.pushSubscribed = false;
     return false;
   }
 
   try{
-
-    /*
-     * iPhone/browser has not granted permission.
-     */
     if(Notification.permission !== 'granted'){
-
       state.pushSubscribed = false;
-
       return false;
     }
 
-    const registration =
-      await getPushRegistration();
+    const registration = await getPushRegistration();
+    const subscription = await registration.pushManager.getSubscription();
 
-    const subscription =
-      await registration.pushManager.getSubscription();
-
-    /*
-     * Permission is granted but there is no
-     * active PushSubscription.
-     *
-     * Do NOT automatically request permission.
-     * The user can press Enable Notifications.
-     */
     if(!subscription){
-
       state.pushSubscribed = false;
-
       return false;
     }
 
     await savePushSubscription(subscription);
-
     state.pushSubscribed = true;
-
     return true;
-
   }catch(error){
-
-    console.error(
-      'Push synchronization failed:',
-      error
-    );
-
+    console.error('Push synchronization failed:', error);
     state.pushSubscribed = false;
-
     return false;
   }
 }
 
-
-/*
- * ENABLE NOTIFICATIONS
- *
- * This must be triggered by the user's button tap.
- * This is especially important for iPhone Web Push.
- */
 async function enablePushNotifications(){
-
   if(!state.currentUser){
-
     alert('Please log in first.');
-
     return;
   }
 
   if(!pushIsSupported()){
-
-    alert(
-      "Push notifications aren't supported on this browser/device."
-    );
-
+    alert("Push notifications aren't supported on this browser/device.");
     return;
   }
 
   if(!window.isSecureContext){
-
-    alert(
-      'Notifications require a secure HTTPS connection.'
-    );
-
+    alert('Notifications require a secure HTTPS connection.');
     return;
   }
 
   try{
-
-    /*
-     * Ask the operating system/browser for permission.
-     *
-     * If permission was already granted,
-     * this simply returns "granted".
-     */
-    const permission =
-      await Notification.requestPermission();
+    const permission = await Notification.requestPermission();
 
     if(permission !== 'granted'){
-
       state.pushSubscribed = false;
-
       render();
-
-      alert(
-        'Notifications were not allowed. ' +
-        'On iPhone, enable CoupleFlow notifications in ' +
-        'Settings → Notifications → CoupleFlow.'
-      );
-
+      alert('Notifications were not allowed. On iPhone, enable CoupleFlow notifications in Settings → Notifications → CoupleFlow.');
       return;
     }
 
-    /*
-     * Get active service worker.
-     */
-    const registration =
-      await getPushRegistration();
+    const registration = await getPushRegistration();
+    let subscription = await registration.pushManager.getSubscription();
 
-    /*
-     * Reuse an existing subscription if possible.
-     */
-    let subscription =
-      await registration.pushManager.getSubscription();
-
-    /*
-     * No subscription exists.
-     *
-     * Create a new one.
-     */
     if(!subscription){
-
-      subscription =
-        await registration.pushManager.subscribe({
-
-          userVisibleOnly: true,
-
-          applicationServerKey:
-            urlBase64ToUint8Array(
-              VAPID_PUBLIC_KEY
-            )
-        });
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
     }
 
-    /*
-     * Save/update the current subscription.
-     */
     await savePushSubscription(subscription);
-
     state.pushSubscribed = true;
-
     render();
-
-    console.log(
-      'CoupleFlow notifications enabled.'
-    );
-
   }catch(error){
-
-    console.error(
-      'Push subscribe failed:',
-      error
-    );
-
+    console.error('Push subscribe failed:', error);
     state.pushSubscribed = false;
-
     render();
-
-    alert(
-      'Something went wrong turning on notifications: ' +
-      (error?.message || 'Unknown error')
-    );
+    alert('Something went wrong turning on notifications: ' + (error?.message || 'Unknown error'));
   }
 }
 
-
-/*
- * DISABLE NOTIFICATIONS INSIDE COUPLEFLOW
- *
- * IMPORTANT:
- *
- * This removes CoupleFlow's push subscription.
- *
- * It DOES NOT and CANNOT change:
- *
- * iPhone Settings
- * → Notifications
- * → CoupleFlow
- * → Allow Notifications
- *
- * That system setting is controlled by iOS.
- */
 async function disablePushNotifications(){
-
-  if(!state.currentUser){
-
-    return;
-  }
+  if(!state.currentUser) return;
 
   if(!pushIsSupported()){
-
     state.pushSubscribed = false;
-
     render();
-
     return;
   }
 
   try{
-
-    const registration =
-      await getPushRegistration();
-
-    const subscription =
-      await registration.pushManager.getSubscription();
+    const registration = await getPushRegistration();
+    const subscription = await registration.pushManager.getSubscription();
 
     if(subscription){
-
-      const endpoint =
-        subscription.endpoint;
-
-      /*
-       * Remove the subscription from Supabase.
-       *
-       * IMPORTANT:
-       * Match both user_id AND endpoint so one user's
-       * device cannot accidentally delete another user's row.
-       */
-      const {
-        error: deleteError
-      } = await supabase
+      const endpoint = subscription.endpoint;
+      const { error: deleteError } = await supabase
         .from('push_subscriptions')
         .delete()
         .eq('user_id', state.currentUser.id)
         .eq('endpoint', endpoint);
 
       if(deleteError){
-
-        console.warn(
-          'Could not remove push subscription from database:',
-          deleteError
-        );
+        console.warn('Could not remove push subscription from database:', deleteError);
       }
 
-      /*
-       * Unsubscribe this browser/PWA subscription.
-       */
       try{
-
         await subscription.unsubscribe();
-
       }catch(unsubscribeError){
-
-        console.warn(
-          'Browser push unsubscribe warning:',
-          unsubscribeError
-        );
+        console.warn('Browser push unsubscribe warning:', unsubscribeError);
       }
     }
 
     state.pushSubscribed = false;
-
     render();
-
-    console.log(
-      'CoupleFlow push notifications disabled.'
-    );
-
   }catch(error){
-
-    console.error(
-      'Push unsubscribe failed:',
-      error
-    );
-
+    console.error('Push unsubscribe failed:', error);
     state.pushSubscribed = false;
-
     render();
   }
 }
-/* ============================================================ */
-/* Goals                                                          */
-/* ============================================================ */
+
 async function addGoal(data){
   const { data: goal, error } = await supabase.from('goals').insert({
     user_id: state.currentUser.id,
@@ -1602,9 +1285,6 @@ async function deleteGoal(id){
   if(error){ console.error(error); setState({ goals: prev }); }
 }
 
-/* ============================================================ */
-/* Updates + photo upload                                         */
-/* ============================================================ */
 async function postUpdate(caption, file){
   if(!caption.trim() && !file) return;
 
@@ -1637,13 +1317,13 @@ async function addReaction(updateId, emoji){
   await loadUserData();
 }
 
-/* ============================================================ */
-/* Render: shell pieces                                           */
-/* ============================================================ */
 function renderTopbar(){
+  const canGoBack = state.screen === 'app' && state.activeTab !== 'today';
   return `
     <div class="topbar">
-      <div></div>
+      <div>
+        ${canGoBack ? `<button class="round-btn" data-action="go-home">←</button>` : ''}
+      </div>
       <div style="display:flex; gap:8px;">
         ${state.screen==='app' ? `<button class="round-btn" data-action="open-settings">⚙️</button>` : ''}
         <button class="round-btn" data-action="toggle-theme">${state.theme==='dark' ? '☀️' : '🌙'}</button>
@@ -1676,9 +1356,6 @@ function renderBottomNav(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Loading                                                */
-/* ============================================================ */
 function renderLoading(){
   return `
     <div class="center-col" style="align-items:center; text-align:center;">
@@ -1687,9 +1364,6 @@ function renderLoading(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Auth screens                                           */
-/* ============================================================ */
 function renderAuthChoice(){
   return `
     <div class="center-col">
@@ -1750,9 +1424,6 @@ function renderYourCode(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Today                                                  */
-/* ============================================================ */
 function renderGoalCard(g){
   const cat = CATEGORY_EMOJI[g.category] || '🌱';
   const done = !!g.is_done;
@@ -1814,7 +1485,7 @@ function renderToday(){
         <span class="faint" style="font-size:12px; font-weight:600;">${goals.length - done} left</span>
       </div>
       ${goals.length===0
-        ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing planned yet</div><div style="font-size:13px;">Add something you want to accomplish today.</div></div>`
+        ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing planned yet</div><div style="font-size:13px; margin-bottom:12px;">Add something you want to accomplish today.</div><button class="btn-primary" style="max-width:200px; margin:0 auto;" data-action="open-add-goal">Add a goal</button></div>`
         : goals.map(renderGoalCard).join('')}
 
       <h3 style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px; margin-top:22px; margin-bottom:10px;">🫶 Their Day</h3>
@@ -1845,15 +1516,15 @@ function renderToday(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Goals                                                  */
-/* ============================================================ */
 let goalsFilter = 'all';
 function renderGoals(){
   const filtered = state.goals.filter(g => goalsFilter==='all' ? true : goalsFilter==='done' ? g.is_done : !g.is_done);
   return `
     <div style="padding:18px 18px 30px;">
-      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🎯 Goals</h1>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <h1 style="font-size:22px; font-weight:800;">🎯 Goals</h1>
+        <button class="btn-primary" style="width:auto; padding:8px 16px; font-size:13px;" data-action="open-add-goal">＋ Add Goal</button>
+      </div>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Everything you're working toward</p>
       <div style="display:flex; gap:8px; margin-bottom:16px;">
         ${['all','active','done'].map(f=>`
@@ -1861,14 +1532,11 @@ function renderGoals(){
         `).join('')}
       </div>
       ${filtered.length===0
-        ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing here yet</div><div style="font-size:13px;">Add something you want to accomplish today.</div></div>`
+        ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing here yet</div><div style="font-size:13px; margin-bottom:12px;">Add something you want to accomplish.</div><button class="btn-primary" style="max-width:200px; margin:0 auto;" data-action="open-add-goal">Add a goal</button></div>`
         : filtered.map(renderGoalCard).join('')}
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Chat                                                   */
-/* ============================================================ */
 function renderChat(){
   if(!state.coupleId){
     return `
@@ -1936,18 +1604,18 @@ function renderChat(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Updates                                                */
-/* ============================================================ */
 function renderUpdates(){
   const list = state.updates;
   const EMOJIS = ['❤️','🔥','🫶'];
   return `
     <div style="padding:18px 18px 30px;">
-      <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">📸 Little moments</h1>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+        <h1 style="font-size:22px; font-weight:800;">📸 Little moments</h1>
+        <button class="btn-primary" style="width:auto; padding:8px 16px; font-size:13px;" data-action="open-add-update">＋ Share Update</button>
+      </div>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Small glimpses into each other's day</p>
       ${list.length===0
-        ? `<div class="empty-state"><div class="em">✨</div><div class="heading" style="font-weight:700; font-size:15px;">Your day is just beginning</div><div style="font-size:13px;">Tap + to share your first moment.</div></div>`
+        ? `<div class="empty-state"><div class="em">✨</div><div class="heading" style="font-weight:700; font-size:15px;">Your day is just beginning</div><div style="font-size:13px; margin-bottom:12px;">Share your first moment with your partner.</div><button class="btn-primary" style="max-width:200px; margin:0 auto;" data-action="open-add-update">Share an Update</button></div>`
         : list.map(u=>{
           const counts = {};
           (u.reactions||[]).forEach(r => counts[r.emoji] = (counts[r.emoji]||0)+1);
@@ -1975,9 +1643,6 @@ function renderUpdates(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Progress                                               */
-/* ============================================================ */
 function renderProgress(){
   const goals = state.goals;
   const done = goals.filter(g=>g.is_done).length;
@@ -2021,9 +1686,6 @@ function renderProgress(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Together                                               */
-/* ============================================================ */
 function renderTogether(){
   const goals = state.goals, pGoals = state.partnerGoals;
   const myPct = goals.length ? Math.round((goals.filter(g=>g.is_done).length/goals.length)*100) : 0;
@@ -2059,61 +1721,74 @@ function renderTogether(){
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Modals                                                 */
-/* ============================================================ */
 function renderModal(){
   if(!state.modal) return '';
 
   if(state.modal==='addChoice') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
+      <div class="modal-sheet">
         <div class="drag-handle"></div>
         <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
-        <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>
+        <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share an update</button>
       </div>
     </div>`;
 
   if(state.modal==='addGoal') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
+      <div class="modal-sheet">
         <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="font-size:17px; font-weight:700; margin:0;">🎯 Add a goal</h2>
+          <button class="round-btn" style="width:28px;height:28px;font-size:14px;" data-action="close-modal">✕</button>
+        </div>
+        
+        <label style="font-size:12px; font-weight:600; margin-bottom:4px; display:block;" class="muted">Goal Title</label>
         <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
+        
+        <label style="font-size:12px; font-weight:600; margin-bottom:4px; display:block;" class="muted">Category</label>
         <select id="goal-category" class="input">
           ${Object.keys(CATEGORY_EMOJI).map(c=>`<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
         </select>
-        <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
+
+        <label style="font-size:12px; font-weight:600; margin-bottom:4px; display:block;" class="muted">Time Commitment (Optional)</label>
+        <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m, 1h)" maxlength="16" />
+
+        <label style="font-size:12px; font-weight:600; margin-bottom:4px; display:block;" class="muted">Priority Level</label>
         <select id="goal-priority" class="input">
           <option value="medium">Medium priority</option>
           <option value="high">High priority</option>
           <option value="low">Low priority</option>
         </select>
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
-          <input type="checkbox" id="goal-private" /> 🔒 Keep this private from my partner
+
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin:10px 0 18px; cursor:pointer;">
+          <input type="checkbox" id="goal-private" /> 🔒 Keep this goal private from my partner
         </label>
-        <button class="btn-primary" data-action="submit-goal">Add goal</button>
+
+        <button class="btn-primary" data-action="submit-goal">Save Goal</button>
       </div>
     </div>`;
 
   if(state.modal==='addUpdate') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
+      <div class="modal-sheet">
         <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="font-size:17px; font-weight:700; margin:0;">📸 Share Updates</h2>
+          <button class="round-btn" style="width:28px;height:28px;font-size:14px;" data-action="close-modal">✕</button>
+        </div>
         <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
           ${state.pendingPhotoFile ? '✅' : '🖼️'}
-          <span class="photo-note" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
+          <span class="photo-note" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to add a photo'}</span>
         </label>
         <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
-        <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
-        <button class="btn-primary" data-action="submit-update">Share this moment</button>
+        <textarea id="update-caption" class="input" rows="3" placeholder="Write an update for your partner..." style="resize:none;"></textarea>
+        <button class="btn-primary" data-action="submit-update">Post Update</button>
       </div>
     </div>`;
 
   if(state.modal==='connect') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
+      <div class="modal-sheet">
         <div class="drag-handle"></div>
         <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
         <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
@@ -2125,7 +1800,7 @@ function renderModal(){
 
   if(state.modal==='settings') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
+      <div class="modal-sheet">
         <div class="drag-handle"></div>
         <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
         <div class="glass" style="padding:16px; margin-bottom:12px;">
@@ -2134,14 +1809,13 @@ function renderModal(){
           <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
           <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
         </div>
-                <div class="glass" style="padding:16px; margin-bottom:12px;">
+        <div class="glass" style="padding:16px; margin-bottom:12px;">
           <div class="muted" style="font-size:11.5px; margin-bottom:8px;">Notifications</div>
-                    ${state.pushSubscribed
+          ${state.pushSubscribed
             ? `<button class="btn-secondary" data-action="disable-notifications">🔕 Turn off notifications</button>`
-            : `<button class="btn-primary" data-action="enable-notifications">🔔 Enable notifications</button>`}</div>
+            : `<button class="btn-primary" data-action="enable-notifications">🔔 Enable notifications</button>`}
+        </div>
 
-        <div class="glass" style="padding:16px; margin-bottom:16px;">
-          <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
         <div class="glass" style="padding:16px; margin-bottom:16px;">
           <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
           ${state.partnerUser ? `
@@ -2158,9 +1832,6 @@ function renderModal(){
   return '';
 }
 
-/* ============================================================ */
-/* Master render                                                  */
-/* ============================================================ */
 function render(){
   const root = document.getElementById('screen');
   document.getElementById('app').setAttribute('data-theme', state.theme);
@@ -2177,7 +1848,7 @@ function render(){
     body = (screens[state.activeTab]||renderToday)();
   }
 
-   const withTopbar = ['app'].includes(state.screen);
+  const withTopbar = ['app'].includes(state.screen);
   root.innerHTML = `
     ${withTopbar ? renderTopbar() : ''}
     ${body}
@@ -2214,9 +1885,6 @@ function render(){
   }
 }
 
-/* ============================================================ */
-/* Input bindings                                                 */
-/* ============================================================ */
 function bindInputs(){
   const nameInput = document.getElementById('name-input');
   if(nameInput) nameInput.addEventListener('input', e => state.authName = e.target.value);
@@ -2237,20 +1905,15 @@ function bindInputs(){
   });
 }
 
-/* ============================================================ */
-/* Event delegation                                               */
-/* ============================================================ */
 document.addEventListener('click', async (e) => {
   const el = e.target.closest('[data-action]');
   if(!el) return;
   const action = el.getAttribute('data-action');
 
-  // Only the overlay background itself should close a modal.
-  // Prevent clicks on inputs/selects inside the modal from being
-  // interpreted as a click on the overlay.
   if(action==='close-modal' && e.target !== el) return;
 
   if(action==='toggle-theme') setState({ theme: state.theme==='dark'?'light':'dark' });
+  else if(action==='go-home') setState({ activeTab: 'today' });
   else if(action==='goto-create') setState({ screen:'create', authError:'' });
   else if(action==='goto-login') setState({ screen:'login', authError:'' });
   else if(action==='goto-choice') setState({ screen:'authChoice', authError:'' });
@@ -2262,7 +1925,6 @@ document.addEventListener('click', async (e) => {
       await navigator.clipboard.writeText(code);
       alert('Code copied!');
     }catch(_){
-      // Clipboard API can be unavailable on file:// or insecure contexts.
       const ta = document.createElement('textarea');
       ta.value = code;
       ta.style.position = 'fixed';
@@ -2284,13 +1946,13 @@ document.addEventListener('click', async (e) => {
   else if(action==='open-add-goal') setState({ modal:'addGoal' });
   else if(action==='open-add-update') setState({ modal:'addUpdate', pendingPhotoFile:null });
   else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
-    else if(action==='open-settings'){
+  else if(action==='open-settings'){
     await checkPushSubscriptionStatus();
     setState({ modal:'settings' });
   }
- else if(action==='enable-notifications') enablePushNotifications();
+  else if(action==='enable-notifications') enablePushNotifications();
   else if(action==='disable-notifications') disablePushNotifications();
-  else if(action==='close-modal') history.back();
+  else if(action==='close-modal') setState({ modal: null });
   else if(action==='do-logout') logout();
   else if(action==='disconnect-partner') disconnectPartner();
   else if(action==='filter-goals'){ goalsFilter = el.getAttribute('data-filter'); render(); }
@@ -2317,30 +1979,21 @@ document.addEventListener('click', async (e) => {
   }
 });
 
-/* ============================================================ */
-/* Init                                                           */
-/* ============================================================ */
 render();
 restoreSession();
 
 })();
 </script>
-  <script>
+<script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/sw.js")
       .then(registration => {
-        console.log(
-          "CoupleFlow service worker registered:",
-          registration.scope
-        );
+        console.log("CoupleFlow service worker registered:", registration.scope);
       })
       .catch(error => {
-        console.error(
-          "CoupleFlow service worker registration failed:",
-          error
-        );
+        console.error("CoupleFlow service worker registration failed:", error);
       });
   });
 }
