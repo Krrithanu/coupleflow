@@ -641,6 +641,7 @@ let state = {
   connectInput: '',
   connectError: '',
   pendingPhotoFile: null,
+  pushSubscribed: false,
 };
 
 let lastNavKey = null;
@@ -1064,6 +1065,17 @@ function pushIsSupported(){
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
+async function checkPushSubscriptionStatus(){
+  if(!pushIsSupported()){ state.pushSubscribed = false; return; }
+  try{
+    const registration = await navigator.serviceWorker.ready;
+    const sub = await registration.pushManager.getSubscription();
+    state.pushSubscribed = !!sub;
+  }catch(_){
+    state.pushSubscribed = false;
+  }
+}
+
 async function enablePushNotifications(){
   if(!pushIsSupported()){
     alert("Push notifications aren't supported on this browser/device.");
@@ -1102,7 +1114,7 @@ async function enablePushNotifications(){
         .insert({ user_id: state.currentUser.id, endpoint: subJson.endpoint, subscription: subJson });
     }
 
-    alert('Notifications enabled! 🎉');
+    state.pushSubscribed = true;
     render();
   }catch(err){
     console.error('Push subscribe failed:', err);
@@ -1119,7 +1131,7 @@ async function disablePushNotifications(){
       await supabase.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint);
       await subscription.unsubscribe();
     }
-    alert('Notifications turned off.');
+    state.pushSubscribed = false;
     render();
   }catch(err){
     console.error('Push unsubscribe failed:', err);
@@ -1702,10 +1714,9 @@ function renderModal(){
         </div>
                 <div class="glass" style="padding:16px; margin-bottom:12px;">
           <div class="muted" style="font-size:11.5px; margin-bottom:8px;">Notifications</div>
-          ${(typeof Notification !== 'undefined' && Notification.permission === 'granted')
+                    ${state.pushSubscribed
             ? `<button class="btn-secondary" data-action="disable-notifications">🔕 Turn off notifications</button>`
-            : `<button class="btn-primary" data-action="enable-notifications">🔔 Enable notifications</button>`}
-        </div>
+            : `<button class="btn-primary" data-action="enable-notifications">🔔 Enable notifications</button>`}</div>
 
         <div class="glass" style="padding:16px; margin-bottom:16px;">
           <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
@@ -1851,7 +1862,12 @@ document.addEventListener('click', async (e) => {
   else if(action==='open-add-goal') setState({ modal:'addGoal' });
   else if(action==='open-add-update') setState({ modal:'addUpdate', pendingPhotoFile:null });
   else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
-  else if(action==='open-settings') setState({ modal:'settings' });
+    else if(action==='open-settings'){
+    await checkPushSubscriptionStatus();
+    setState({ modal:'settings' });
+  }
+  else if(action==='enable-notifications') enablePushNotifications();
+  else if(action==='disable-notifications') disablePushNotifications();
   else if(action==='enable-notifications') enablePushNotifications();
   else if(action==='disable-notifications') disablePushNotifications();
   else if(action==='close-modal') history.back();
