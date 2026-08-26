@@ -1235,62 +1235,24 @@ async function savePushSubscription(subscription){
     );
   }
 
-  /*
-   * First check whether this exact endpoint already exists.
-   */
   const {
-    data: existing,
-    error: findError
+    error
   } = await supabase
     .from('push_subscriptions')
-    .select('id')
-    .eq('endpoint', subJson.endpoint)
-    .maybeSingle();
-
-  if(findError){
-    throw findError;
-  }
-
-  if(existing){
-
-    /*
-     * Existing device/subscription:
-     * update it and make sure it belongs to
-     * the currently logged-in user.
-     */
-    const {
-      error: updateError
-    } = await supabase
-      .from('push_subscriptions')
-      .update({
-        user_id: state.currentUser.id,
-        subscription: subJson,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', existing.id);
-
-    if(updateError){
-      throw updateError;
-    }
-
-  }else{
-
-    /*
-     * New device/subscription.
-     */
-    const {
-      error: insertError
-    } = await supabase
-      .from('push_subscriptions')
-      .insert({
+    .upsert(
+      {
         user_id: state.currentUser.id,
         endpoint: subJson.endpoint,
-        subscription: subJson
-      });
+        subscription: subJson,
+        updated_at: new Date().toISOString()
+      },
+      {
+        onConflict: 'endpoint'
+      }
+    );
 
-    if(insertError){
-      throw insertError;
-    }
+  if(error){
+    throw error;
   }
 
   console.log(
