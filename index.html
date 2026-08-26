@@ -767,6 +767,14 @@ async function loadAppData(){
     lastNavKey = 'app|today|null';
     setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
     await loadUserData();
+    try{
+  await syncExistingPushSubscription();
+}catch(error){
+  console.warn(
+    'Initial push synchronization failed:',
+    error
+  );
+}
   }catch(err){
     console.error(err);
     try{ await supabase.auth.signOut({ scope:'local' }); }catch(_){}
@@ -1061,83 +1069,458 @@ async function disconnectPartner(){
 /* ============================================================ */
 /* Push notifications                                             */
 /* ============================================================ */
+/* ============================================================ */
+/* Push notifications                                           */
+/* ============================================================ */
+
 function pushIsSupported(){
-  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  return (
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window
+  );
 }
 
+
+/*
+ * Get the active service worker.
+ */
+async function getPushRegistration(){
+  if(!('serviceWorker' in navigator)){
+    throw new Error('Service workers are not supported.');
+  }
+
+  return await navigator.serviceWorker.ready;
+}
+
+
+/*
+ * Check the REAL notification state.
+ *
+ * IMPORTANT:
+ * Notification.permission is controlled by iOS/browser.
+ * CoupleFlow cannot turn the iPhone Settings switch off.
+ */
 async function checkPushSubscriptionStatus(){
-  if(!pushIsSupported()){ state.pushSubscribed = false; return; }
+
+  if(!pushIsSupported()){
+    state.pushSubscribed = false;
+    return;
+  }
+
   try{
-    const registration = await navigator.serviceWorker.ready;
-    const sub = await registration.pushManager.getSubscription();
-    state.pushSubscribed = !!sub;
-  }catch(_){
+
+    const permission = Notification.permission;
+
+    const registration =
+      await getPushRegistration();
+
+    const subscription =
+      await registration.pushManager.getSubscription();
+
+    /*
+     * CoupleFlow = ON only when BOTH exist:
+     *
+     * permission = granted
+     * subscription = exists
+     */
+    state.pushSubscribed =
+      permission === 'granted' &&
+      !!subscription;
+
+  }catch(error){
+
+    console.warn(
+      'Push status check failed:',
+      error
+    );
+
     state.pushSubscribed = false;
   }
 }
 
-async function enablePushNotifications(){
+
+/*
+ * Save/update the current subscription in Supabase.
+ *
+ * Endpoint identifies the specific device/browser subscription.
+ */
+async function savePushSubscription(subscription){
+
+  if(!state.currentUser){
+    throw new Error('You must be logged in first.');
+  }
+
+  const subJson = subscription.toJSON();
+
+  if(!subJson?.endpoint){
+    throw new Error(
+      'Push subscription does not contain an endpoint.'
+    );
+  }
+
+  /*
+   * First check whether this exact endpoint already exists.
+   */
+  const {
+    data: existing,
+    error: findError
+  } = await supabase
+    .from('push_subscriptions')
+    .select('id')
+    .eq('endpoint', subJson.endpoint)
+    .maybeSingle();
+
+  if(findError){
+    throw findError;
+  }
+
+  if(existing){
+
+    /*
+     * Existing device/subscription:
+     * update it and make sure it belongs to
+     * the currently logged-in user.
+     */
+    const {
+      error: updateError
+    } = await supabase
+      .from('push_subscriptions')
+      .update({
+        user_id: state.currentUser.id,
+        subscription: subJson,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', existing.id);
+
+    if(updateError){
+      throw updateError;
+    }
+
+  }else{
+
+    /*
+     * New device/subscription.
+     */
+    const {
+      error: insertError
+    } = await supabase
+      .from('push_subscriptions')
+      .insert({
+        user_id: state.currentUser.id,
+        endpoint: subJson.endpoint,
+        subscription: subJson
+      });
+
+    if(insertError){
+      throw insertError;
+    }
+  }
+
+  console.log(
+    'CoupleFlow push subscription synchronized.'
+  );
+}
+
+
+/*
+ * Synchronize an already-existing subscription.
+ *
+ * IMPORTANT:
+ * This DOES NOT request notification permission.
+ *
+ * It is safe to run when CoupleFlow starts.
+ */
+async function syncExistingPushSubscription(){
+
   if(!pushIsSupported()){
-    alert("Push notifications aren't supported on this browser/device.");
+    state.pushSubscribed = false;
+    return false;
+  }
+
+  if(!state.currentUser){
+    state.pushSubscribed = false;
+    return false;
+  }
+
+  try{
+
+    /*
+     * iPhone/browser has not granted permission.
+     */
+    if(Notification.permission !== 'granted'){
+
+      state.pushSubscribed = false;
+
+      return false;
+    }
+
+    const registration =
+      await getPushRegistration();
+
+    const subscription =
+      await registration.pushManager.getSubscription();
+
+    /*
+     * Permission is granted but there is no
+     * active PushSubscription.
+     *
+     * Do NOT automatically request permission.
+     * The user can press Enable Notifications.
+     */
+    if(!subscription){
+
+      state.pushSubscribed = false;
+
+      return false;
+    }
+
+    await savePushSubscription(subscription);
+
+    state.pushSubscribed = true;
+
+    return true;
+
+  }catch(error){
+
+    console.error(
+      'Push synchronization failed:',
+      error
+    );
+
+    state.pushSubscribed = false;
+
+    return false;
+  }
+}
+
+
+/*
+ * ENABLE NOTIFICATIONS
+ *
+ * This must be triggered by the user's button tap.
+ * This is especially important for iPhone Web Push.
+ */
+async function enablePushNotifications(){
+
+  if(!state.currentUser){
+
+    alert('Please log in first.');
+
     return;
   }
+
+  if(!pushIsSupported()){
+
+    alert(
+      "Push notifications aren't supported on this browser/device."
+    );
+
+    return;
+  }
+
+  if(!window.isSecureContext){
+
+    alert(
+      'Notifications require a secure HTTPS connection.'
+    );
+
+    return;
+  }
+
   try{
-    const permission = await Notification.requestPermission();
+
+    /*
+     * Ask the operating system/browser for permission.
+     *
+     * If permission was already granted,
+     * this simply returns "granted".
+     */
+    const permission =
+      await Notification.requestPermission();
+
     if(permission !== 'granted'){
-      alert('Notifications permission was not granted.');
+
+      state.pushSubscribed = false;
+
+      render();
+
+      alert(
+        'Notifications were not allowed. ' +
+        'On iPhone, enable CoupleFlow notifications in ' +
+        'Settings → Notifications → CoupleFlow.'
+      );
+
       return;
     }
 
-    const registration = await navigator.serviceWorker.ready;
-    let subscription = await registration.pushManager.getSubscription();
+    /*
+     * Get active service worker.
+     */
+    const registration =
+      await getPushRegistration();
+
+    /*
+     * Reuse an existing subscription if possible.
+     */
+    let subscription =
+      await registration.pushManager.getSubscription();
+
+    /*
+     * No subscription exists.
+     *
+     * Create a new one.
+     */
     if(!subscription){
-      subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
+
+      subscription =
+        await registration.pushManager.subscribe({
+
+          userVisibleOnly: true,
+
+          applicationServerKey:
+            urlBase64ToUint8Array(
+              VAPID_PUBLIC_KEY
+            )
+        });
     }
 
-    const subJson = subscription.toJSON();
-
-    const { data: existing } = await supabase.from('push_subscriptions')
-      .select('id')
-      .eq('user_id', state.currentUser.id)
-      .eq('endpoint', subJson.endpoint)
-      .maybeSingle();
-
-    if(existing){
-      await supabase.from('push_subscriptions')
-        .update({ subscription: subJson, updated_at: new Date().toISOString() })
-        .eq('id', existing.id);
-    } else {
-      await supabase.from('push_subscriptions')
-        .insert({ user_id: state.currentUser.id, endpoint: subJson.endpoint, subscription: subJson });
-    }
+    /*
+     * Save/update the current subscription.
+     */
+    await savePushSubscription(subscription);
 
     state.pushSubscribed = true;
-    render();
-  }catch(err){
-    console.error('Push subscribe failed:', err);
-    alert('Something went wrong turning on notifications.');
-  }
-}
 
-async function disablePushNotifications(){
-  if(!pushIsSupported()) return;
-  try{
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if(subscription){
-      await supabase.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint);
-      await subscription.unsubscribe();
-    }
+    render();
+
+    console.log(
+      'CoupleFlow notifications enabled.'
+    );
+
+  }catch(error){
+
+    console.error(
+      'Push subscribe failed:',
+      error
+    );
+
     state.pushSubscribed = false;
+
     render();
-  }catch(err){
-    console.error('Push unsubscribe failed:', err);
+
+    alert(
+      'Something went wrong turning on notifications: ' +
+      (error?.message || 'Unknown error')
+    );
   }
 }
 
+
+/*
+ * DISABLE NOTIFICATIONS INSIDE COUPLEFLOW
+ *
+ * IMPORTANT:
+ *
+ * This removes CoupleFlow's push subscription.
+ *
+ * It DOES NOT and CANNOT change:
+ *
+ * iPhone Settings
+ * → Notifications
+ * → CoupleFlow
+ * → Allow Notifications
+ *
+ * That system setting is controlled by iOS.
+ */
+async function disablePushNotifications(){
+
+  if(!state.currentUser){
+
+    return;
+  }
+
+  if(!pushIsSupported()){
+
+    state.pushSubscribed = false;
+
+    render();
+
+    return;
+  }
+
+  try{
+
+    const registration =
+      await getPushRegistration();
+
+    const subscription =
+      await registration.pushManager.getSubscription();
+
+    if(subscription){
+
+      const endpoint =
+        subscription.endpoint;
+
+      /*
+       * Remove the subscription from Supabase.
+       *
+       * IMPORTANT:
+       * Match both user_id AND endpoint so one user's
+       * device cannot accidentally delete another user's row.
+       */
+      const {
+        error: deleteError
+      } = await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', state.currentUser.id)
+        .eq('endpoint', endpoint);
+
+      if(deleteError){
+
+        console.warn(
+          'Could not remove push subscription from database:',
+          deleteError
+        );
+      }
+
+      /*
+       * Unsubscribe this browser/PWA subscription.
+       */
+      try{
+
+        await subscription.unsubscribe();
+
+      }catch(unsubscribeError){
+
+        console.warn(
+          'Browser push unsubscribe warning:',
+          unsubscribeError
+        );
+      }
+    }
+
+    state.pushSubscribed = false;
+
+    render();
+
+    console.log(
+      'CoupleFlow push notifications disabled.'
+    );
+
+  }catch(error){
+
+    console.error(
+      'Push unsubscribe failed:',
+      error
+    );
+
+    state.pushSubscribed = false;
+
+    render();
+  }
+}
 /* ============================================================ */
 /* Goals                                                          */
 /* ============================================================ */
@@ -1866,9 +2249,7 @@ document.addEventListener('click', async (e) => {
     await checkPushSubscriptionStatus();
     setState({ modal:'settings' });
   }
-  else if(action==='enable-notifications') enablePushNotifications();
-  else if(action==='disable-notifications') disablePushNotifications();
-  else if(action==='enable-notifications') enablePushNotifications();
+ else if(action==='enable-notifications') enablePushNotifications();
   else if(action==='disable-notifications') disablePushNotifications();
   else if(action==='close-modal') history.back();
   else if(action==='do-logout') logout();
