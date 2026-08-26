@@ -981,6 +981,7 @@ async function sendChatMessage(){
   if(input){
     input.value = '';
     input.style.height = 'auto';
+    input.focus({ preventScroll: true });
   }
 
   /*
@@ -1930,8 +1931,7 @@ function renderChat(){
 
       <div id="chat-input-bar">
         <textarea id="chat-input" rows="1" placeholder="Message ${partnerName}…" autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
-        <button id="chat-send" data-action="send-chat" aria-label="Send message">➤</button>
-      </div>
+       <button id="chat-send" data-action="send-chat" aria-label="Send message" onmousedown="event.preventDefault()" ontouchstart="event.preventDefault()">➤</button></div>
     </div>`;
 }
 
