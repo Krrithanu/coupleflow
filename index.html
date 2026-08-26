@@ -383,13 +383,7 @@
   #chat-send:hover{box-shadow:0 10px 22px rgba(118,87,224,.34);}
   #chat-send:active{transform:none;}
 
-  html,body{
-    width:100%; height:100%; margin:0;
-    -webkit-text-size-adjust:100%; text-size-adjust:100%;
-    overscroll-behavior:none;
-  }
-  input,textarea,select{font-size:16px;}
-  #app{width:100%; height:100dvh; min-height:100dvh; overflow:hidden;}
+   input,textarea,select{font-size:16px;}
 
   @media(max-width:380px){
     .chat-screen{padding:0 9px;}
@@ -415,22 +409,24 @@ html, body {
 
 input, textarea, select { font-size: 16px !important; }
 
-#app {
-  width: 100%;
-  height: 100dvh;
-  min-height: 100dvh;
-  overflow: hidden;
-}
+/* Only lock the viewport + hide overflow while the chat tab is open —
+   every other tab needs the page to scroll normally. */
+#app.chat-mode { height: 100dvh; overflow: hidden; }
+#app.chat-mode #screen { display:flex; flex-direction:column; overflow:hidden; }
+#app.chat-mode .topbar { flex:0 0 auto; }
 
 .chat-screen {
-  height: calc(100dvh - 62px);
-  max-height: calc(100dvh - 62px);
-  min-height: 0;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   padding: 0 12px 78px;
+}
+#app.chat-mode .chat-screen {
+  flex:1 1 auto;
+  min-height:0;
+  height:auto;
+  max-height:none;
 }
 
 .chat-header {
@@ -872,18 +868,27 @@ function subscribeToChat(coupleId){
 
   chatChannel = supabase
     .channel(`couple-${coupleId}`)
-    .on('postgres_changes',
+       .on('postgres_changes',
       { event:'INSERT', schema:'public', table:'messages', filter:`couple_id=eq.${coupleId}` },
       (payload) => {
         if(payload.new.sender_id === state.currentUser.id) return;
-        setState({ messages: [...state.messages, payload.new], partnerTyping:false });
+        state.messages = [...state.messages, payload.new];
+        state.partnerTyping = false;
+        if(state.screen==='app' && state.activeTab==='chat'){
+          refreshChatList();
+          updateTypingStatusUI();
+        }
       }
     )
     .on('broadcast', { event:'typing' }, (payload) => {
       if(payload.payload?.userId === state.currentUser.id) return;
-      setState({ partnerTyping:true });
+      state.partnerTyping = true;
+      updateTypingStatusUI();
       clearTimeout(typingHideTimer);
-      typingHideTimer = setTimeout(() => setState({ partnerTyping:false }), 2500);
+      typingHideTimer = setTimeout(() => {
+        state.partnerTyping = false;
+        updateTypingStatusUI();
+      }, 2500);
     })
     .subscribe();
 
@@ -904,6 +909,37 @@ function notifyTyping(){
   chatChannel.send({ type:'broadcast', event:'typing', payload:{ userId: state.currentUser.id } });
 }
 
+function messagesHtml(){
+  if(!state.messages.length){
+    return `<div class="chat-empty-content"><div class="empty-state"><div class="em">💬</div><div style="font-size:13px;font-weight:600;">Say hi — this is just between you two.</div></div></div>`;
+  }
+  return state.messages.map(m => {
+    const mine = m.sender_id === state.currentUser.id;
+    return `
+      <div class="chat-msg ${mine ? 'mine' : 'theirs'}">
+        <div>
+          <div class="chat-bubble">${escapeHtml(m.body)}</div>
+          <div class="chat-time">${timeShort(m.created_at)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function refreshChatList(){
+  const list = document.getElementById('chat-list');
+  if(!list) return;
+  list.innerHTML = messagesHtml();
+  list.scrollTop = list.scrollHeight;
+  lastRenderedMessageCount = state.messages.length;
+}
+
+function updateTypingStatusUI(){
+  const statusEl = document.querySelector('.chat-header-status');
+  if(statusEl && state.partnerUser){
+    statusEl.textContent = state.partnerTyping ? 'typing…' : 'Private chat · just you two';
+  }
+}
+
 async function sendChatMessage(){
   const input = document.getElementById('chat-input');
   const body = (input?.value || '').trim();
@@ -914,18 +950,18 @@ async function sendChatMessage(){
     id: optimisticId, couple_id: state.coupleId, sender_id: state.currentUser.id,
     body, created_at: new Date().toISOString(),
   };
-  setState({ messages: [...state.messages, optimistic] });
-  if(input) input.value = '';
+  state.messages = [...state.messages, optimistic];
+  refreshChatList();
+  if(input){ input.value = ''; input.style.height = 'auto'; }
 
   const { data, error } = await supabase.from('messages')
     .insert({ couple_id: state.coupleId, sender_id: state.currentUser.id, body })
     .select().single();
 
-  if(error){
-    console.error(error);
-    return;
-  }
-  setState({ messages: state.messages.map(m => m.id === optimisticId ? data : m) });
+  if(error){ console.error(error); return; }
+
+  state.messages = state.messages.map(m => m.id === optimisticId ? data : m);
+  refreshChatList();
 }
 
 /* ============================================================ */
@@ -1620,13 +1656,17 @@ function render(){
     body = (screens[state.activeTab]||renderToday)();
   }
 
-  const withTopbar = ['app'].includes(state.screen);
+   const withTopbar = ['app'].includes(state.screen);
   root.innerHTML = `
     ${withTopbar ? renderTopbar() : ''}
     ${body}
     ${state.screen==='app' ? renderBottomNav() : ''}
     ${renderModal()}
   `;
+
+  document.getElementById('app').classList.toggle(
+    'chat-mode', state.screen==='app' && state.activeTab==='chat'
+  );
 
   bindInputs();
 
