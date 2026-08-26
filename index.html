@@ -230,25 +230,40 @@
 .modal-sheet{
   position:relative;
   z-index:10000;
+
   box-sizing:border-box;
+
   width:100%;
   max-width:430px;
   margin:0 auto;
+
   background:var(--solid);
+
   border-radius:28px 28px 0 0;
-  padding:12px 20px calc(32px + env(safe-area-inset-bottom));
+
+  padding:
+    12px
+    20px
+    max(40px, calc(40px + env(safe-area-inset-bottom)));
+
   box-shadow:0 -8px 35px rgba(30,20,50,0.15);
 
-  /*
-   * Keep the entire sheet above the bottom navigation.
-   * The content itself can scroll if it becomes too tall.
-   */
   max-height:90dvh;
+
   overflow-y:auto;
+
   pointer-events:auto;
 
-  /* Prevent buttons from being hidden by the nav */
-  padding-bottom:max(32px, calc(32px + env(safe-area-inset-bottom)));
+  -webkit-overflow-scrolling:touch;
+}
+
+.modal-sheet button,
+.modal-sheet input,
+.modal-sheet select,
+.modal-sheet textarea,
+.modal-sheet label{
+  position:relative;
+  z-index:10001;
 }
 
 .modal-sheet button,
@@ -2097,16 +2112,16 @@ function renderTogether(){
 /* ============================================================ */
 /* Render: Modals                                                 */
 /* ============================================================ */
+
 function renderModal(){
   if(!state.modal) return '';
 
-  /* ============================================================
+  /* =========================
      ADD CHOICE
-     ============================================================ */
-  if(state.modal==='addChoice') return `
+     ========================= */
+  if(state.modal === 'addChoice') return `
     <div class="modal-overlay" data-action="close-modal">
-
-      <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet">
 
         <div class="drag-handle"></div>
 
@@ -2119,6 +2134,7 @@ function renderModal(){
         </h2>
 
         <button
+          type="button"
           class="btn-secondary"
           style="
             width:100%;
@@ -2132,6 +2148,7 @@ function renderModal(){
         </button>
 
         <button
+          type="button"
           class="btn-secondary"
           style="
             width:100%;
@@ -2148,15 +2165,13 @@ function renderModal(){
   `;
 
 
-  /* ============================================================
+  /* =========================
      ADD GOAL
-     ============================================================ */
-  if(state.modal==='addGoal') return `
+     ========================= */
+  if(state.modal === 'addGoal') return `
     <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet">
 
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-
-        <!-- Header -->
         <div style="
           display:flex;
           align-items:center;
@@ -2165,6 +2180,7 @@ function renderModal(){
         ">
 
           <button
+            type="button"
             class="round-btn"
             style="
               width:36px;
@@ -2188,8 +2204,6 @@ function renderModal(){
 
         </div>
 
-
-        <!-- Goal title -->
         <input
           id="goal-title"
           class="input"
@@ -2197,12 +2211,7 @@ function renderModal(){
           maxlength="60"
         />
 
-
-        <!-- Category -->
-        <select
-          id="goal-category"
-          class="input"
-        >
+        <select id="goal-category" class="input">
           ${Object.keys(CATEGORY_EMOJI).map(c => `
             <option value="${c}">
               ${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}
@@ -2210,8 +2219,6 @@ function renderModal(){
           `).join('')}
         </select>
 
-
-        <!-- Estimated time -->
         <input
           id="goal-duration"
           class="input"
@@ -2219,19 +2226,12 @@ function renderModal(){
           maxlength="16"
         />
 
-
-        <!-- Priority -->
-        <select
-          id="goal-priority"
-          class="input"
-        >
+        <select id="goal-priority" class="input">
           <option value="medium">Medium priority</option>
           <option value="high">High priority</option>
           <option value="low">Low priority</option>
         </select>
 
-
-        <!-- Private -->
         <label style="
           display:flex;
           align-items:center;
@@ -2240,16 +2240,12 @@ function renderModal(){
           margin:4px 0 18px;
           cursor:pointer;
         ">
-          <input
-            type="checkbox"
-            id="goal-private"
-          />
+          <input type="checkbox" id="goal-private">
           🔒 Keep this private from my partner
         </label>
 
-
-        <!-- ADD GOAL BUTTON -->
         <button
+          type="button"
           class="btn-primary"
           style="
             width:100%;
@@ -2268,13 +2264,12 @@ function renderModal(){
   `;
 
 
-  /* ============================================================
+  /* =========================
      SHARE A MOMENT
-     ============================================================ */
-  if(state.modal==='addUpdate') return `
+     ========================= */
+  if(state.modal === 'addUpdate') return `
     <div class="modal-overlay" data-action="close-modal">
-
-      <div class="modal-sheet" onclick="event.stopPropagation()">
+      <div class="modal-sheet">
 
         <div style="
           display:flex;
@@ -2284,6 +2279,7 @@ function renderModal(){
         ">
 
           <button
+            type="button"
             class="round-btn"
             style="
               width:36px;
@@ -2291,7 +2287,7 @@ function renderModal(){
               flex-shrink:0;
               font-size:18px;
             "
-            data-action="open-add"
+            data-action="back-add-choice"
             aria-label="Back"
           >
             ←
@@ -2307,7 +2303,6 @@ function renderModal(){
 
         </div>
 
-
         <label
           class="photo-placeholder"
           for="update-photo-input"
@@ -2315,10 +2310,7 @@ function renderModal(){
         >
           ${state.pendingPhotoFile ? '✅' : '🖼️'}
 
-          <span
-            class="photo-note"
-            style="margin:0;"
-          >
+          <span class="photo-note" style="margin:0;">
             ${
               state.pendingPhotoFile
                 ? escapeHtml(state.pendingPhotoFile.name)
@@ -2327,14 +2319,12 @@ function renderModal(){
           </span>
         </label>
 
-
         <input
           type="file"
           id="update-photo-input"
           accept="image/*"
           style="display:none;"
         />
-
 
         <textarea
           id="update-caption"
@@ -2344,110 +2334,17 @@ function renderModal(){
           style="resize:none;"
         ></textarea>
 
-
         <button
+          type="button"
           class="btn-primary"
           style="
             width:100%;
-            margin-top:4px;
+            margin-top:8px;
+            padding:13px 16px;
           "
           data-action="submit-update"
         >
           📸 Share this moment
-        </button>
-
-      </div>
-    </div>
-  `;
-
-
-  /* ============================================================
-     CONNECT
-     ============================================================ */
-  if(state.modal==='connect') return `
-    <div class="modal-overlay" data-action="close-modal">
-
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-
-        <div class="drag-handle"></div>
-
-        <h2 style="
-          font-size:17px;
-          font-weight:700;
-          margin-bottom:6px;
-        ">
-          🔗 Connect with your partner
-        </h2>
-
-        <p
-          class="muted"
-          style="
-            font-size:12.5px;
-            margin-bottom:16px;
-          "
-        >
-          Your code is
-          <strong>${state.currentUser.code}</strong>
-          — share it with them, or enter theirs below.
-        </p>
-
-        <input
-          id="connect-input"
-          class="input"
-          style="
-            text-transform:uppercase;
-            letter-spacing:2px;
-            text-align:center;
-          "
-          placeholder="Partner's code"
-          maxlength="10"
-        />
-
-        ${
-          state.connectError
-            ? `<div class="error-text">
-                ${escapeHtml(state.connectError)}
-              </div>`
-            : ''
-        }
-
-        <button
-          class="btn-primary"
-          data-action="submit-connect"
-          ${state.busy?'disabled':''}
-        >
-          ${state.busy?'Connecting…':'Connect'}
-        </button>
-
-      </div>
-    </div>
-  `;
-
-
-  /* ============================================================
-     SETTINGS
-     ============================================================ */
-  if(state.modal==='settings') return `
-    <div class="modal-overlay" data-action="close-modal">
-
-      <div class="modal-sheet" onclick="event.stopPropagation()">
-
-        <div class="drag-handle"></div>
-
-        <h2 style="
-          font-size:17px;
-          font-weight:700;
-          margin-bottom:16px;
-        ">
-          ⚙️ Settings
-        </h2>
-
-        <!-- Keep your existing settings content here -->
-        <button
-          class="btn-secondary"
-          data-action="close-modal"
-        >
-          Close
         </button>
 
       </div>
@@ -2541,95 +2438,275 @@ function bindInputs(){
 /* Event delegation                                               */
 /* ============================================================ */
 document.addEventListener('click', async (e) => {
+
   const el = e.target.closest('[data-action]');
   if(!el) return;
+
   const action = el.getAttribute('data-action');
 
-  // Only the overlay background itself should close a modal.
-  // Prevent clicks on inputs/selects inside the modal from being
-  // interpreted as a click on the overlay.
-  if(action==='close-modal' && e.target !== el) return;
-
-  if(action==='toggle-theme') setState({ theme: state.theme==='dark'?'light':'dark' });
-  else if(action==='goto-create') setState({ screen:'create', authError:'' });
-  else if(action==='goto-login') setState({ screen:'login', authError:'' });
-  else if(action==='goto-choice') setState({ screen:'authChoice', authError:'' });
-  else if(action==='submit-create') createAccount();
-  else if(action==='submit-login') loginWithCode();
-  else if(action==='copy-code'){
-    const code = state.currentUser?.code || '';
-    try{
-      await navigator.clipboard.writeText(code);
-      alert('Code copied!');
-    }catch(_){
-      // Clipboard API can be unavailable on file:// or insecure contexts.
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try{ document.execCommand('copy'); alert('Code copied!'); }
-      catch(e){ alert('Your code is: ' + code); }
-      ta.remove();
-    }
+  /* =========================
+     MODAL BACKDROP
+     ========================= */
+  if(action === 'close-modal') {
+    if(e.target !== el) return;
+    history.back();
+    return;
   }
-  else if(action==='connect-now'){
-    await connectPartner(state.connectInput);
-    if(!state.connectError) finishOnboarding();
+
+
+  /* =========================
+     GENERAL ACTIONS
+     ========================= */
+
+  if(action === 'toggle-theme') {
+    setState({
+      theme: state.theme === 'dark' ? 'light' : 'dark'
+    });
+    return;
   }
-  else if(action==='skip-connect') finishOnboarding();
-  else if(action==='tab') setState({ activeTab: el.getAttribute('data-tab') });
- else if(action==='open-add'){
-  setState({ modal:'addChoice' });
-}
 
-else if(action==='open-add-goal'){
-  setState({ modal:'addGoal' });
-}
+  if(action === 'goto-create') {
+    setState({
+      screen:'create',
+      authError:''
+    });
+    return;
+  }
 
-else if(action==='open-add-update'){
-  setState({
-    modal:'addUpdate',
-    pendingPhotoFile:null
-  });
-}
+  if(action === 'goto-login') {
+    setState({
+      screen:'login',
+      authError:''
+    });
+    return;
+  }
 
-else if(action==='back-add-choice'){
-  setState({ modal:'addChoice' });
-}
-  else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
-    else if(action==='open-settings'){
+  if(action === 'goto-choice') {
+    setState({
+      screen:'authChoice',
+      authError:''
+    });
+    return;
+  }
+
+  if(action === 'submit-create') {
+    createAccount();
+    return;
+  }
+
+  if(action === 'submit-login') {
+    loginWithCode();
+    return;
+  }
+
+
+  /* =========================
+     ADD MENU
+     ========================= */
+
+  if(action === 'open-add') {
+    setState({
+      modal:'addChoice'
+    });
+    return;
+  }
+
+  if(action === 'open-add-goal') {
+    setState({
+      modal:'addGoal'
+    });
+    return;
+  }
+
+  if(action === 'open-add-update') {
+    setState({
+      modal:'addUpdate',
+      pendingPhotoFile:null
+    });
+    return;
+  }
+
+  if(action === 'back-add-choice') {
+    setState({
+      modal:'addChoice'
+    });
+    return;
+  }
+
+
+  /* =========================
+     TABS
+     ========================= */
+
+  if(action === 'tab') {
+    setState({
+      activeTab: el.getAttribute('data-tab')
+    });
+    return;
+  }
+
+
+  /* =========================
+     SETTINGS / CONNECTION
+     ========================= */
+
+  if(action === 'open-connect' ||
+     action === 'open-connect-from-settings') {
+
+    setState({
+      modal:'connect',
+      connectError:''
+    });
+
+    return;
+  }
+
+  if(action === 'open-settings') {
+
     await checkPushSubscriptionStatus();
-    setState({ modal:'settings' });
+
+    setState({
+      modal:'settings'
+    });
+
+    return;
   }
- else if(action==='enable-notifications') enablePushNotifications();
-  else if(action==='disable-notifications') disablePushNotifications();
-  else if(action==='close-modal') history.back();
-  else if(action==='do-logout') logout();
-  else if(action==='disconnect-partner') disconnectPartner();
-  else if(action==='filter-goals'){ goalsFilter = el.getAttribute('data-filter'); render(); }
-  else if(action==='toggle-goal') toggleGoal(el.getAttribute('data-id'));
-  else if(action==='delete-goal') deleteGoal(el.getAttribute('data-id'));
-  else if(action==='react') addReaction(el.getAttribute('data-update-id'), el.getAttribute('data-emoji'));
-  else if(action==='send-chat') sendChatMessage();
-  else if(action==='submit-connect'){
-    const val = document.getElementById('connect-input')?.value || '';
+
+  if(action === 'enable-notifications') {
+    enablePushNotifications();
+    return;
+  }
+
+  if(action === 'disable-notifications') {
+    disablePushNotifications();
+    return;
+  }
+
+
+  /* =========================
+     OTHER ACTIONS
+     ========================= */
+
+  if(action === 'do-logout') {
+    logout();
+    return;
+  }
+
+  if(action === 'disconnect-partner') {
+    disconnectPartner();
+    return;
+  }
+
+  if(action === 'filter-goals') {
+    goalsFilter = el.getAttribute('data-filter');
+    render();
+    return;
+  }
+
+  if(action === 'toggle-goal') {
+    toggleGoal(el.getAttribute('data-id'));
+    return;
+  }
+
+  if(action === 'delete-goal') {
+    deleteGoal(el.getAttribute('data-id'));
+    return;
+  }
+
+  if(action === 'react') {
+    addReaction(
+      el.getAttribute('data-update-id'),
+      el.getAttribute('data-emoji')
+    );
+    return;
+  }
+
+  if(action === 'send-chat') {
+    sendChatMessage();
+    return;
+  }
+
+
+  /* =========================
+     CONNECT
+     ========================= */
+
+  if(action === 'connect-now') {
+    await connectPartner(state.connectInput);
+
+    if(!state.connectError) {
+      finishOnboarding();
+    }
+
+    return;
+  }
+
+  if(action === 'submit-connect') {
+
+    const val =
+      document.getElementById('connect-input')?.value || '';
+
     connectPartner(val);
+
+    return;
   }
-  else if(action==='submit-goal'){
-    const title = document.getElementById('goal-title')?.value.trim();
-    if(!title) return;
-    const category = document.getElementById('goal-category')?.value;
-    const duration = document.getElementById('goal-duration')?.value.trim();
-    const priority = document.getElementById('goal-priority')?.value;
-    const priv = document.getElementById('goal-private')?.checked;
-    addGoal({ title, category, duration, priority, private:priv });
+
+
+  /* =========================
+     ADD GOAL
+     ========================= */
+
+  if(action === 'submit-goal') {
+
+    const title =
+      document.getElementById('goal-title')?.value.trim();
+
+    if(!title) {
+      document.getElementById('goal-title')?.focus();
+      return;
+    }
+
+    const category =
+      document.getElementById('goal-category')?.value;
+
+    const duration =
+      document.getElementById('goal-duration')?.value.trim();
+
+    const priority =
+      document.getElementById('goal-priority')?.value;
+
+    const priv =
+      document.getElementById('goal-private')?.checked || false;
+
+    addGoal({
+      title,
+      category,
+      duration,
+      priority,
+      private: priv
+    });
+
+    return;
   }
-  else if(action==='submit-update'){
-    const caption = document.getElementById('update-caption')?.value || '';
-    postUpdate(caption, state.pendingPhotoFile);
+
+
+  /* =========================
+     SHARE UPDATE
+     ========================= */
+
+  if(action === 'submit-update') {
+
+    const caption =
+      document.getElementById('update-caption')?.value || '';
+
+    postUpdate(
+      caption,
+      state.pendingPhotoFile
+    );
+
+    return;
   }
+
 });
 
 /* ============================================================ */
