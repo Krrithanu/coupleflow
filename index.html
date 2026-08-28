@@ -215,15 +215,65 @@
     font-size:15px;
   }
 
-  .modal-overlay{
-    position:fixed; inset:0; z-index:50; display:flex; align-items:flex-end;
-    background:rgba(20,15,35,0.35); backdrop-filter:blur(4px);
-  }
-  .modal-sheet{
-    width:100%; max-width:430px; margin:0 auto; background:var(--solid);
-    border-radius:28px 28px 0 0; padding:10px 20px calc(28px + env(safe-area-inset-bottom)); box-shadow:var(--shadow);
-    max-height:85vh; overflow-y:auto;
-  }
+ .modal-overlay{
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  background:rgba(20,15,35,0.35);
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px);
+}
+
+.modal-sheet{
+  position:relative;
+  z-index:10000;
+
+  box-sizing:border-box;
+
+  width:100%;
+  max-width:430px;
+  margin:0 auto;
+
+  background:var(--solid);
+
+  border-radius:28px 28px 0 0;
+
+  padding:
+    12px
+    20px
+    max(40px, calc(40px + env(safe-area-inset-bottom)));
+
+  box-shadow:0 -8px 35px rgba(30,20,50,0.15);
+
+  max-height:90dvh;
+
+  overflow-y:auto;
+
+  pointer-events:auto;
+
+  -webkit-overflow-scrolling:touch;
+}
+
+.modal-sheet button,
+.modal-sheet input,
+.modal-sheet select,
+.modal-sheet textarea,
+.modal-sheet label{
+  position:relative;
+  z-index:10001;
+}
+
+.modal-sheet button,
+.modal-sheet input,
+.modal-sheet select,
+.modal-sheet textarea,
+.modal-sheet label{
+  position:relative;
+  z-index:10001;
+}
   .drag-handle{ width:40px; height:4px; border-radius:999px; background:var(--glass-border); margin:6px auto 18px; }
 
   .photo-placeholder{
@@ -258,38 +308,320 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
-  /* Chat */
-  .chat-msg{ display:flex; margin-bottom:10px; animation: msgIn .2s ease; }
-  @keyframes msgIn{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
-  .chat-msg.mine{ justify-content:flex-end; }
+  /* =========================================================
+     CHAT — MOBILE-FIRST, STABLE PHONE LAYOUT
+     ========================================================= */
+
+  .chat-screen{
+    height:calc(100dvh - 78px);
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    padding:0 12px;
+  }
+
+  .chat-header{
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:4px 4px 12px;
+  }
+
+  .chat-avatar{
+    width:42px; height:42px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    flex:0 0 42px;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    color:#fff; font-size:15px; font-weight:800;
+    box-shadow:0 7px 18px rgba(118,87,224,.20);
+  }
+
+  .chat-header-info{min-width:0; flex:1;}
+  .chat-header-name{font-size:15px; font-weight:800; line-height:1.2;}
+  .chat-header-status{font-size:11px; color:var(--ink-faint); margin-top:3px;}
+
+  #chat-list{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:6px 3px 12px;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    scroll-behavior:smooth;
+    scrollbar-width:none;
+  }
+  #chat-list::-webkit-scrollbar{width:0;height:0;}
+
+  .chat-msg{display:flex; width:100%; margin:3px 0;}
+  .chat-msg.mine{justify-content:flex-end;}
+  .chat-msg.theirs{justify-content:flex-start;}
+  .chat-msg > div{max-width:78%; min-width:0;}
+
   .chat-bubble{
-    max-width:75%; padding:10px 14px; border-radius:18px; font-size:14px; line-height:1.4;
-    word-wrap:break-word;
+    display:inline-block;
+    max-width:100%;
+    box-sizing:border-box;
+    padding:10px 13px;
+    border-radius:18px;
+    font-size:14px;
+    line-height:1.4;
+    word-break:break-word;
+    white-space:pre-wrap;
+    box-shadow:0 4px 14px rgba(50,35,80,.06);
   }
   .chat-msg.mine .chat-bubble{
-    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border-bottom-right-radius:4px;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    color:#fff;
+    border-bottom-right-radius:5px;
   }
   .chat-msg.theirs .chat-bubble{
-    background:var(--glass-strong); border:1px solid var(--glass-border); border-bottom-left-radius:4px;
+    background:var(--glass-strong);
+    color:var(--ink);
+    border:1px solid var(--glass-border);
+    border-bottom-left-radius:5px;
   }
-  .chat-time{ font-size:9.5px; color:var(--ink-faint); margin-top:3px; }
-  .chat-msg.mine .chat-time{ text-align:right; }
+  .chat-time{font-size:9px; color:var(--ink-faint); margin-top:3px; padding:0 4px;}
+  .chat-msg.mine .chat-time{text-align:right;}
+
   #chat-input-bar{
-    position:sticky; bottom:76px; left:0; right:0; padding:10px 14px; z-index:25;
-    display:flex; gap:8px; align-items:flex-end;
+    position:relative !important;
+    left:auto !important; right:auto !important; bottom:auto !important;
+    flex:0 0 auto;
+    width:100%;
+    box-sizing:border-box;
+    display:flex; align-items:flex-end; gap:8px;
+    padding:8px 2px calc(8px + env(safe-area-inset-bottom));
+    z-index:30;
   }
+
   #chat-input{
-    flex:1; border:1px solid var(--glass-border); border-radius:20px; padding:11px 16px;
-    font-size:14px; background:var(--glass-strong); color:var(--ink); outline:none; resize:none;
-    max-height:90px; font-family:'Inter',sans-serif;
+    flex:1 1 auto;
+    min-width:0;
+    min-height:46px; max-height:100px;
+    box-sizing:border-box;
+    padding:12px 15px;
+    border:1px solid var(--glass-border);
+    border-radius:23px;
+    outline:none; resize:none;
+    background:var(--glass-strong);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    color:var(--ink);
+    font-family:'Inter',sans-serif;
+    font-size:16px !important;
+    line-height:1.35;
+    -webkit-appearance:none; appearance:none;
+    box-shadow:0 6px 18px rgba(60,40,90,.06);
   }
+  #chat-input:focus{border-color:rgba(155,135,245,.45);}
   #chat-send{
-    width:42px; height:42px; border-radius:50%; border:none; flex-shrink:0;
-    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:16px;
+    flex:0 0 46px;
+    width:46px; height:46px;
+    min-width:46px; min-height:46px;
+    border:none; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 8px 18px -8px rgba(118,87,224,0.55);
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    color:#fff; font-size:17px; line-height:1;
+    box-shadow:0 8px 18px rgba(118,87,224,.28);
+    cursor:pointer;
+    -webkit-tap-highlight-color:transparent;
+    transition:box-shadow .15s ease;
   }
+  #chat-send:hover{box-shadow:0 10px 22px rgba(118,87,224,.34);}
+  #chat-send:active{transform:none;}
+
+   input,textarea,select{font-size:16px;}
+
+  @media(max-width:380px){
+    .chat-screen{padding:0 9px;}
+    .chat-msg > div{max-width:82%;}
+    .chat-bubble{font-size:14px; padding:10px 12px;}
+    #chat-send{width:44px;height:44px;min-width:44px;min-height:44px;flex-basis:44px;}
+  }
+
   .typing-indicator{ font-size:12px; color:var(--ink-faint); padding:4px 4px 8px; font-style:italic; }
+
+
+/* ============================================================
+   FINAL PHONE CHAT LAYOUT
+   ============================================================ */
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
+input, textarea, select { font-size: 16px !important; }
+
+/* Only lock the viewport + hide overflow while the chat tab is open —
+   every other tab needs the page to scroll normally. */
+#app.chat-mode { height: 100dvh; overflow: hidden; }
+#app.chat-mode #screen { display:flex; flex-direction:column; overflow:hidden; }
+#app.chat-mode .topbar { flex:0 0 auto; }
+
+.chat-screen {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0 12px 78px;
+}
+#app.chat-mode .chat-screen {
+  flex:1 1 auto;
+  min-height:0;
+  height:auto;
+  max-height:none;
+}
+
+.chat-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 5px 5px 12px;
+}
+
+.chat-avatar {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg,var(--purple),var(--pink));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 7px 18px rgba(118,87,224,.22);
+}
+
+.chat-header-info { min-width: 0; flex: 1; }
+.chat-header-name { font-size: 16px; font-weight: 800; line-height: 1.2; }
+.chat-header-status { margin-top: 3px; font-size: 10.5px; color: var(--ink-faint); }
+
+#chat-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 6px 3px 12px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+#chat-list::-webkit-scrollbar { display:none; width:0; }
+
+.chat-msg { display:flex; width:100%; margin:3px 0; }
+.chat-msg.mine { justify-content:flex-end; }
+.chat-msg.theirs { justify-content:flex-start; }
+.chat-msg > div { max-width:78%; }
+
+.chat-bubble {
+  display:inline-block;
+  padding:10px 13px;
+  border-radius:18px;
+  font-size:14px;
+  line-height:1.4;
+  word-break:break-word;
+  white-space:pre-wrap;
+  box-shadow:0 4px 14px rgba(50,35,80,.06);
+}
+.chat-msg.mine .chat-bubble {
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;
+  border-bottom-right-radius:5px;
+}
+.chat-msg.theirs .chat-bubble {
+  background:var(--glass-strong);
+  color:var(--ink);
+  border:1px solid var(--glass-border);
+  border-bottom-left-radius:5px;
+}
+.chat-time { margin-top:3px; padding:0 4px; font-size:9px; color:var(--ink-faint); }
+.chat-msg.mine .chat-time { text-align:right; }
+
+.chat-empty-content {
+  min-height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.typing-indicator { flex:0 0 auto; padding:2px 7px 5px; font-size:10.5px; color:var(--ink-faint); font-style:italic; }
+
+#chat-input-bar {
+  position:relative !important;
+  left:auto !important;
+  right:auto !important;
+  bottom:auto !important;
+  flex:0 0 auto;
+  width:100%;
+  box-sizing:border-box;
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+  padding:7px 2px calc(8px + env(safe-area-inset-bottom));
+  z-index:30;
+}
+
+#chat-input {
+  flex:1 1 auto;
+  min-width:0;
+  min-height:44px;
+  max-height:96px;
+  box-sizing:border-box;
+  padding:11px 14px;
+  border:1px solid var(--glass-border);
+  border-radius:22px;
+  outline:none;
+  resize:none;
+  background:var(--glass-strong);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  font-size:16px !important;
+  line-height:1.35;
+  -webkit-appearance:none;
+  appearance:none;
+  box-shadow:0 6px 18px rgba(60,40,90,.06);
+}
+#chat-input:focus { border-color:rgba(155,135,245,.45); }
+
+#chat-send {
+  flex:0 0 44px;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:linear-gradient(135deg,var(--purple),var(--pink));
+  color:#fff;
+  font-size:17px;
+  line-height:1;
+  box-shadow:0 8px 18px rgba(118,87,224,.28);
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#chat-send:hover { transform:none; }
+#chat-send:active { transform:scale(.94); }
+
+@media(max-width:380px){
+  .chat-screen { padding:0 9px; }
+  .chat-msg > div { max-width:82%; }
+  #chat-input-bar { padding-left:1px; padding-right:1px; }
+}
 </style>
 </head>
 <body>
@@ -311,6 +643,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
 });
+const VAPID_PUBLIC_KEY = 'BIuS2o3zQA3UoB8v7FHwQie8dOWjBR5UkgaJhIBvKHdgtFxG8dCBa65n-8btdJNMaXhmFHVEVvAYFbp5qSVmqgA';
+
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for(let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
 
 function makeInternalEmail(name){
   const slug = (name||'user').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20) || 'user';
@@ -349,6 +691,7 @@ let state = {
   connectInput: '',
   connectError: '',
   pendingPhotoFile: null,
+  pushSubscribed: false,
 };
 
 let lastNavKey = null;
@@ -474,6 +817,14 @@ async function loadAppData(){
     lastNavKey = 'app|today|null';
     setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
     await loadUserData();
+    try{
+  await syncExistingPushSubscription();
+}catch(error){
+  console.warn(
+    'Initial push synchronization failed:',
+    error
+  );
+}
   }catch(err){
     console.error(err);
     try{ await supabase.auth.signOut({ scope:'local' }); }catch(_){}
@@ -586,18 +937,27 @@ function subscribeToChat(coupleId){
 
   chatChannel = supabase
     .channel(`couple-${coupleId}`)
-    .on('postgres_changes',
+       .on('postgres_changes',
       { event:'INSERT', schema:'public', table:'messages', filter:`couple_id=eq.${coupleId}` },
       (payload) => {
         if(payload.new.sender_id === state.currentUser.id) return;
-        setState({ messages: [...state.messages, payload.new], partnerTyping:false });
+        state.messages = [...state.messages, payload.new];
+        state.partnerTyping = false;
+        if(state.screen==='app' && state.activeTab==='chat'){
+          refreshChatList();
+          updateTypingStatusUI();
+        }
       }
     )
     .on('broadcast', { event:'typing' }, (payload) => {
       if(payload.payload?.userId === state.currentUser.id) return;
-      setState({ partnerTyping:true });
+      state.partnerTyping = true;
+      updateTypingStatusUI();
       clearTimeout(typingHideTimer);
-      typingHideTimer = setTimeout(() => setState({ partnerTyping:false }), 2500);
+      typingHideTimer = setTimeout(() => {
+        state.partnerTyping = false;
+        updateTypingStatusUI();
+      }, 2500);
     })
     .subscribe();
 
@@ -618,28 +978,136 @@ function notifyTyping(){
   chatChannel.send({ type:'broadcast', event:'typing', payload:{ userId: state.currentUser.id } });
 }
 
+function messagesHtml(){
+  if(!state.messages.length){
+    return `<div class="chat-empty-content"><div class="empty-state"><div class="em">💬</div><div style="font-size:13px;font-weight:600;">Say hi — this is just between you two.</div></div></div>`;
+  }
+  return state.messages.map(m => {
+    const mine = m.sender_id === state.currentUser.id;
+    return `
+      <div class="chat-msg ${mine ? 'mine' : 'theirs'}">
+        <div>
+          <div class="chat-bubble">${escapeHtml(m.body)}</div>
+          <div class="chat-time">${timeShort(m.created_at)}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function refreshChatList(){
+  const list = document.getElementById('chat-list');
+  if(!list) return;
+  list.innerHTML = messagesHtml();
+  list.scrollTop = list.scrollHeight;
+  lastRenderedMessageCount = state.messages.length;
+}
+
+function updateTypingStatusUI(){
+  const statusEl = document.querySelector('.chat-header-status');
+  if(statusEl && state.partnerUser){
+    statusEl.textContent = state.partnerTyping ? 'typing…' : 'Private chat · just you two';
+  }
+}
+
 async function sendChatMessage(){
   const input = document.getElementById('chat-input');
   const body = (input?.value || '').trim();
-  if(!body || !state.coupleId) return;
+
+  if(!body || !state.coupleId || !state.partnerUser) return;
 
   const optimisticId = genId();
-  const optimistic = {
-    id: optimisticId, couple_id: state.coupleId, sender_id: state.currentUser.id,
-    body, created_at: new Date().toISOString(),
-  };
-  setState({ messages: [...state.messages, optimistic] });
-  if(input) input.value = '';
 
-  const { data, error } = await supabase.from('messages')
-    .insert({ couple_id: state.coupleId, sender_id: state.currentUser.id, body })
-    .select().single();
+  const optimistic = {
+    id: optimisticId,
+    couple_id: state.coupleId,
+    sender_id: state.currentUser.id,
+    body,
+    created_at: new Date().toISOString(),
+  };
+
+  state.messages = [...state.messages, optimistic];
+  refreshChatList();
+
+  if(input){
+    input.value = '';
+    input.style.height = 'auto';
+    input.focus({ preventScroll: true });
+  }
+
+  /*
+   * 1. Save the message
+   */
+  const { data, error } = await supabase
+    .from('messages')
+    .insert({
+      couple_id: state.coupleId,
+      sender_id: state.currentUser.id,
+      body
+    })
+    .select()
+    .single();
 
   if(error){
-    console.error(error);
+    console.error('Message send failed:', error);
     return;
   }
-  setState({ messages: state.messages.map(m => m.id === optimisticId ? data : m) });
+
+  /*
+   * Replace optimistic message with
+   * the real database message.
+   */
+  state.messages = state.messages.map(m =>
+    m.id === optimisticId ? data : m
+  );
+
+  refreshChatList();
+
+  /*
+   * 2. Send push notification to partner
+   */
+  try{
+
+    const { data: pushResult, error: pushError } =
+      await supabase.functions.invoke('push-notifications', {
+        body: {
+          recipient_id: state.partnerUser.id,
+
+          type: 'message',
+
+          actor_id: state.currentUser.id,
+
+          actor_name: state.currentUser.name,
+
+          message: body,
+
+          title: `New message from ${state.currentUser.name}`,
+
+          body: body,
+
+          url: '/?tab=chat'
+        }
+      });
+
+    if(pushError){
+      console.error(
+        'Push notification failed:',
+        pushError
+      );
+    }else{
+      console.log(
+        'Chat notification result:',
+        pushResult
+      );
+    }
+
+  }catch(pushError){
+
+    console.error(
+      'Could not trigger push notification:',
+      pushError
+    );
+
+  }
 }
 
 /* ============================================================ */
@@ -726,6 +1194,423 @@ async function disconnectPartner(){
 }
 
 /* ============================================================ */
+/* Push notifications                                             */
+/* ============================================================ */
+/* ============================================================ */
+/* Push notifications                                           */
+/* ============================================================ */
+
+function pushIsSupported(){
+  return (
+    'serviceWorker' in navigator &&
+    'PushManager' in window &&
+    'Notification' in window
+  );
+}
+
+
+/*
+ * Get the active service worker.
+ */
+async function getPushRegistration(){
+  if(!('serviceWorker' in navigator)){
+    throw new Error('Service workers are not supported.');
+  }
+
+  return await navigator.serviceWorker.ready;
+}
+
+
+/*
+ * Check the REAL notification state.
+ *
+ * IMPORTANT:
+ * Notification.permission is controlled by iOS/browser.
+ * CoupleFlow cannot turn the iPhone Settings switch off.
+ */
+async function checkPushSubscriptionStatus(){
+
+  if(!pushIsSupported()){
+    state.pushSubscribed = false;
+    return;
+  }
+
+  try{
+
+    const permission = Notification.permission;
+
+    const registration =
+      await getPushRegistration();
+
+    const subscription =
+      await registration.pushManager.getSubscription();
+
+    /*
+     * CoupleFlow = ON only when BOTH exist:
+     *
+     * permission = granted
+     * subscription = exists
+     */
+    state.pushSubscribed =
+      permission === 'granted' &&
+      !!subscription;
+
+  }catch(error){
+
+    console.warn(
+      'Push status check failed:',
+      error
+    );
+
+    state.pushSubscribed = false;
+  }
+}
+
+
+/*
+ * Save/update the current subscription in Supabase.
+ *
+ * Endpoint identifies the specific device/browser subscription.
+ */
+async function savePushSubscription(subscription){
+
+  if(!state.currentUser){
+    throw new Error('You must be logged in first.');
+  }
+
+  const subJson = subscription.toJSON();
+
+  if(!subJson?.endpoint){
+    throw new Error(
+      'Push subscription does not contain an endpoint.'
+    );
+  }
+
+  const {
+    error
+  } = await supabase
+    .from('push_subscriptions')
+    .upsert(
+      {
+        user_id: state.currentUser.id,
+        endpoint: subJson.endpoint,
+        subscription: subJson,
+        updated_at: new Date().toISOString()
+      },
+      {
+        onConflict: 'endpoint'
+      }
+    );
+
+  if(error){
+    throw error;
+  }
+
+  console.log(
+    'CoupleFlow push subscription synchronized.'
+  );
+}
+
+
+/*
+ * Synchronize an already-existing subscription.
+ *
+ * IMPORTANT:
+ * This DOES NOT request notification permission.
+ *
+ * It is safe to run when CoupleFlow starts.
+ */
+async function syncExistingPushSubscription(){
+
+  if(!pushIsSupported()){
+    state.pushSubscribed = false;
+    return false;
+  }
+
+  if(!state.currentUser){
+    state.pushSubscribed = false;
+    return false;
+  }
+
+  try{
+
+    /*
+     * iPhone/browser has not granted permission.
+     */
+    if(Notification.permission !== 'granted'){
+
+      state.pushSubscribed = false;
+
+      return false;
+    }
+
+    const registration =
+      await getPushRegistration();
+
+    const subscription =
+      await registration.pushManager.getSubscription();
+
+    /*
+     * Permission is granted but there is no
+     * active PushSubscription.
+     *
+     * Do NOT automatically request permission.
+     * The user can press Enable Notifications.
+     */
+    if(!subscription){
+
+      state.pushSubscribed = false;
+
+      return false;
+    }
+
+    await savePushSubscription(subscription);
+
+    state.pushSubscribed = true;
+
+    return true;
+
+  }catch(error){
+
+    console.error(
+      'Push synchronization failed:',
+      error
+    );
+
+    state.pushSubscribed = false;
+
+    return false;
+  }
+}
+
+
+/*
+ * ENABLE NOTIFICATIONS
+ *
+ * This must be triggered by the user's button tap.
+ * This is especially important for iPhone Web Push.
+ */
+async function enablePushNotifications(){
+
+  if(!state.currentUser){
+
+    alert('Please log in first.');
+
+    return;
+  }
+
+  if(!pushIsSupported()){
+
+    alert(
+      "Push notifications aren't supported on this browser/device."
+    );
+
+    return;
+  }
+
+  if(!window.isSecureContext){
+
+    alert(
+      'Notifications require a secure HTTPS connection.'
+    );
+
+    return;
+  }
+
+  try{
+
+    /*
+     * Ask the operating system/browser for permission.
+     *
+     * If permission was already granted,
+     * this simply returns "granted".
+     */
+    const permission =
+      await Notification.requestPermission();
+
+    if(permission !== 'granted'){
+
+      state.pushSubscribed = false;
+
+      render();
+
+      alert(
+        'Notifications were not allowed. ' +
+        'On iPhone, enable CoupleFlow notifications in ' +
+        'Settings → Notifications → CoupleFlow.'
+      );
+
+      return;
+    }
+
+    /*
+     * Get active service worker.
+     */
+    const registration =
+      await getPushRegistration();
+
+    /*
+     * Reuse an existing subscription if possible.
+     */
+    let subscription =
+      await registration.pushManager.getSubscription();
+
+    /*
+     * No subscription exists.
+     *
+     * Create a new one.
+     */
+    if(!subscription){
+
+      subscription =
+        await registration.pushManager.subscribe({
+
+          userVisibleOnly: true,
+
+          applicationServerKey:
+            urlBase64ToUint8Array(
+              VAPID_PUBLIC_KEY
+            )
+        });
+    }
+
+    /*
+     * Save/update the current subscription.
+     */
+    await savePushSubscription(subscription);
+
+    state.pushSubscribed = true;
+
+    render();
+
+    console.log(
+      'CoupleFlow notifications enabled.'
+    );
+
+  }catch(error){
+
+    console.error(
+      'Push subscribe failed:',
+      error
+    );
+
+    state.pushSubscribed = false;
+
+    render();
+
+    alert(
+      'Something went wrong turning on notifications: ' +
+      (error?.message || 'Unknown error')
+    );
+  }
+}
+
+
+/*
+ * DISABLE NOTIFICATIONS INSIDE COUPLEFLOW
+ *
+ * IMPORTANT:
+ *
+ * This removes CoupleFlow's push subscription.
+ *
+ * It DOES NOT and CANNOT change:
+ *
+ * iPhone Settings
+ * → Notifications
+ * → CoupleFlow
+ * → Allow Notifications
+ *
+ * That system setting is controlled by iOS.
+ */
+async function disablePushNotifications(){
+
+  if(!state.currentUser){
+
+    return;
+  }
+
+  if(!pushIsSupported()){
+
+    state.pushSubscribed = false;
+
+    render();
+
+    return;
+  }
+
+  try{
+
+    const registration =
+      await getPushRegistration();
+
+    const subscription =
+      await registration.pushManager.getSubscription();
+
+    if(subscription){
+
+      const endpoint =
+        subscription.endpoint;
+
+      /*
+       * Remove the subscription from Supabase.
+       *
+       * IMPORTANT:
+       * Match both user_id AND endpoint so one user's
+       * device cannot accidentally delete another user's row.
+       */
+      const {
+        error: deleteError
+      } = await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', state.currentUser.id)
+        .eq('endpoint', endpoint);
+
+      if(deleteError){
+
+        console.warn(
+          'Could not remove push subscription from database:',
+          deleteError
+        );
+      }
+
+      /*
+       * Unsubscribe this browser/PWA subscription.
+       */
+      try{
+
+        await subscription.unsubscribe();
+
+      }catch(unsubscribeError){
+
+        console.warn(
+          'Browser push unsubscribe warning:',
+          unsubscribeError
+        );
+      }
+    }
+
+    state.pushSubscribed = false;
+
+    render();
+
+    console.log(
+      'CoupleFlow push notifications disabled.'
+    );
+
+  }catch(error){
+
+    console.error(
+      'Push unsubscribe failed:',
+      error
+    );
+
+    state.pushSubscribed = false;
+
+    render();
+  }
+}
+/* ============================================================ */
 /* Goals                                                          */
 /* ============================================================ */
 async function addGoal(data){
@@ -773,77 +1658,70 @@ async function deleteGoal(id){
 async function postUpdate(caption, file){
   if(!caption.trim() && !file) return;
 
-  const { data: update, error } = await supabase.from('updates').insert({
-    user_id: state.currentUser.id,
-    caption: caption.trim() || null,
-  }).select().single();
-
-  if(error){ alert(friendlyError(error)); return; }
-
-  if(file){
-    const path = `${state.currentUser.id}/updates/${update.id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage.from('photos').upload(path, file);
-    if(uploadError){
-      console.error(uploadError);
-    } else {
-      await supabase.from('update_photos').insert({ update_id: update.id, storage_path: path });
-    }
-  }
-
-  setState({ modal:null, pendingPhotoFile:null });
-  await loadUserData();
-}
-
-async function addReaction(updateId, emoji){
-
-  if(!state.currentUser?.id){
-    console.error('Cannot react: user is not logged in');
-    return;
-  }
-
-  if(!updateId || !emoji){
-    console.error('Cannot react: missing updateId or emoji', {
-      updateId,
-      emoji
-    });
-    return;
-  }
-
-  console.log('Adding reaction:', {
-    updateId,
-    emoji,
-    userId: state.currentUser.id
-  });
-
-  const { data, error } = await supabase
-    .from('reactions')
+  const { data: update, error } = await supabase
+    .from('updates')
     .insert({
-      update_id: updateId,
       user_id: state.currentUser.id,
-      emoji: emoji
+      caption: caption.trim() || null,
     })
     .select()
     .single();
 
   if(error){
-
-    console.error('REACTION ERROR:', error);
-
-    // Already reacted with this exact emoji
-    if(error.code === '23505'){
-      console.log('Reaction already exists:', emoji);
-      return;
-    }
-
-    alert(
-      'Reaction failed: ' +
-      (error.message || 'Unknown Supabase error')
-    );
-
+    console.error(error);
+    alert(friendlyError(error));
     return;
   }
 
-  console.log('Reaction added successfully:', data);
+  if(file){
+
+    // Make the filename safe for Supabase Storage
+    const safeName = file.name
+      .normalize('NFKD')
+      .replace(/[^\w.-]+/g, '_')
+      .replace(/_+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 120);
+
+    const fileName = `${Date.now()}-${safeName || 'photo.jpg'}`;
+
+    const path =
+      `${state.currentUser.id}/updates/${update.id}/${fileName}`;
+
+    console.log('Uploading photo:', path);
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from('photos')
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: file.type || 'image/jpeg'
+      });
+
+    if(uploadError){
+      console.error('PHOTO UPLOAD ERROR:', uploadError);
+      alert('Could not upload the photo. Please try again.');
+      return;
+    }
+
+    const { error: photoDbError } = await supabase
+      .from('update_photos')
+      .insert({
+        update_id: update.id,
+        storage_path: path
+      });
+
+    if(photoDbError){
+      console.error('PHOTO DATABASE ERROR:', photoDbError);
+      return;
+    }
+  }
+
+  setState({
+    modal: null,
+    pendingPhotoFile: null
+  });
 
   await loadUserData();
 }
@@ -1083,22 +1961,32 @@ function renderGoals(){
 function renderChat(){
   if(!state.coupleId){
     return `
-      <div style="padding:18px 18px 30px;">
-        <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">💬 Chat</h1>
-        <div class="empty-state">
-          <div class="em">🔗</div>
-          <div class="heading" style="font-weight:700; font-size:15px;">Connect with your partner first</div>
-          <div style="font-size:13px; margin-bottom:16px;">Once you're connected, your chat shows up here — live, on both sides.</div>
-          <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
+      <div class="chat-screen chat-empty-screen">
+        <div class="chat-header">
+          <div class="chat-avatar">♡</div>
+          <div class="chat-header-info">
+            <div class="chat-header-name">Chat</div>
+            <div class="chat-header-status">Private space for two</div>
+          </div>
+        </div>
+        <div class="chat-empty-content">
+          <div class="empty-state">
+            <div class="em">🔗</div>
+            <div class="heading" style="font-weight:700;font-size:15px;">Connect with your partner first</div>
+            <div style="font-size:13px;margin-bottom:16px;">Once you're connected, your private chat will appear here.</div>
+            <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
+          </div>
         </div>
       </div>`;
   }
 
   const partnerName = state.partnerUser ? escapeHtml(state.partnerUser.name) : 'Partner';
+  const partnerInitial = state.partnerUser?.name ? initials(state.partnerUser.name) : '♡';
+
   const msgs = state.messages.map(m => {
     const mine = m.sender_id === state.currentUser.id;
     return `
-      <div class="chat-msg ${mine?'mine':'theirs'}">
+      <div class="chat-msg ${mine ? 'mine' : 'theirs'}">
         <div>
           <div class="chat-bubble">${escapeHtml(m.body)}</div>
           <div class="chat-time">${timeShort(m.created_at)}</div>
@@ -1107,16 +1995,33 @@ function renderChat(){
   }).join('');
 
   return `
-    <div style="padding:18px 18px 10px;">
-      <h1 style="font-size:20px; font-weight:800; margin-bottom:14px;">💬 ${partnerName}</h1>
-      <div id="chat-list">
-        ${msgs || `<div class="empty-state"><div class="em">💬</div><div style="font-size:13px;">Say hi — this is just between you two.</div></div>`}
-        ${state.partnerTyping ? `<div class="typing-indicator">${partnerName} is typing…</div>` : ''}
+    <div class="chat-screen">
+      <div class="chat-header">
+        <div class="chat-avatar">${escapeHtml(partnerInitial)}</div>
+        <div class="chat-header-info">
+          <div class="chat-header-name">${partnerName}</div>
+          <div class="chat-header-status">
+            ${state.partnerTyping ? 'typing…' : 'Private chat · just you two'}
+          </div>
+        </div>
       </div>
-    </div>
-    <div id="chat-input-bar">
-      <textarea id="chat-input" rows="1" placeholder="Type a message…"></textarea>
-      <button id="chat-send" data-action="send-chat">➤</button>
+
+      <div id="chat-list">
+        ${msgs || `
+          <div class="chat-empty-content">
+            <div class="empty-state">
+              <div class="em">💬</div>
+              <div style="font-size:13px;font-weight:600;">Say hi — this is just between you two.</div>
+            </div>
+          </div>`}
+      </div>
+
+      ${state.partnerTyping ? `<div class="typing-indicator">${partnerName} is typing…</div>` : ''}
+
+      <div id="chat-input-bar">
+        <textarea id="chat-input" rows="1" placeholder="Message ${partnerName}…" autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
+        <button id="chat-send" data-action="send-chat" aria-label="Send message">➤</button>
+      </div>
     </div>`;
 }
 
@@ -1246,90 +2151,245 @@ function renderTogether(){
 /* ============================================================ */
 /* Render: Modals                                                 */
 /* ============================================================ */
+
 function renderModal(){
   if(!state.modal) return '';
 
-  if(state.modal==='addChoice') return `
+  /* =========================
+     ADD CHOICE
+     ========================= */
+  if(state.modal === 'addChoice') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
-        <div class="drag-handle"></div>
-        <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding-left:16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
-        <button class="btn-secondary" style="text-align:left; padding-left:16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>
-      </div>
-    </div>`;
+      <div class="modal-sheet">
 
-  if(state.modal==='addGoal') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
         <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">＋ Add a goal</h2>
-        <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
+
+        <h2 style="
+          font-size:17px;
+          font-weight:700;
+          margin:0 0 16px;
+        ">
+          ＋ What would you like to do?
+        </h2>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          style="
+            width:100%;
+            margin-bottom:10px;
+            text-align:left;
+            padding:14px 16px;
+          "
+          data-action="open-add-goal"
+        >
+          🎯 &nbsp; Add a goal
+        </button>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          style="
+            width:100%;
+            text-align:left;
+            padding:14px 16px;
+          "
+          data-action="open-add-update"
+        >
+          📸 &nbsp; Share a moment
+        </button>
+
+      </div>
+    </div>
+  `;
+
+
+  /* =========================
+     ADD GOAL
+     ========================= */
+  if(state.modal === 'addGoal') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet">
+
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin:2px 0 20px;
+        ">
+
+          <button
+            type="button"
+            class="round-btn"
+            style="
+              width:36px;
+              height:36px;
+              flex-shrink:0;
+              font-size:18px;
+            "
+            data-action="back-add-choice"
+            aria-label="Back"
+          >
+            ←
+          </button>
+
+          <h2 style="
+            font-size:17px;
+            font-weight:700;
+            margin:0;
+          ">
+            🎯 Add a goal
+          </h2>
+
+        </div>
+
+        <input
+          id="goal-title"
+          class="input"
+          placeholder="What do you want to accomplish?"
+          maxlength="60"
+        />
+
         <select id="goal-category" class="input">
-          ${Object.keys(CATEGORY_EMOJI).map(c=>`<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
+          ${Object.keys(CATEGORY_EMOJI).map(c => `
+            <option value="${c}">
+              ${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}
+            </option>
+          `).join('')}
         </select>
-        <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
+
+        <input
+          id="goal-duration"
+          class="input"
+          placeholder="Estimated time (e.g. 30m)"
+          maxlength="16"
+        />
+
         <select id="goal-priority" class="input">
           <option value="medium">Medium priority</option>
           <option value="high">High priority</option>
           <option value="low">Low priority</option>
         </select>
-        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:16px; cursor:pointer;">
-          <input type="checkbox" id="goal-private" /> 🔒 Keep this private from my partner
-        </label>
-        <button class="btn-primary" data-action="submit-goal">Add goal</button>
-      </div>
-    </div>`;
 
-  if(state.modal==='addUpdate') return `
+        <label style="
+          display:flex;
+          align-items:center;
+          gap:8px;
+          font-size:13px;
+          margin:4px 0 18px;
+          cursor:pointer;
+        ">
+          <input type="checkbox" id="goal-private">
+          🔒 Keep this private from my partner
+        </label>
+
+        <button
+          type="button"
+          class="btn-primary"
+          style="
+            width:100%;
+            display:block;
+            margin-top:6px;
+            margin-bottom:4px;
+            padding:13px 16px;
+          "
+          data-action="submit-goal"
+        >
+          🎯 Add goal
+        </button>
+
+      </div>
+    </div>
+  `;
+
+
+  /* =========================
+     SHARE A MOMENT
+     ========================= */
+  if(state.modal === 'addUpdate') return `
     <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
-        <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">📸 Photo Update</h2>
-        <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
+      <div class="modal-sheet">
+
+        <div style="
+          display:flex;
+          align-items:center;
+          gap:10px;
+          margin:2px 0 20px;
+        ">
+
+          <button
+            type="button"
+            class="round-btn"
+            style="
+              width:36px;
+              height:36px;
+              flex-shrink:0;
+              font-size:18px;
+            "
+            data-action="back-add-choice"
+            aria-label="Back"
+          >
+            ←
+          </button>
+
+          <h2 style="
+            font-size:17px;
+            font-weight:700;
+            margin:0;
+          ">
+            📸 Share a moment
+          </h2>
+
+        </div>
+
+        <label
+          class="photo-placeholder"
+          for="update-photo-input"
+          style="cursor:pointer;"
+        >
           ${state.pendingPhotoFile ? '✅' : '🖼️'}
-          <span class="photo-note" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
+
+          <span class="photo-note" style="margin:0;">
+            ${
+              state.pendingPhotoFile
+                ? escapeHtml(state.pendingPhotoFile.name)
+                : 'Tap to choose a photo'
+            }
+          </span>
         </label>
-        <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
-        <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
-        <button class="btn-primary" data-action="submit-update">Share this moment</button>
-      </div>
-    </div>`;
 
-  if(state.modal==='connect') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
-        <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:6px;">🔗 Connect with your partner</h2>
-        <p class="muted" style="font-size:12.5px; margin-bottom:16px;">Your code is <strong>${state.currentUser.code}</strong> — share it with them, or enter theirs below.</p>
-        <input id="connect-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code" maxlength="10" />
-        ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
-        <button class="btn-primary" data-action="submit-connect" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect'}</button>
-      </div>
-    </div>`;
+        <input
+          type="file"
+          id="update-photo-input"
+          accept="image/*"
+          style="display:none;"
+        />
 
-  if(state.modal==='settings') return `
-    <div class="modal-overlay" data-action="close-modal">
-      <div class="modal-sheet" >
-        <div class="drag-handle"></div>
-        <h2 style="font-size:17px; font-weight:700; margin-bottom:16px;">⚙️ Settings</h2>
-        <div class="glass" style="padding:16px; margin-bottom:12px;">
-          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your name</div>
-          <div style="font-weight:600; font-size:14px; margin-bottom:12px;">${escapeHtml(state.currentUser.name)}</div>
-          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
-          <div style="font-weight:700; font-size:16px; letter-spacing:2px; color:var(--purple-deep);">${state.currentUser.code}</div>
-        </div>
-        <div class="glass" style="padding:16px; margin-bottom:16px;">
-          <div class="muted" style="font-size:11.5px; margin-bottom:6px;">Partner</div>
-          ${state.partnerUser ? `
-            <div style="display:flex; align-items:center; justify-content:space-between;">
-              <span style="font-weight:600; font-size:14px;">${escapeHtml(state.partnerUser.name)}</span>
-              <button class="tag pink" style="border:none; cursor:pointer;" data-action="disconnect-partner">Disconnect</button>
-            </div>
-          ` : `<button class="btn-secondary" data-action="open-connect-from-settings">Connect with your partner</button>`}
-        </div>
-        <button class="btn-secondary" data-action="do-logout">Log out</button>
+        <textarea
+          id="update-caption"
+          class="input"
+          rows="3"
+          placeholder="Say something about this moment..."
+          style="resize:none;"
+        ></textarea>
+
+        <button
+          type="button"
+          class="btn-primary"
+          style="
+            width:100%;
+            margin-top:8px;
+            padding:13px 16px;
+          "
+          data-action="submit-update"
+        >
+          📸 Share this moment
+        </button>
+
       </div>
-    </div>`;
+    </div>
+  `;
+
 
   return '';
 }
@@ -1353,7 +2413,7 @@ function render(){
     body = (screens[state.activeTab]||renderToday)();
   }
 
-  const withTopbar = ['app'].includes(state.screen);
+   const withTopbar = ['app'].includes(state.screen);
   root.innerHTML = `
     ${withTopbar ? renderTopbar() : ''}
     ${body}
@@ -1361,12 +2421,16 @@ function render(){
     ${renderModal()}
   `;
 
+  document.getElementById('app').classList.toggle(
+    'chat-mode', state.screen==='app' && state.activeTab==='chat'
+  );
+
   bindInputs();
 
   if(state.screen==='app' && state.activeTab==='chat'){
     const list = document.getElementById('chat-list');
     if(list && state.messages.length !== lastRenderedMessageCount){
-      list.scrollIntoView({ block:'end' });
+      list.scrollTop = list.scrollHeight;
       lastRenderedMessageCount = state.messages.length;
     }
     const chatInput = document.getElementById('chat-input');
@@ -1382,7 +2446,6 @@ function render(){
           sendChatMessage();
         }
       });
-      chatInput.focus();
     }
   }
 }
@@ -1414,75 +2477,275 @@ function bindInputs(){
 /* Event delegation                                               */
 /* ============================================================ */
 document.addEventListener('click', async (e) => {
+
   const el = e.target.closest('[data-action]');
   if(!el) return;
+
   const action = el.getAttribute('data-action');
 
-  // Only the overlay background itself should close a modal.
-  // Prevent clicks on inputs/selects inside the modal from being
-  // interpreted as a click on the overlay.
-  if(action==='close-modal' && e.target !== el) return;
+  /* =========================
+     MODAL BACKDROP
+     ========================= */
+  if(action === 'close-modal') {
+    if(e.target !== el) return;
+    history.back();
+    return;
+  }
 
-  if(action==='toggle-theme') setState({ theme: state.theme==='dark'?'light':'dark' });
-  else if(action==='goto-create') setState({ screen:'create', authError:'' });
-  else if(action==='goto-login') setState({ screen:'login', authError:'' });
-  else if(action==='goto-choice') setState({ screen:'authChoice', authError:'' });
-  else if(action==='submit-create') createAccount();
-  else if(action==='submit-login') loginWithCode();
-  else if(action==='copy-code'){
-    const code = state.currentUser?.code || '';
-    try{
-      await navigator.clipboard.writeText(code);
-      alert('Code copied!');
-    }catch(_){
-      // Clipboard API can be unavailable on file:// or insecure contexts.
-      const ta = document.createElement('textarea');
-      ta.value = code;
-      ta.style.position = 'fixed';
-      ta.style.opacity = '0';
-      document.body.appendChild(ta);
-      ta.select();
-      try{ document.execCommand('copy'); alert('Code copied!'); }
-      catch(e){ alert('Your code is: ' + code); }
-      ta.remove();
-    }
+
+  /* =========================
+     GENERAL ACTIONS
+     ========================= */
+
+  if(action === 'toggle-theme') {
+    setState({
+      theme: state.theme === 'dark' ? 'light' : 'dark'
+    });
+    return;
   }
-  else if(action==='connect-now'){
+
+  if(action === 'goto-create') {
+    setState({
+      screen:'create',
+      authError:''
+    });
+    return;
+  }
+
+  if(action === 'goto-login') {
+    setState({
+      screen:'login',
+      authError:''
+    });
+    return;
+  }
+
+  if(action === 'goto-choice') {
+    setState({
+      screen:'authChoice',
+      authError:''
+    });
+    return;
+  }
+
+  if(action === 'submit-create') {
+    createAccount();
+    return;
+  }
+
+  if(action === 'submit-login') {
+    loginWithCode();
+    return;
+  }
+
+
+  /* =========================
+     ADD MENU
+     ========================= */
+
+  if(action === 'open-add') {
+    setState({
+      modal:'addChoice'
+    });
+    return;
+  }
+
+  if(action === 'open-add-goal') {
+    setState({
+      modal:'addGoal'
+    });
+    return;
+  }
+
+  if(action === 'open-add-update') {
+    setState({
+      modal:'addUpdate',
+      pendingPhotoFile:null
+    });
+    return;
+  }
+
+  if(action === 'back-add-choice') {
+    setState({
+      modal:'addChoice'
+    });
+    return;
+  }
+
+
+  /* =========================
+     TABS
+     ========================= */
+
+  if(action === 'tab') {
+    setState({
+      activeTab: el.getAttribute('data-tab')
+    });
+    return;
+  }
+
+
+  /* =========================
+     SETTINGS / CONNECTION
+     ========================= */
+
+  if(action === 'open-connect' ||
+     action === 'open-connect-from-settings') {
+
+    setState({
+      modal:'connect',
+      connectError:''
+    });
+
+    return;
+  }
+
+  if(action === 'open-settings') {
+
+    await checkPushSubscriptionStatus();
+
+    setState({
+      modal:'settings'
+    });
+
+    return;
+  }
+
+  if(action === 'enable-notifications') {
+    enablePushNotifications();
+    return;
+  }
+
+  if(action === 'disable-notifications') {
+    disablePushNotifications();
+    return;
+  }
+
+
+  /* =========================
+     OTHER ACTIONS
+     ========================= */
+
+  if(action === 'do-logout') {
+    logout();
+    return;
+  }
+
+  if(action === 'disconnect-partner') {
+    disconnectPartner();
+    return;
+  }
+
+  if(action === 'filter-goals') {
+    goalsFilter = el.getAttribute('data-filter');
+    render();
+    return;
+  }
+
+  if(action === 'toggle-goal') {
+    toggleGoal(el.getAttribute('data-id'));
+    return;
+  }
+
+  if(action === 'delete-goal') {
+    deleteGoal(el.getAttribute('data-id'));
+    return;
+  }
+
+  if(action === 'react') {
+    addReaction(
+      el.getAttribute('data-update-id'),
+      el.getAttribute('data-emoji')
+    );
+    return;
+  }
+
+  if(action === 'send-chat') {
+    sendChatMessage();
+    return;
+  }
+
+
+  /* =========================
+     CONNECT
+     ========================= */
+
+  if(action === 'connect-now') {
     await connectPartner(state.connectInput);
-    if(!state.connectError) finishOnboarding();
+
+    if(!state.connectError) {
+      finishOnboarding();
+    }
+
+    return;
   }
-  else if(action==='skip-connect') finishOnboarding();
-  else if(action==='tab') setState({ activeTab: el.getAttribute('data-tab') });
-  else if(action==='open-add') setState({ modal:'addChoice' });
-  else if(action==='open-add-goal') setState({ modal:'addGoal' });
-  else if(action==='open-add-update') setState({ modal:'addUpdate', pendingPhotoFile:null });
-  else if(action==='open-connect' || action==='open-connect-from-settings') setState({ modal:'connect', connectError:'' });
-  else if(action==='open-settings') setState({ modal:'settings' });
-  else if(action==='close-modal') history.back();
-  else if(action==='do-logout') logout();
-  else if(action==='disconnect-partner') disconnectPartner();
-  else if(action==='filter-goals'){ goalsFilter = el.getAttribute('data-filter'); render(); }
-  else if(action==='toggle-goal') toggleGoal(el.getAttribute('data-id'));
-  else if(action==='delete-goal') deleteGoal(el.getAttribute('data-id'));
-  else if(action==='react') addReaction(el.getAttribute('data-update-id'), el.getAttribute('data-emoji'));
-  else if(action==='send-chat') sendChatMessage();
-  else if(action==='submit-connect'){
-    const val = document.getElementById('connect-input')?.value || '';
+
+  if(action === 'submit-connect') {
+
+    const val =
+      document.getElementById('connect-input')?.value || '';
+
     connectPartner(val);
+
+    return;
   }
-  else if(action==='submit-goal'){
-    const title = document.getElementById('goal-title')?.value.trim();
-    if(!title) return;
-    const category = document.getElementById('goal-category')?.value;
-    const duration = document.getElementById('goal-duration')?.value.trim();
-    const priority = document.getElementById('goal-priority')?.value;
-    const priv = document.getElementById('goal-private')?.checked;
-    addGoal({ title, category, duration, priority, private:priv });
+
+
+  /* =========================
+     ADD GOAL
+     ========================= */
+
+  if(action === 'submit-goal') {
+
+    const title =
+      document.getElementById('goal-title')?.value.trim();
+
+    if(!title) {
+      document.getElementById('goal-title')?.focus();
+      return;
+    }
+
+    const category =
+      document.getElementById('goal-category')?.value;
+
+    const duration =
+      document.getElementById('goal-duration')?.value.trim();
+
+    const priority =
+      document.getElementById('goal-priority')?.value;
+
+    const priv =
+      document.getElementById('goal-private')?.checked || false;
+
+    addGoal({
+      title,
+      category,
+      duration,
+      priority,
+      private: priv
+    });
+
+    return;
   }
-  else if(action==='submit-update'){
-    const caption = document.getElementById('update-caption')?.value || '';
-    postUpdate(caption, state.pendingPhotoFile);
+
+
+  /* =========================
+     SHARE UPDATE
+     ========================= */
+
+  if(action === 'submit-update') {
+
+    const caption =
+      document.getElementById('update-caption')?.value || '';
+
+    postUpdate(
+      caption,
+      state.pendingPhotoFile
+    );
+
+    return;
   }
+
 });
 
 /* ============================================================ */
