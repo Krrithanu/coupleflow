@@ -313,12 +313,12 @@
      ========================================================= */
 
   .chat-screen{
-    height:calc(100dvh - 78px);
+    flex:1 1 auto;
     min-height:0;
     display:flex;
     flex-direction:column;
     overflow:hidden;
-    padding:0 12px;
+    padding:0 12px 0;
   }
 
   .chat-header{
@@ -327,6 +327,7 @@
     align-items:center;
     gap:11px;
     padding:4px 4px 12px;
+    border-bottom:1px solid rgba(255,255,255,0.12);
   }
 
   .chat-avatar{
@@ -347,7 +348,7 @@
     min-height:0;
     overflow-y:auto;
     overflow-x:hidden;
-    padding:6px 3px 12px;
+    padding:8px 3px 12px;
     -webkit-overflow-scrolling:touch;
     overscroll-behavior:contain;
     scroll-behavior:smooth;
@@ -393,8 +394,10 @@
     width:100%;
     box-sizing:border-box;
     display:flex; align-items:flex-end; gap:8px;
-    padding:8px 2px calc(8px + env(safe-area-inset-bottom));
+    padding:8px 2px max(10px, calc(8px + env(safe-area-inset-bottom)));
     z-index:30;
+    background:linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--bg-grad) 88%, transparent) 12%, var(--bg-grad) 100%);
+    border-top:1px solid rgba(255,255,255,0.08);
   }
 
   #chat-input{
@@ -461,16 +464,18 @@ input, textarea, select { font-size: 16px !important; }
 
 /* Only lock the viewport + hide overflow while the chat tab is open —
    every other tab needs the page to scroll normally. */
-#app.chat-mode { height: 100dvh; overflow: hidden; }
+#app.chat-mode { height:100dvh; overflow:hidden; }
 #app.chat-mode #screen { display:flex; flex-direction:column; overflow:hidden; }
 #app.chat-mode .topbar { flex:0 0 auto; }
 
 .chat-screen {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  padding: 0 12px 78px;
+  box-sizing:border-box;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  min-height:0;
+  flex:1 1 auto;
+  padding:0 12px 0;
 }
 #app.chat-mode .chat-screen {
   flex:1 1 auto;
@@ -511,7 +516,7 @@ input, textarea, select { font-size: 16px !important; }
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 6px 3px 12px;
+  padding: 8px 3px 12px;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -568,8 +573,10 @@ input, textarea, select { font-size: 16px !important; }
   display:flex;
   align-items:flex-end;
   gap:8px;
-  padding:7px 2px calc(8px + env(safe-area-inset-bottom));
+  padding:8px 2px max(10px, calc(8px + env(safe-area-inset-bottom)));
   z-index:30;
+  background:linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--bg-grad) 88%, transparent) 14%, var(--bg-grad) 100%);
+  border-top:1px solid rgba(255,255,255,0.08);
 }
 
 #chat-input {
