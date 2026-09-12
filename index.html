@@ -2680,6 +2680,13 @@ document.addEventListener('click', async (e) => {
     return;
   }
 
+  if(action === 'skip-connect') {
+    state.connectInput = '';
+    state.connectError = '';
+    finishOnboarding();
+    return;
+  }
+
   if(action === 'submit-connect') {
 
     const val =
