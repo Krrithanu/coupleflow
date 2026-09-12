@@ -1,4 +1,4 @@
-<html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
@@ -686,8 +686,17 @@ const CATEGORY_EMOJI = { study:'📚', fitness:'🏋️', code:'💻', creative:
 const CATEGORY_LABEL = { study:'Study', fitness:'Fitness', code:'Coding', creative:'Creative', learning:'Learning', habit:'Habit' };
 const AUTH_ONLY_SCREENS = ['loading','authChoice','create','login','yourCode'];
 
+const savedTheme = (() => {
+  try {
+    const value = localStorage.getItem('coupleflow-theme');
+    return value === 'dark' ? 'dark' : 'light';
+  } catch (_){
+    return 'light';
+  }
+})();
+
 let state = {
-  theme: 'light',
+  theme: savedTheme,
   screen: 'loading',
   authName: '',
   authCodeInput: '',
@@ -2198,6 +2207,43 @@ function renderTogether(){
 function renderModal(){
   if(!state.modal) return '';
 
+  if(state.modal === 'settings') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet">
+        <div class="drag-handle"></div>
+
+        <h2 style="font-size:17px; font-weight:700; margin:0 0 16px;">⚙️ Settings</h2>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          style="width:100%; margin-bottom:10px;"
+          data-action="toggle-theme"
+        >
+          ${state.theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
+        </button>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          style="width:100%; margin-bottom:10px;"
+          data-action="enable-notifications"
+        >
+          ${state.pushSubscribed ? '🔔 Notifications on' : '🔔 Enable notifications'}
+        </button>
+
+        <button
+          type="button"
+          class="btn-secondary"
+          style="width:100%;"
+          data-action="do-logout"
+        >
+          🚪 Log out
+        </button>
+      </div>
+    </div>
+  `;
+
   /* =========================
      ADD CHOICE
      ========================= */
@@ -2489,8 +2535,10 @@ function renderModal(){
 /* ============================================================ */
 function render(){
   const root = document.getElementById('screen');
-  document.getElementById('app').setAttribute('data-theme', state.theme);
-  document.documentElement.setAttribute('data-theme', state.theme);
+  const nextTheme = state.theme === 'dark' ? 'dark' : 'light';
+  document.getElementById('app').setAttribute('data-theme', nextTheme);
+  document.documentElement.setAttribute('data-theme', nextTheme);
+  try { localStorage.setItem('coupleflow-theme', nextTheme); } catch (_) {}
 
   let body = '';
   if(state.screen==='loading') body = renderLoading();
@@ -2592,9 +2640,12 @@ document.addEventListener('click', async (e) => {
      ========================= */
 
   if(action === 'toggle-theme') {
+    const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
     setState({
-      theme: state.theme === 'dark' ? 'light' : 'dark'
+      theme: nextTheme,
+      chatMenuOpen: false,
     });
+    try { localStorage.setItem('coupleflow-theme', nextTheme); } catch (_) {}
     return;
   }
 
