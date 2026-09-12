@@ -1428,7 +1428,7 @@ async function enablePushNotifications(){
     return;
   }
 
-  if(!pushIsSupported()){
+  if(!('Notification' in window) || !pushIsSupported()){
 
     alert(
       "Push notifications aren't supported on this browser/device."
@@ -1440,7 +1440,7 @@ async function enablePushNotifications(){
   if(!window.isSecureContext){
 
     alert(
-      'Notifications require a secure HTTPS connection.'
+      'Notifications require a secure HTTPS connection or localhost. Open this app from http://localhost or HTTPS, then try again.'
     );
 
     return;
@@ -2207,6 +2207,8 @@ function renderTogether(){
 function renderModal(){
   if(!state.modal) return '';
 
+  const notificationsReady = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window && window.isSecureContext;
+
   if(state.modal === 'settings') return `
     <div class="modal-overlay" data-action="close-modal">
       <div class="modal-sheet">
@@ -2227,9 +2229,9 @@ function renderModal(){
           type="button"
           class="btn-secondary"
           style="width:100%; margin-bottom:10px;"
-          data-action="enable-notifications"
+          data-action="${notificationsReady ? 'enable-notifications' : 'show-notification-help'}"
         >
-          ${state.pushSubscribed ? '🔔 Notifications on' : '🔔 Enable notifications'}
+          ${notificationsReady ? (state.pushSubscribed ? '🔔 Notifications on' : '🔔 Enable notifications') : '🔔 Notifications require HTTPS'}
         </button>
 
         <button
@@ -2772,6 +2774,11 @@ document.addEventListener('click', async (e) => {
       modal:'settings'
     });
 
+    return;
+  }
+
+  if(action === 'show-notification-help') {
+    alert('Notifications only work on a secure site. Open this app from http://localhost or HTTPS, then try again.');
     return;
   }
 
