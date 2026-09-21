@@ -378,6 +378,31 @@
     #chat-list{ padding:12px 8px; }
     .chat-bubble-wrap{ max-width:82%; }
   }
+
+/* ============================================================ */
+/* CoupleFlow 2.0 Phase 1–4 polish                              */
+/* ============================================================ */
+.cf2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.cf2-card{position:relative;overflow:hidden;padding:16px;border-radius:22px;background:var(--glass);border:1px solid var(--glass-border);box-shadow:var(--shadow-soft);transition:transform .22s ease,box-shadow .22s ease}
+.cf2-card:before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle at 20% 20%,rgba(155,135,245,.16),transparent 38%),radial-gradient(circle at 80% 70%,rgba(242,166,206,.16),transparent 36%);pointer-events:none}
+.cf2-card:active{transform:scale(.985)}
+.cf2-icon{font-size:27px;margin-bottom:8px}
+.cf2-title{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px}
+.cf2-sub{font-size:11px;color:var(--ink-soft);margin-top:4px;line-height:1.4}
+.cf2-chip{display:inline-flex;align-items:center;gap:5px;padding:7px 10px;border-radius:999px;background:var(--glass-strong);border:1px solid var(--glass-border);font-size:11px;font-weight:700}
+.cf2-progress{height:8px;border-radius:99px;background:rgba(127,110,180,.12);overflow:hidden}.cf2-progress>i{display:block;height:100%;width:var(--p,0%);border-radius:99px;background:linear-gradient(90deg,var(--purple),var(--pink),var(--blue));animation:cf2Grow .8s ease both}
+@keyframes cf2Grow{from{width:0}}@keyframes cf2Pop{0%{transform:scale(.7);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+.cf2-pop{animation:cf2Pop .45s cubic-bezier(.2,.9,.2,1) both}.cf2-float{animation:cf2Float 4s ease-in-out infinite}@keyframes cf2Float{50%{transform:translateY(-6px) rotate(1deg)}}
+.cf2-stat{font-size:24px;font-weight:800;font-family:'Plus Jakarta Sans',sans-serif}.cf2-mini{font-size:10px;color:var(--ink-soft)}
+.cf2-section{margin:18px 0 10px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;font-size:14px}
+.cf2-list{display:flex;flex-direction:column;gap:8px}.cf2-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:16px;background:var(--glass-strong);border:1px solid var(--glass-border)}
+.cf2-row input,.cf2-row textarea{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--ink);font:inherit}
+.cf2-pill-btn{border:0;border-radius:999px;padding:9px 12px;background:linear-gradient(135deg,var(--purple),var(--pink));color:white;font-weight:800;cursor:pointer}
+.cf2-modal{max-height:min(86dvh,760px);overflow:auto}.cf2-empty{text-align:center;padding:18px;color:var(--ink-soft);font-size:12px}
+.cf2-hero{padding:20px;border-radius:25px;background:linear-gradient(135deg,color-mix(in srgb,var(--purple) 18%,transparent),color-mix(in srgb,var(--pink) 16%,transparent),color-mix(in srgb,var(--blue) 14%,transparent));border:1px solid var(--glass-border);box-shadow:var(--shadow);position:relative;overflow:hidden}
+.cf2-hero:after{content:"✦";position:absolute;right:18px;top:12px;font-size:34px;opacity:.22;animation:cf2Float 3s ease-in-out infinite}
+.cf2-week{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cf2-day{height:44px;border-radius:14px;background:var(--glass);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}.cf2-day.done{background:linear-gradient(135deg,var(--purple),var(--pink));color:#fff}
+@media(max-width:380px){.cf2-grid{gap:7px}.cf2-card{padding:13px}.cf2-week{gap:3px}}
 </style>
 </head>
 <body>
@@ -438,6 +463,7 @@ let state = {
   chatMenuOpen:false, pendingPhotoFile:null, pushSubscribed:false,
   goalsFilter:'all',
   toast:null,
+  cf2:{loaded:false, question:null, answer:null, mood:null, appreciation:null, thinking:false, sharedGoals:[], tasks:[], events:[], lists:[], memories:[], milestones:[], games:[], xp:0, level:1, achievements:[], challenges:[], pet:{name:'Mochi',type:'bunny',xp:0,happiness:50,energy:50}, weekly:null, monthly:null, yearly:null, insights:[]},
 };
 
 let lastNavKey = null;
@@ -558,11 +584,11 @@ async function loadAppData(){
       .from('profiles').select('*').eq('id', user.id).single();
     if(error) throw error;
 
+    state.currentUser = profile;
+    await loadUserData();
     history.replaceState({ screen:'app', activeTab:'today', modal:null },'');
     lastNavKey = 'app|today|null';
     setState({ currentUser:profile, screen:'app', activeTab:'today' }, { fromPopstate:true });
-
-    await loadUserData();
     try{ await syncExistingPushSubscription(); }
     catch(e){ console.warn('Push sync failed:', e); }
   }catch(err){
@@ -595,12 +621,14 @@ async function loadUserData(){
   const updates = await getUpdatesFeed(me, partner);
   const messages = couple ? await loadMessages(couple.id) : [];
 
+  state.goals = goals; state.partnerUser = partner; state.partnerGoals = partnerGoals; state.updates = updates; state.coupleId = couple ? couple.id : null; state.messages = messages;
+  cf2Sync();
   setState({
     goals, partnerUser:partner, partnerGoals, updates,
     coupleId: couple ? couple.id : null, messages,
   });
 
-  if(couple) subscribeToChat(couple.id); else unsubscribeChat();
+  if(couple){ subscribeToChat(couple.id); cf2HydrateRemote(); } else unsubscribeChat();
 }
 
 async function getMyGoals(){
@@ -1222,6 +1250,86 @@ async function addReaction(updateId, emoji){
   });
 }
 
+
+/* ============================================================ */
+/* CoupleFlow 2.0 Phase 1–4                                     */
+/* ============================================================ */
+const CF2_KEY = 'coupleflow-phase-v2';
+const CF2_QUESTIONS = [
+  'What was one good thing about today?',
+  'What is something you want to accomplish this week?',
+  'What is a small thing that made you smile recently?',
+  'What is one thing you are looking forward to?',
+  'What is something you are proud of this week?',
+  'What would make tomorrow feel like a good day?',
+  'What is one activity you would enjoy doing together?'
+];
+function cf2Local(){ try{return JSON.parse(localStorage.getItem(CF2_KEY)||'{}')}catch(_){return {}} }
+function cf2Save(){ try{localStorage.setItem(CF2_KEY,JSON.stringify(state.cf2))}catch(_){} }
+function cf2Sync(){
+  const raw=cf2Local();
+  state.cf2={...state.cf2,...raw,sharedGoals:raw.sharedGoals||[],tasks:raw.tasks||[],events:raw.events||[],lists:raw.lists||[],memories:raw.memories||[],milestones:raw.milestones||[],games:raw.games||[],achievements:raw.achievements||[],challenges:raw.challenges||[],insights:raw.insights||[]};
+  state.cf2.question=CF2_QUESTIONS[new Date().getDay()%CF2_QUESTIONS.length];
+  state.cf2.weekly=cf2BuildSummary(7); state.cf2.monthly=cf2BuildSummary(30); state.cf2.yearly=cf2BuildSummary(365);
+}
+function cf2BuildSummary(days){
+  const since=Date.now()-days*86400000;
+  const myDone=state.goals.filter(g=>g.is_done&&new Date(g.completed_at||g.created_at).getTime()>=since).length;
+  const sharedDone=state.cf2.sharedGoals.filter(g=>g.done&&new Date(g.date||0).getTime()>=since).length;
+  const memories=state.cf2.memories.filter(x=>new Date(x.date||0).getTime()>=since).length;
+  const messages=state.messages.filter(x=>new Date(x.created_at||0).getTime()>=since).length;
+  return {myDone,sharedDone,memories,messages,xp:state.cf2.xp};
+}
+function cf2Award(n,reason){state.cf2.xp=Math.max(0,state.cf2.xp+n);state.cf2.level=1+Math.floor(state.cf2.xp/500);cf2Save();showToast(`${reason} +${n} XP ✨`)}
+function cf2Achievement(key,title,emoji='🏆'){
+  if(state.cf2.achievements.some(x=>x.key===key))return;
+  state.cf2.achievements.push({key,title,emoji,date:new Date().toISOString()});cf2Award(50,title);cf2Save();
+}
+function cf2Open(title,body){state.cf2FormTitle=title;state.cf2FormBody=body;setState({modal:'cf2-form'})}
+function cf2Input(id,placeholder,extra=''){return `<input id="${id}" class="input" placeholder="${placeholder}" ${extra}>`}
+function cf2ListItems(items,empty='Nothing here yet.') { return items.length?`<div class="cf2-list">${items.map((x,i)=>`<div class="cf2-row"><span>${escapeHtml(x.emoji||'✨')}</span><div style="flex:1"><div style="font-weight:700;font-size:13px;${x.done?'text-decoration:line-through;color:var(--ink-faint)':''}">${escapeHtml(x.title||x.text||x.name||'Untitled')}</div><div class="cf2-mini">${escapeHtml(x.sub||x.date||'')}</div></div>${x.done?'✓':`<button class="cf2-pill-btn" data-action="cf2-done" data-index="${i}">Done</button>`}</div>`).join('')}</div>`:`<div class="cf2-empty">${empty}</div>`}
+function cf2FormBody(type){
+  if(type==='question') return `<div class="cf2-hero"><div style="font-size:11px;font-weight:800">TODAY'S QUESTION</div><div style="font-size:18px;font-weight:800;margin-top:8px">${escapeHtml(state.cf2.question)}</div></div>${cf2Input('cf2-answer','Your answer…','maxlength="300"')}<button class="btn-primary" data-action="cf2-submit-question">Save answer</button>`;
+  if(type==='mood') return `<div class="cf2-grid">${['😊','🙂','😐','😕','😴','🤩'].map(e=>`<button class="cf2-card" data-action="cf2-set-mood" data-mood="${e}"><div class="cf2-icon">${e}</div><div class="cf2-title">${e}</div></button>`).join('')}</div><div class="cf2-empty">Your check-in is private unless you choose to share it.</div>`;
+  if(type==='appreciation') return `<div class="muted" style="font-size:12px;margin-bottom:8px">Write something kind you appreciate.</div>${cf2Input('cf2-appreciation','A small thing I appreciate…','maxlength="300"')}<button class="btn-primary" data-action="cf2-submit-appreciation">Send appreciation 💌</button>`;
+  if(type==='shared-goal') return `${cf2Input('cf2-shared-title','Shared goal title…','maxlength="80"')}${cf2Input('cf2-shared-date','Target date','type="date"')}<button class="btn-primary" data-action="cf2-submit-shared-goal">Create shared goal 🎯</button>${cf2ListItems(state.cf2.sharedGoals)}`;
+  if(type==='calendar') return `${cf2Input('cf2-event-title','Plan title…')}${cf2Input('cf2-event-date','Date','type="date"')}${cf2Input('cf2-event-location','Location (optional)')}<button class="btn-primary" data-action="cf2-submit-event">Add plan 🗓️</button>${cf2ListItems(state.cf2.events,'No shared plans yet.')}`;
+  if(type==='list') return `${cf2Input('cf2-list-title','List item…')}${cf2Input('cf2-list-name','List name (e.g. Bucket List)')}<button class="btn-primary" data-action="cf2-submit-list">Add to list 📝</button>${cf2ListItems(state.cf2.lists,'Your shared list is empty.')}`;
+  if(type==='memory') return `${cf2Input('cf2-memory-title','Memory title…')}${cf2Input('cf2-memory-date','Date','type="date"')}${cf2Input('cf2-memory-note','Caption…') }<button class="btn-primary" data-action="cf2-submit-memory">Save memory 📸</button>${cf2ListItems(state.cf2.memories,'No memories added here yet.')}`;
+  if(type==='milestone') return `${cf2Input('cf2-milestone-title','Milestone…')}${cf2Input('cf2-milestone-date','Date','type="date"')}<button class="btn-primary" data-action="cf2-submit-milestone">Save milestone 🏆</button>${cf2ListItems(state.cf2.milestones,'No milestones yet.')}`;
+  if(type==='game') return `<div class="cf2-grid"><button class="cf2-card" data-action="cf2-game-start" data-game="trivia"><div class="cf2-icon">🧠</div><div class="cf2-title">Quick Trivia</div></button><button class="cf2-card" data-action="cf2-game-start" data-game="choice"><div class="cf2-icon">🤔</div><div class="cf2-title">This or That</div></button><button class="cf2-card" data-action="cf2-game-start" data-game="guess"><div class="cf2-icon">🎯</div><div class="cf2-title">Guess My Answer</div></button></div><div class="cf2-empty">Games are designed as light, cooperative activities — no relationship score.</div>${cf2ListItems(state.cf2.games,'No games played yet.')}`;
+  if(type==='challenge') return `${cf2Input('cf2-challenge-title','Challenge…')}${cf2Input('cf2-challenge-xp','XP reward','type="number" min="10" max="500" value="50"')}<button class="btn-primary" data-action="cf2-submit-challenge">Create challenge 🔥</button>${cf2ListItems(state.cf2.challenges,'No active challenges.')}`;
+  if(type==='pet') return `<div class="cf2-hero" style="text-align:center"><div style="font-size:64px" class="cf2-float">🐰</div><div style="font-size:20px;font-weight:800">${escapeHtml(state.cf2.pet.name)}</div><div class="cf2-mini">Level ${1+Math.floor(state.cf2.pet.xp/100)} • Happiness ${state.cf2.pet.happiness}% • Energy ${state.cf2.pet.energy}%</div></div><button class="btn-primary" data-action="cf2-pet-feed">🍎 Care for ${escapeHtml(state.cf2.pet.name)}</button>`;
+  if(type==='smart') return `${cf2Input('cf2-smart-goal','Goal you want to break down…','maxlength="100"')}${cf2Input('cf2-smart-days','Number of days','type="number" min="2" max="30" value="7"')}<button class="btn-primary" data-action="cf2-submit-smart">Build my plan 🪄</button><div id="cf2-smart-result" class="cf2-empty">Your plan will appear here.</div>`;
+  if(type==='streak') {const dates=state.goals.filter(g=>g.is_done&&g.completed_at).map(g=>new Date(g.completed_at).toDateString());let streak=0,d=new Date();while(dates.includes(d.toDateString())){streak++;d.setDate(d.getDate()-1)}return `<div class="cf2-hero"><div class="cf2-stat">${streak} days</div><div class="cf2-mini">Current goal streak</div></div><div class="cf2-empty">Complete at least one goal each day to keep your streak moving.</div>`;}
+  if(type==='summary') {const w=state.cf2.weekly;return `<div class="cf2-grid"><div class="cf2-card"><div class="cf2-stat">${w.myDone}</div><div class="cf2-mini">Goals done</div></div><div class="cf2-card"><div class="cf2-stat">${w.sharedDone}</div><div class="cf2-mini">Shared done</div></div><div class="cf2-card"><div class="cf2-stat">${w.memories}</div><div class="cf2-mini">Memories</div></div><div class="cf2-card"><div class="cf2-stat">${w.messages}</div><div class="cf2-mini">Messages</div></div></div><div class="cf2-hero" style="margin-top:12px"><b>Your week in one line</b><div class="muted" style="font-size:12px;margin-top:6px">You completed ${w.myDone} personal goals and ${w.sharedDone} shared goals. Keep building small wins together.</div></div>`;}
+  if(type==='wrapped') {const m=state.cf2.monthly,y=state.cf2.yearly;return `<div class="cf2-section">This month</div><div class="cf2-grid"><div class="cf2-card"><div class="cf2-stat">${m.myDone}</div><div class="cf2-mini">Goals</div></div><div class="cf2-card"><div class="cf2-stat">${m.memories}</div><div class="cf2-mini">Memories</div></div></div><div class="cf2-section">This year</div><div class="cf2-grid"><div class="cf2-card"><div class="cf2-stat">${y.myDone}</div><div class="cf2-mini">Goals</div></div><div class="cf2-card"><div class="cf2-stat">${y.xp}</div><div class="cf2-mini">XP</div></div></div>`;}
+  if(type==='insights') {const w=state.cf2.weekly;return `<div class="cf2-list"><div class="cf2-row">📚 <div><b>Progress pattern</b><div class="cf2-mini">${w.myDone} personal goals completed this week.</div></div></div><div class="cf2-row">🫶 <div><b>Connection activity</b><div class="cf2-mini">${w.messages} messages and ${w.memories} memories counted in the last 7 days.</div></div></div><div class="cf2-row">🌱 <div><b>Next step</b><div class="cf2-mini">Pick one small shared goal and finish it together.</div></div></div></div>`;}
+  if(type==='xp') return `<div class="cf2-hero"><div class="cf2-stat">${state.cf2.xp} XP</div><div class="cf2-mini">Level ${state.cf2.level}</div></div><div class="cf2-section">Achievements</div>${state.cf2.achievements.length?cf2ListItems(state.cf2.achievements,''):'<div class="cf2-empty">Complete goals, challenges and couple activities to unlock achievements.</div>'}`;
+  return '';
+}
+function cf2OpenType(type,title){cf2Sync();cf2Open(title,cf2FormBody(type));}
+function cf2Reopen(type,title){setTimeout(()=>cf2OpenType(type,title),0)}
+function cf2HandleDone(i){const maps=['sharedGoals','tasks','events','lists','memories','milestones','games','challenges'];for(const k of maps){if(state.cf2[k]?.[i]){state.cf2[k][i].done=true;break}}cf2Award(25,'Completed');cf2Save();render();}
+async function cf2Remote(table,payload){try{if(!state.coupleId)return false;const {error}=await supabase.from(table).insert(payload);return !error}catch(_){return false}}
+async function cf2HydrateRemote(){
+  if(!state.coupleId) return;
+  const q=async(table,column='couple_id')=>{try{const {data,error}=await supabase.from(table).select('*').eq(column,state.coupleId).order('created_at',{ascending:false});return error?null:data}catch(_){return null}};
+  const [sg,ev,mem,mil,games,challenges,xp,pet]=await Promise.all([
+    q('shared_goals'),q('couple_events'),q('memories'),q('milestones'),q('games'),q('couple_challenges'),q('couple_xp'),q('couple_pet')
+  ]);
+  if(sg) state.cf2.sharedGoals=sg.map(x=>({id:x.id,title:x.title,date:x.target_date||x.start_date||'',done:x.completed||false,emoji:'🎯'}));
+  if(ev) state.cf2.events=ev.map(x=>({id:x.id,title:x.title,date:x.event_date||'',sub:x.location||'',done:false,emoji:'🗓️'}));
+  if(mem) state.cf2.memories=mem.map(x=>({id:x.id,title:x.title||'Memory',date:x.memory_date||'',sub:x.caption||'',done:false,emoji:'📸'}));
+  if(mil) state.cf2.milestones=mil.map(x=>({id:x.id,title:x.title,date:x.milestone_date||'',sub:x.description||'',done:false,emoji:x.emoji||'🏆'}));
+  if(games) state.cf2.games=games.map(x=>({id:x.id,title:x.game_type,sub:x.status||'',done:x.status==='completed',emoji:'🎮'}));
+  if(challenges) state.cf2.challenges=challenges.map(x=>({id:x.id,title:x.title,sub:(x.xp_reward||0)+' XP',done:x.completed,emoji:'🔥'}));
+  if(xp?.length) state.cf2.xp=xp.reduce((n,x)=>n+(x.xp||0),0);
+  if(pet?.[0]) state.cf2.pet={...state.cf2.pet,name:pet[0].pet_name||'Mochi',xp:pet[0].xp||0,happiness:pet[0].happiness??50,energy:pet[0].energy??50};
+  state.cf2.level=1+Math.floor(state.cf2.xp/500);cf2Save();render();
+}
+function cf2ExportedActivity(){cf2Sync();return state.cf2}
+
 /* ============================================================ */
 /* Render: shell                                                 */
 /* ============================================================ */
@@ -1617,6 +1725,7 @@ function renderTogether(){
     <div style="padding:6px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🫶 Together</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">${state.partnerUser ? 'You and '+escapeHtml(state.partnerUser.name) : 'Connect with your partner to see this fill in'}</p>
+      <button class="btn-primary cf2-pop" style="margin-bottom:14px;" data-action="open-cf2">✨ Open CoupleFlow Hub</button>
 
       <div class="glass glass-strong" style="padding:22px; margin-bottom:16px;">
         <div style="display:flex; justify-content:space-around; margin-bottom:16px;">
@@ -1746,6 +1855,61 @@ function renderModal(){
       </div>
     </div>`;
 
+
+  if(state.modal === 'cf2') return `
+    <div class="modal-overlay" data-action="close-modal">
+      <div class="modal-sheet cf2-modal">
+        <div class="drag-handle"></div>
+        ${modalHeader('✨ CoupleFlow Hub', null)}
+        <div class="cf2-hero cf2-pop">
+          <div style="font-size:12px;font-weight:700;color:var(--purple-deep);">BUILD • CONNECT • GROW</div>
+          <div style="font-family:'Plus Jakarta Sans';font-size:23px;font-weight:800;margin-top:4px;">Your life + your relationship</div>
+          <div class="muted" style="font-size:12px;margin-top:5px;">Everything from Goals 2.0 through CoupleFlow Wrapped.</div>
+        </div>
+
+        <div class="cf2-section">Daily connection</div>
+        <div class="cf2-grid">
+          <button class="cf2-card" data-action="cf2-question"><div class="cf2-icon">💭</div><div class="cf2-title">Daily Question</div><div class="cf2-sub">Answer privately, then reveal together.</div></button>
+          <button class="cf2-card" data-action="cf2-mood"><div class="cf2-icon">🌤️</div><div class="cf2-title">Mood Check-in</div><div class="cf2-sub">Share how today feels.</div></button>
+          <button class="cf2-card" data-action="cf2-appreciation"><div class="cf2-icon">💌</div><div class="cf2-title">Appreciation</div><div class="cf2-sub">Leave a kind note.</div></button>
+          <button class="cf2-card" data-action="cf2-thinking"><div class="cf2-icon">🫶</div><div class="cf2-title">Thinking of You</div><div class="cf2-sub">Send a tiny moment.</div></button>
+        </div>
+
+        <div class="cf2-section">Build together</div>
+        <div class="cf2-grid">
+          <button class="cf2-card" data-action="cf2-shared-goal"><div class="cf2-icon">🎯</div><div class="cf2-title">Shared Goal</div><div class="cf2-sub">One goal, tasks for both.</div></button><button class="cf2-card" data-action="cf2-smart"><div class="cf2-icon">🪄</div><div class="cf2-title">Smart Planner</div><div class="cf2-sub">Turn a goal into small steps.</div></button>
+          <button class="cf2-card" data-action="cf2-calendar"><div class="cf2-icon">🗓️</div><div class="cf2-title">Shared Plans</div><div class="cf2-sub">Keep plans in one place.</div></button>
+          <button class="cf2-card" data-action="cf2-list"><div class="cf2-icon">📝</div><div class="cf2-title">Shared Lists</div><div class="cf2-sub">Bucket lists and ideas.</div></button>
+          <button class="cf2-card" data-action="cf2-memory"><div class="cf2-icon">📸</div><div class="cf2-title">Memory</div><div class="cf2-sub">Keep meaningful moments.</div></button>
+          <button class="cf2-card" data-action="cf2-milestone"><div class="cf2-icon">🏆</div><div class="cf2-title">Milestone</div><div class="cf2-sub">Mark something meaningful.</div></button>
+          <button class="cf2-card" data-action="cf2-game"><div class="cf2-icon">🎮</div><div class="cf2-title">Couple Games</div><div class="cf2-sub">Trivia, this-or-that and more.</div></button>
+        </div>
+
+        <div class="cf2-section">Progress & fun</div>
+        <div class="cf2-grid">
+          <button class="cf2-card" data-action="cf2-challenge"><div class="cf2-icon">🔥</div><div class="cf2-title">Challenge</div><div class="cf2-sub">Complete something together.</div></button>
+          <button class="cf2-card" data-action="cf2-pet"><div class="cf2-icon">🐰</div><div class="cf2-title">Virtual Pet</div><div class="cf2-sub">Grow your shared little buddy.</div></button>
+          <button class="cf2-card" data-action="cf2-summary"><div class="cf2-icon">📊</div><div class="cf2-title">Weekly Summary</div><div class="cf2-sub">See what you built this week.</div></button>
+          <button class="cf2-card" data-action="cf2-wrapped"><div class="cf2-icon">✨</div><div class="cf2-title">Wrapped</div><div class="cf2-sub">Monthly and yearly recap.</div></button>
+          <button class="cf2-card" data-action="cf2-insights"><div class="cf2-icon">🧠</div><div class="cf2-title">Insights</div><div class="cf2-sub">Activity-based patterns.</div></button>
+          <button class="cf2-card" data-action="cf2-xp"><div class="cf2-icon">⭐</div><div class="cf2-title">XP & Achievements</div><div class="cf2-sub">Celebrate progress, not comparison.</div></button><button class="cf2-card" data-action="cf2-streak"><div class="cf2-icon">🔥</div><div class="cf2-title">Goal Streaks</div><div class="cf2-sub">See your consistency.</div></button>
+        </div>
+
+        <div class="cf2-section">This week</div>
+        <div class="glass" style="padding:15px;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:end;gap:12px;"><div><div class="cf2-stat">${state.cf2.xp} XP</div><div class="cf2-mini">Level ${state.cf2.level}</div></div><div class="cf2-chip">🏆 ${state.cf2.achievements.length} achievements</div></div>
+          <div class="cf2-progress" style="margin-top:12px;--p:${Math.min(100,(state.cf2.xp%500)/5)}%"><i></i></div>
+        </div>
+        <div class="cf2-week">${['M','T','W','T','F','S','S'].map((d,i)=>`<div class="cf2-day ${i<Math.min(7,Math.floor(state.cf2.xp/50))?'done':''}">${d}</div>`).join('')}</div>
+      </div>
+    </div>`;
+
+
+  if(state.modal === 'cf2-form') return `
+    <div class="modal-overlay" data-action="close-modal"><div class="modal-sheet cf2-modal"><div class="drag-handle"></div>
+      ${modalHeader(state.cf2FormTitle || '✨ CoupleFlow','close-modal-btn')}
+      ${state.cf2FormBody || ''}
+    </div></div>`;
   if(state.modal === 'connect') return `
     <div class="modal-overlay" data-action="close-modal">
       <div class="modal-sheet">
@@ -1913,6 +2077,40 @@ document.addEventListener('click', async (e) => {
   if(action === 'copy-code'){ copyCode(); return; }
 
   if(action === 'open-add'){ setState({ modal:'addChoice' }); return; }
+
+  if(action === 'open-cf2'){ cf2Sync(); setState({modal:'cf2'}); return; }
+  if(action === 'cf2-question'){cf2OpenType('question','💭 Daily Question');return;}
+  if(action === 'cf2-mood'){cf2OpenType('mood','🌤️ Mood Check-in');return;}
+  if(action === 'cf2-appreciation'){cf2OpenType('appreciation','💌 Appreciation');return;}
+  if(action === 'cf2-thinking'){state.cf2.thinking=true;cf2Award(10,'Thinking of You');cf2Save();setState({modal:null});showToast('Thinking of you sent 🫶');return;}
+  if(action === 'cf2-shared-goal'){cf2OpenType('shared-goal','🎯 Shared Goal');return;}  if(action === 'cf2-smart'){cf2OpenType('smart','🪄 Smart Goal Planner');return;}
+  if(action === 'cf2-streak'){cf2OpenType('streak','🔥 Goal Streaks');return;}
+  if(action === 'cf2-submit-smart'){const goal=document.getElementById('cf2-smart-goal')?.value.trim();const days=Math.max(2,Math.min(30,Number(document.getElementById('cf2-smart-days')?.value||7)));if(!goal){showToast('Enter a goal first');return;}const steps=['Define the exact outcome','Choose the smallest first action','Work on it for 20–30 minutes','Review what worked','Finish or adjust the next step'];state.cf2.tasks=steps.slice(0,Math.min(steps.length,days)).map((x,i)=>({title:x+' — '+goal,sub:'Day '+(i+1),done:false,emoji:'✅'}));cf2Save();cf2Award(25,'Plan created');cf2OpenType('smart','🪄 Smart Goal Planner');return;}
+
+  if(action === 'cf2-calendar'){cf2OpenType('calendar','🗓️ Shared Plans');return;}
+  if(action === 'cf2-list'){cf2OpenType('list','📝 Shared Lists');return;}
+  if(action === 'cf2-memory'){cf2OpenType('memory','📸 Memory Timeline');return;}
+  if(action === 'cf2-milestone'){cf2OpenType('milestone','🏆 Milestones');return;}
+  if(action === 'cf2-game'){cf2OpenType('game','🎮 Couple Games');return;}
+  if(action === 'cf2-challenge'){cf2OpenType('challenge','🔥 Shared Challenge');return;}
+  if(action === 'cf2-pet'){cf2OpenType('pet','🐰 Virtual Pet');return;}
+  if(action === 'cf2-summary'){cf2OpenType('summary','📊 Weekly Summary');return;}
+  if(action === 'cf2-wrapped'){cf2OpenType('wrapped','✨ Couple Wrapped');return;}
+  if(action === 'cf2-insights'){cf2OpenType('insights','🧠 CoupleFlow Insights');return;}
+  if(action === 'cf2-xp'){cf2OpenType('xp','⭐ XP & Achievements');return;}
+  if(action === 'cf2-set-mood'){state.cf2.mood=el.getAttribute('data-mood');cf2Award(10,'Mood check-in');cf2Save();setState({modal:null});showToast('Mood saved 🌤️');return;}
+  if(action === 'cf2-submit-question'){const v=document.getElementById('cf2-answer')?.value.trim();if(!v){showToast('Write an answer first');return;}state.cf2.answer=v;cf2Award(20,'Question answered');cf2Save();setState({modal:null});showToast('Answer saved 💭');return;}
+  if(action === 'cf2-submit-appreciation'){const v=document.getElementById('cf2-appreciation')?.value.trim();if(!v){showToast('Write something first');return;}state.cf2.appreciation=v;cf2Award(20,'Appreciation');cf2Save();setState({modal:null});showToast('Appreciation saved 💌');return;}
+  if(action === 'cf2-submit-shared-goal'){const v=document.getElementById('cf2-shared-title')?.value.trim();if(!v){showToast('Name the shared goal');return;}state.cf2.sharedGoals.unshift({title:v,date:document.getElementById('cf2-shared-date')?.value||'',done:false,emoji:'🎯'});cf2Achievement('first-shared-goal','First shared goal','🎯');cf2Save();cf2Award(30,'Shared goal');cf2Reopen('shared-goal','🎯 Shared Goal');return;}
+  if(action === 'cf2-submit-event'){const v=document.getElementById('cf2-event-title')?.value.trim();if(!v){showToast('Name the plan');return;}state.cf2.events.unshift({title:v,date:document.getElementById('cf2-event-date')?.value||'',sub:document.getElementById('cf2-event-location')?.value||'',done:false,emoji:'🗓️'});cf2Award(15,'Shared plan');cf2Save();cf2Reopen('calendar','🗓️ Shared Plans');return;}
+  if(action === 'cf2-submit-list'){const v=document.getElementById('cf2-list-title')?.value.trim();if(!v){showToast('Add an item');return;}state.cf2.lists.unshift({title:v,sub:document.getElementById('cf2-list-name')?.value||'Shared List',done:false,emoji:'📝'});cf2Award(10,'Shared list');cf2Save();cf2Reopen('list','📝 Shared Lists');return;}
+  if(action === 'cf2-submit-memory'){const v=document.getElementById('cf2-memory-title')?.value.trim();if(!v){showToast('Name the memory');return;}state.cf2.memories.unshift({title:v,date:document.getElementById('cf2-memory-date')?.value||new Date().toISOString().slice(0,10),sub:document.getElementById('cf2-memory-note')?.value||'',done:false,emoji:'📸'});cf2Achievement('first-memory','First memory','📸');cf2Award(20,'Memory');cf2Save();cf2Reopen('memory','📸 Memory Timeline');return;}
+  if(action === 'cf2-submit-milestone'){const v=document.getElementById('cf2-milestone-title')?.value.trim();if(!v){showToast('Name the milestone');return;}state.cf2.milestones.unshift({title:v,date:document.getElementById('cf2-milestone-date')?.value||'',done:false,emoji:'🏆'});cf2Award(25,'Milestone');cf2Save();cf2Reopen('milestone','🏆 Milestones');return;}
+  if(action === 'cf2-game-start'){const game=el.getAttribute('data-game');const titles={trivia:'Quick Trivia',choice:'This or That',guess:'Guess My Answer'};state.cf2.games.unshift({title:titles[game]||'Couple Game',sub:'Started '+new Date().toLocaleDateString(),done:false,emoji:'🎮'});cf2Award(15,'Game started');cf2Save();showToast('Game started 🎮');cf2Reopen('game','🎮 Couple Games');return;}
+  if(action === 'cf2-submit-challenge'){const v=document.getElementById('cf2-challenge-title')?.value.trim();if(!v){showToast('Name the challenge');return;}state.cf2.challenges.unshift({title:v,sub:(document.getElementById('cf2-challenge-xp')?.value||50)+' XP',done:false,emoji:'🔥'});cf2Save();cf2Reopen('challenge','🔥 Shared Challenge');return;}
+  if(action === 'cf2-pet-feed'){state.cf2.pet.xp+=20;state.cf2.pet.happiness=Math.min(100,state.cf2.pet.happiness+5);state.cf2.pet.energy=Math.min(100,state.cf2.pet.energy+3);cf2Award(10,'Pet care');cf2Save();showToast('Mochi is happy 🐰');return;}
+  if(action === 'cf2-done'){cf2HandleDone(Number(el.getAttribute('data-index')));return;}
+
   if(action === 'open-add-goal'){ setState({ modal:'addGoal' }); return; }
   if(action === 'open-add-update'){ setState({ modal:'addUpdate', pendingPhotoFile:null }); return; }
   if(action === 'back-add-choice'){ setState({ modal:'addChoice' }); return; }
