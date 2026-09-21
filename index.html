@@ -1478,64 +1478,114 @@ function renderToday(){
   const partner = state.partnerUser;
   const pGoals = state.partnerGoals;
   const pPct = pGoals.length ? Math.round(pGoals.filter(g=>g.is_done).length/pGoals.length*100) : 0;
-
+  const c = state.cf2 || {};
   const angle = pct/100*360;
   const ringStyle = `background: conic-gradient(var(--purple) 0deg, var(--pink) ${angle}deg, var(--glass-border) ${angle}deg 360deg);`;
-
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
   const dateLine = new Date().toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
 
+  const feature = (action, icon, title, sub) => `
+    <button class="cf2-card cf2-pop" data-action="${action}" style="text-align:left;min-height:112px;">
+      <div class="cf2-icon">${icon}</div>
+      <div class="cf2-title">${title}</div>
+      <div class="cf2-sub">${sub}</div>
+    </button>`;
+
   return `
-    <div style="padding:6px 18px 30px;">
-      <div style="margin-bottom:18px;">
-        <div class="muted" style="font-size:13px; font-weight:500;">${dateLine}</div>
-        <h1 style="font-size:24px; font-weight:800; margin-top:2px; letter-spacing:-0.5px;">${greeting}, ${escapeHtml(state.currentUser.name)} ✨</h1>
+    <div style="padding:6px 18px 34px;">
+      <div style="margin-bottom:16px;">
+        <div class="muted" style="font-size:13px;font-weight:500;">${dateLine}</div>
+        <h1 style="font-size:24px;font-weight:800;margin-top:2px;letter-spacing:-.5px;">${greeting}, ${escapeHtml(state.currentUser.name)} ✨</h1>
       </div>
 
-      <div class="glass glass-strong" style="padding:24px; margin-bottom:18px; display:flex; flex-direction:column; align-items:center;">
-        <div class="muted" style="align-self:flex-start; font-size:13px; font-weight:600; margin-bottom:10px;">Today's Progress</div>
-        <div style="width:168px; height:168px; border-radius:50%; ${ringStyle} display:flex; align-items:center; justify-content:center; padding:14px;">
-          <div style="width:100%; height:100%; border-radius:50%; background:var(--solid); display:flex; flex-direction:column; align-items:center; justify-content:center;">
-            <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:36px; letter-spacing:-1px;">${pct}%</div>
-            <div class="faint" style="font-size:11px; margin-top:2px;">${done} / ${goals.length} goals</div>
+      <div class="cf2-hero cf2-pop" style="margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <div style="width:78px;height:78px;border-radius:50%;${ringStyle}display:flex;align-items:center;justify-content:center;padding:7px;flex-shrink:0;">
+            <div style="width:100%;height:100%;border-radius:50%;background:var(--solid);display:flex;flex-direction:column;align-items:center;justify-content:center;">
+              <div class="cf2-stat" style="font-size:21px;">${pct}%</div>
+              <div class="cf2-mini">${done}/${goals.length}</div>
+            </div>
           </div>
+          <div style="min-width:0;flex:1;">
+            <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--purple-deep);">Your day</div>
+            <div style="font-family:'Plus Jakarta Sans';font-size:18px;font-weight:800;margin-top:3px;">${goals.length-done} goals left</div>
+            <div class="cf2-sub">Keep moving — every small win counts.</div>
+          </div>
+          <button class="round-btn" data-action="open-add-goal" aria-label="Add goal">＋</button>
         </div>
       </div>
 
-      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-        <h3 style="font-size:16px; font-weight:700;">🎯 Today's Goals</h3>
-        <span class="faint" style="font-size:12px; font-weight:600;">${goals.length - done} left</span>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <button class="cf2-chip" style="flex:1;justify-content:center;" data-action="cf2-thinking">🫶 Thinking of You</button>
+        <button class="cf2-chip" style="flex:1;justify-content:center;" data-action="open-add-update">📸 Share Moment</button>
       </div>
-      ${goals.length===0
-        ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing planned yet</div><div style="font-size:13px;">Add something you want to accomplish today.</div></div>`
-        : goals.map(renderGoalCard).join('')}
 
-      <h3 style="font-size:16px; font-weight:700; margin:22px 0 10px;">🫶 Their Day</h3>
+      <div class="cf2-section" style="margin-top:4px;">🎯 Today's Goals</div>
+      ${goals.length===0
+        ? `<div class="glass cf2-empty">🌱 Nothing planned yet. Add your first goal above.</div>`
+        : `<div class="cf2-list">${goals.slice(0,4).map(renderGoalCard).join('')}</div>${goals.length>4 ? `<button class="btn-secondary" style="margin-top:8px;" data-action="nav-goals">View all ${goals.length} goals →</button>` : ''}`}
+
+      <div class="cf2-section">💜 Daily Connection</div>
+      <div class="cf2-grid">
+        ${feature('cf2-question','💭','Daily Question',c.answer?'Answered today':'Answer privately, then reveal together')}
+        ${feature('cf2-mood','🌤️','Mood Check-in',c.mood?`Today: ${escapeHtml(c.mood)}`:'Share how today feels')}
+        ${feature('cf2-appreciation','💌','Appreciation',c.appreciation?'Sent today':'Leave a kind note')}
+        ${feature('cf2-thinking','🫶','Thinking of You',c.thinking?'Sent today':'Send a tiny moment')}
+      </div>
+
+      <div class="cf2-section">🤝 Build Together</div>
+      <div class="cf2-grid">
+        ${feature('cf2-shared-goal','🎯','Shared Goal',`${c.sharedGoals?.length||0} goals`)}
+        ${feature('cf2-smart','🪄','Smart Planner','Break a goal into steps')}
+        ${feature('cf2-calendar','🗓️','Shared Plans',`${c.events?.length||0} plans`)}
+        ${feature('cf2-list','📝','Shared Lists',`${c.lists?.length||0} items`)}
+        ${feature('cf2-memory','📸','Memories',`${c.memories?.length||0} saved`)}
+        ${feature('cf2-milestone','🏆','Milestones',`${c.milestones?.length||0} moments`)}
+        ${feature('cf2-game','🎮','Couple Games',`${c.games?.length||0} games`)}
+      </div>
+
+      <div class="cf2-section">✨ Progress & Fun</div>
+      <div class="cf2-grid">
+        ${feature('cf2-streak','🔥','Goal Streaks','See your consistency')}
+        ${feature('cf2-challenge','🚀','Challenges',`${c.challenges?.length||0} active`)}
+        ${feature('cf2-pet','🐰','Virtual Pet',`${c.pet?.name||'Mochi'} · Lv ${c.pet?.level||1}`)}
+        ${feature('cf2-xp','⭐','XP & Achievements',`${c.xp||0} XP · Lv ${c.level||1}`)}
+        ${feature('cf2-summary','📊','Weekly Summary','See what you built')}
+        ${feature('cf2-wrapped','✨','Couple Wrapped','Monthly & yearly recap')}
+        ${feature('cf2-insights','🧠','Insights','Activity-based patterns')}
+      </div>
+
+      <div class="cf2-section">🫶 Your Together Snapshot</div>
       ${!partner ? `
-        <div class="glass" style="padding:20px; text-align:center;">
-          <div style="font-size:26px; margin-bottom:8px;">🔗</div>
-          <div style="font-weight:600; font-size:14px; margin-bottom:4px;">Not connected yet</div>
-          <div class="muted" style="font-size:12.5px; margin-bottom:14px;">Share your code or enter theirs to start planning together.</div>
+        <div class="glass glass-strong" style="padding:20px;text-align:center;">
+          <div style="font-size:28px;margin-bottom:7px;">🔗</div>
+          <div style="font-weight:800;font-size:14px;">Connect your partner</div>
+          <div class="muted" style="font-size:12px;margin:5px 0 14px;">Unlock the shared side of your dashboard.</div>
           <button class="btn-primary" data-action="open-connect">Connect with your partner</button>
         </div>
       ` : `
-        <div class="glass" style="padding:16px;">
-          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-            <div class="avatar" style="width:40px; height:40px; background:linear-gradient(135deg,var(--pink),var(--purple));">${initials(partner.name)}</div>
-            <div style="flex:1; min-width:0;">
-              <div style="font-size:14px; font-weight:700;">${escapeHtml(partner.name)}</div>
-              <div class="muted" style="font-size:12px;">${pPct}% complete</div>
+        <div class="glass glass-strong" style="padding:16px;">
+          <div style="display:flex;align-items:center;gap:11px;">
+            <div class="avatar" style="width:42px;height:42px;background:linear-gradient(135deg,var(--pink),var(--purple));">${initials(partner.name)}</div>
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:14px;font-weight:800;">${escapeHtml(partner.name)}</div>
+              <div class="muted" style="font-size:11.5px;">${pPct}% of their goals complete</div>
             </div>
-            <div style="width:46px; height:6px; border-radius:999px; background:var(--glass-border); overflow:hidden;">
-              <div style="width:${pPct}%; height:100%; background:linear-gradient(90deg,var(--pink),var(--purple)); border-radius:999px;"></div>
-            </div>
+            <div class="cf2-chip">💜 ${c.xp||0} XP</div>
           </div>
-          ${pGoals.length===0
-            ? `<div class="faint" style="font-size:12.5px;">No shared goals visible yet.</div>`
-            : pGoals.map(renderPartnerGoalRow).join('')}
+          <div class="cf2-progress" style="margin-top:12px;--p:${pPct}%"><i></i></div>
         </div>
       `}
+
+      <div class="cf2-section">📈 This Week</div>
+      <div class="glass" style="padding:16px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:end;gap:12px;">
+          <div><div class="cf2-stat">${c.xp||0} XP</div><div class="cf2-mini">Level ${c.level||1} · ${c.achievements?.length||0} achievements</div></div>
+          <button class="cf2-chip" data-action="cf2-summary">View summary →</button>
+        </div>
+        <div class="cf2-progress" style="margin-top:12px;--p:${Math.min(100,((c.xp||0)%500)/5)}%"><i></i></div>
+      </div>
     </div>`;
 }
 
@@ -2078,6 +2128,7 @@ document.addEventListener('click', async (e) => {
 
   if(action === 'open-add'){ setState({ modal:'addChoice' }); return; }
 
+  if(action === 'nav-goals'){ setState({activeTab:'goals', modal:null}); return; }
   if(action === 'open-cf2'){ cf2Sync(); setState({modal:'cf2'}); return; }
   if(action === 'cf2-question'){cf2OpenType('question','💭 Daily Question');return;}
   if(action === 'cf2-mood'){cf2OpenType('mood','🌤️ Mood Check-in');return;}
