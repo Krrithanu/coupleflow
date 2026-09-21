@@ -8,16 +8,12 @@
 <link rel="manifest" href="/manifest.json">
 
 <meta name="theme-color" content="#8b5cf6">
-
-<!-- Android / general PWA -->
 <meta name="mobile-web-app-capable" content="yes">
-
-<!-- iOS -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CoupleFlow">
-
 <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
@@ -38,8 +34,6 @@
     --nav-bg: rgba(255,255,255,0.75);
     --shadow: 0 20px 45px -20px rgba(118,87,224,0.28);
     --shadow-soft: 0 10px 30px -14px rgba(118,87,224,0.22);
-    --keyboard-offset: 0px;
-    --chat-composer-bottom: calc(8px + env(safe-area-inset-bottom));
   }
   [data-theme="dark"]{
     --bg-grad: linear-gradient(160deg, #191529 0%, #1E1726 48%, #161A26 100%);
@@ -63,15 +57,17 @@
   *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   @media (prefers-reduced-motion: reduce){ *{ transition:none!important; animation:none!important; } }
 
-  html{ min-height:100%; }
-  html,body{ margin:0; font-family:'Inter',sans-serif; }
-  body{
-    min-height:100dvh;
-    background:var(--bg-grad);
+  html,body{
+    margin:0;
+    width:100%;
+    font-family:'Inter',sans-serif;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
+    overscroll-behavior-y:none;
   }
+  body{ min-height:100dvh; background:var(--bg-grad); }
+  input,select,textarea{ font-size:16px; }
 
-  /* Full responsive page — no phone mockup. Content centers in a
-     readable column on wide screens, fills the width on mobile. */
   #app{
     position:relative;
     width:100%;
@@ -86,12 +82,7 @@
   .blob-1{ top:-80px; right:-60px; width:280px; height:280px; background:color-mix(in srgb, var(--purple) 30%, transparent); }
   .blob-2{ bottom:0; left:-90px; width:260px; height:260px; background:color-mix(in srgb, var(--pink) 28%, transparent); }
 
-#screen{
-  position:relative;
-  flex:1;
-  z-index:1;
-  padding-bottom:90px;
-}
+  #screen{ position:relative; flex:1; z-index:1; padding-bottom:96px; }
 
   .glass{
     background:var(--glass); border:1px solid var(--glass-border); border-radius:26px;
@@ -101,7 +92,6 @@
 
   h1,h2,h3,.heading{ font-family:'Plus Jakarta Sans',sans-serif; color:var(--ink); margin:0; }
   p,span,div,button,input,select,textarea,label{ color:var(--ink); }
-
   .muted{ color:var(--ink-soft); }
   .faint{ color:var(--ink-faint); }
 
@@ -115,6 +105,7 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:14.5px;
     box-shadow:0 10px 24px -10px rgba(118,87,224,0.55);
   }
+  .btn-primary:disabled{ opacity:.6; }
   .btn-secondary{
     width:100%; padding:13px 0; border-radius:18px; cursor:pointer;
     border:1px solid var(--glass-border); background:var(--glass); color:var(--ink);
@@ -122,7 +113,7 @@
   }
   .input{
     width:100%; border:1px solid var(--glass-border); border-radius:16px; padding:13px 14px;
-    font-size:14px; color:var(--ink); background:var(--glass); outline:none; margin-bottom:12px;
+    font-size:16px; color:var(--ink); background:var(--glass); outline:none; margin-bottom:12px;
   }
   .input:focus{ border-color:var(--purple); }
 
@@ -144,162 +135,76 @@
 
   .checkbox-btn{
     width:30px; height:30px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
-    border:2px solid var(--ink-faint); background:transparent; transition:all .25s;
+    border:2px solid var(--ink-faint); background:transparent; transition:all .25s; color:#fff; font-size:14px;
   }
-  .checkbox-btn.done{
-    border:none; background:linear-gradient(135deg,var(--purple),var(--pink));
+  .checkbox-btn.done{ border:none; background:linear-gradient(135deg,var(--purple),var(--pink)); }
+
+  #bottomnav{
+    position:fixed; left:50%; bottom:0; transform:translateX(-50%);
+    width:min(560px,100%); display:flex; justify-content:center;
+    padding:10px 8px calc(12px + env(safe-area-inset-bottom));
+    z-index:100; pointer-events:none;
   }
-
- #bottomnav{
-  position:fixed;
-  left:50%;
-  bottom:0;
-  transform:translateX(-50%);
-  width:min(560px, 100%);
-  display:flex;
-  justify-content:center;
-  padding:10px 8px calc(14px + env(safe-area-inset-bottom));
-  z-index:100;
-  pointer-events:none;
-}
-
-#navbar{
-  width:100%;
-  max-width:560px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:2px;
-  padding:8px 8px;
-  background:var(--nav-bg);
-  border-radius:26px;
-  backdrop-filter:blur(20px);
-  -webkit-backdrop-filter:blur(20px);
-  border:1px solid var(--glass-border);
-  box-shadow:var(--shadow);
-  pointer-events:auto;
-}
-  
+  #navbar{
+    width:100%; max-width:560px; display:flex; align-items:center; justify-content:space-between;
+    gap:2px; padding:8px; background:var(--nav-bg); border-radius:26px;
+    backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border); box-shadow:var(--shadow); pointer-events:auto;
+  }
   .navitem{
-  flex:1;
-  min-width:0;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  gap:2px;
-  padding:6px 4px;
-  border-radius:16px;
-  border:none;
-  background:transparent;
-}
-
+    flex:1; min-width:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; padding:6px 4px; border-radius:16px; border:none; background:transparent;
+  }
   .navitem.active{ background:color-mix(in srgb, var(--purple) 14%, transparent); }
   .navitem .ic{ font-size:17px; line-height:1; }
   .navitem .lb{ font-size:9px; font-weight:600; color:var(--ink-faint); }
   .navitem.active .lb{ color:var(--purple-deep); }
 
-  .chat-menu-wrap{ position:relative; }
-  .chat-menu-panel{
-    position:absolute; right:0; top:calc(100% + 10px); min-width:180px;
-    background:var(--solid); border:1px solid var(--glass-border); border-radius:18px;
-    box-shadow:var(--shadow-soft); overflow:hidden; z-index:20;
-  }
-  .chat-menu-item{
-    width:100%; padding:12px 14px; border:none; background:transparent; text-align:left;
-    font-size:13px; font-weight:600; color:var(--ink); border-bottom:1px solid rgba(255,255,255,0.08);
-  }
-  .chat-menu-item:last-child{ border-bottom:none; }
-
   #fab{
-    width:44px; height:44px; border-radius:50%; border:none; margin:0 2px;
+    width:44px; height:44px; border-radius:50%; border:none; margin:0 2px; flex-shrink:0;
     background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; font-size:20px;
     display:flex; align-items:center; justify-content:center;
-    box-shadow:0 10px 22px -8px rgba(118,87,224,0.6); flex-shrink:0;
+    box-shadow:0 10px 22px -8px rgba(118,87,224,0.6);
   }
 
   .topbar{
-    position:sticky; top:0; left:0; right:0; display:flex; align-items:center; justify-content:space-between;
-    padding:calc(16px + env(safe-area-inset-top)) 18px 16px; z-index:20;
-    background:linear-gradient(180deg, var(--bg-grad) 60%, transparent);
+    position:sticky; top:0; display:flex; align-items:center; justify-content:space-between;
+    padding:calc(14px + env(safe-area-inset-top)) 18px 14px; z-index:20;
+    background:linear-gradient(180deg, var(--bg-grad) 62%, transparent);
   }
   .round-btn{
-    width:36px; height:36px; border-radius:50%; border:1px solid var(--glass-border);
-    background:var(--glass); backdrop-filter:blur(12px); display:flex; align-items:center; justify-content:center;
-    font-size:15px;
+    width:36px; height:36px; border-radius:50%; border:1px solid var(--glass-border); flex-shrink:0;
+    background:var(--glass); backdrop-filter:blur(12px);
+    display:flex; align-items:center; justify-content:center; font-size:15px;
   }
 
- .modal-overlay{
-  position:fixed;
-  inset:0;
-  z-index:9999;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  background:rgba(20,15,35,0.35);
-  backdrop-filter:blur(4px);
-  -webkit-backdrop-filter:blur(4px);
-}
-
-.modal-sheet{
-  position:relative;
-  z-index:10000;
-
-  box-sizing:border-box;
-
-  width:100%;
-  max-width:430px;
-  margin:0 auto;
-
-  background:var(--solid);
-
-  border-radius:28px 28px 0 0;
-
-  padding:
-    12px
-    20px
-    max(40px, calc(40px + env(safe-area-inset-bottom)));
-
-  box-shadow:0 -8px 35px rgba(30,20,50,0.15);
-
-  max-height:90dvh;
-
-  overflow-y:auto;
-
-  pointer-events:auto;
-
-  -webkit-overflow-scrolling:touch;
-}
-
-.modal-sheet button,
-.modal-sheet input,
-.modal-sheet select,
-.modal-sheet textarea,
-.modal-sheet label{
-  position:relative;
-  z-index:10001;
-}
-
-.modal-sheet button,
-.modal-sheet input,
-.modal-sheet select,
-.modal-sheet textarea,
-.modal-sheet label{
-  position:relative;
-  z-index:10001;
-}
+  .modal-overlay{
+    position:fixed; inset:0; z-index:9999; display:flex; align-items:flex-end; justify-content:center;
+    background:rgba(20,15,35,0.38); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px);
+    animation: fadeIn .16s ease;
+  }
+  @keyframes fadeIn{ from{opacity:0} to{opacity:1} }
+  .modal-sheet{
+    position:relative; z-index:10000; box-sizing:border-box;
+    width:100%; max-width:430px; margin:0 auto; background:var(--solid);
+    border-radius:28px 28px 0 0;
+    padding:12px 20px max(32px, calc(32px + env(safe-area-inset-bottom)));
+    box-shadow:0 -8px 35px rgba(30,20,50,0.15);
+    max-height:90dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    animation: sheetUp .22s cubic-bezier(.2,.8,.3,1);
+  }
+  @keyframes sheetUp{ from{ transform:translateY(24px); opacity:.6 } to{ transform:translateY(0); opacity:1 } }
   .drag-handle{ width:40px; height:4px; border-radius:999px; background:var(--glass-border); margin:6px auto 18px; }
 
   .photo-placeholder{
     width:100%; height:130px; border-radius:18px; margin-bottom:12px;
     background:linear-gradient(135deg,color-mix(in srgb, var(--purple) 20%, transparent),color-mix(in srgb, var(--pink) 18%, transparent));
     border:1.5px dashed var(--ink-faint);
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
-    font-size:26px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; font-size:26px;
   }
   .photo-note{ font-size:11px; color:var(--ink-faint); text-align:center; }
 
-  .empty-state{ text-align:center; padding:50px 20px; color:var(--ink-soft); }
+  .empty-state{ text-align:center; padding:46px 20px; color:var(--ink-soft); }
   .empty-state .em{ font-size:34px; margin-bottom:10px; }
 
   .code-display{
@@ -307,9 +212,8 @@
     text-align:center; color:var(--purple-deep); padding:18px 0;
   }
 
-  .auth-tabs{ display:flex; gap:8px; margin-bottom:18px; }
   .auth-tab{
-    flex:1; padding:10px 0; border-radius:14px; border:1px solid var(--glass-border);
+    padding:10px 0; border-radius:14px; border:1px solid var(--glass-border);
     background:var(--glass); font-weight:600; font-size:13px; color:var(--ink-soft);
   }
   .auth-tab.active{ background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff; border:none; }
@@ -322,224 +226,218 @@
     font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; flex-shrink:0;
   }
 
-  /* =========================================================
-     /* =========================================================
-   CHAT — clean single-source layout
-   ========================================================= */
-#app.chat-mode{ height:100dvh; overflow:hidden; }
-#app.chat-mode #screen{ display:flex; flex-direction:column; overflow:hidden; height:100dvh; padding-bottom:0; }
+  .toast{
+    position:fixed; left:50%; bottom:calc(104px + env(safe-area-inset-bottom));
+    transform:translateX(-50%); z-index:12000;
+    background:var(--ink); color:var(--solid);
+    padding:11px 18px; border-radius:999px; font-size:13px; font-weight:600;
+    box-shadow:0 10px 30px rgba(20,12,40,.3);
+    animation: toastIn .2s ease;
+  }
+  @keyframes toastIn{ from{ opacity:0; transform:translate(-50%,8px) } to{ opacity:1; transform:translate(-50%,0) } }
 
-.chat-screen{
-  flex:1 1 auto;
-  min-height:0;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  background:
-    radial-gradient(circle at 15% 8%, color-mix(in srgb, var(--purple) 10%, transparent), transparent 40%),
-    radial-gradient(circle at 85% 92%, color-mix(in srgb, var(--pink) 10%, transparent), transparent 40%),
-    var(--bg-grad);
-}
+  /* ============ CHAT ============ */
+  #app.chat-mode{ height:100dvh; overflow:hidden; }
+  #app.chat-mode #screen{ display:flex; flex-direction:column; overflow:hidden; height:100dvh; padding-bottom:0; }
 
-.chat-header{
-  flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  padding:calc(10px + env(safe-area-inset-top)) 14px 12px;
-  background:var(--glass-strong);
-  border-bottom:1px solid var(--glass-border);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-}
+  .chat-screen{
+    flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden;
+    background:
+      radial-gradient(circle at 15% 8%, color-mix(in srgb, var(--purple) 10%, transparent), transparent 42%),
+      radial-gradient(circle at 85% 92%, color-mix(in srgb, var(--pink) 10%, transparent), transparent 42%),
+      var(--bg-grad);
+  }
 
-.chat-avatar{
-  width:38px; height:38px; border-radius:50%; flex:0 0 38px;
-  display:flex; align-items:center; justify-content:center;
-  background:linear-gradient(135deg,var(--purple),var(--pink));
-  color:#fff; font-size:14px; font-weight:800;
-}
+  .chat-header{
+    flex:0 0 auto; display:flex; align-items:center; gap:10px;
+    padding:calc(10px + env(safe-area-inset-top)) 12px 11px;
+    background:var(--glass-strong); border-bottom:1px solid var(--glass-border);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  }
+  .chat-avatar{
+    width:38px; height:38px; border-radius:50%; flex:0 0 38px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    color:#fff; font-size:14px; font-weight:800;
+  }
+  .chat-header-info{ min-width:0; flex:1; }
+  .chat-header-name{ font-size:15px; font-weight:800; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chat-header-status{ font-size:11px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
-.chat-header-info{ min-width:0; flex:1; }
-.chat-header-name{ font-size:15px; font-weight:800; line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.chat-header-status{ font-size:11px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .chat-menu-wrap{ position:relative; }
+  .chat-menu-panel{
+    position:absolute; right:0; top:calc(100% + 10px); min-width:170px;
+    background:var(--solid); border:1px solid var(--glass-border); border-radius:16px;
+    box-shadow:var(--shadow); overflow:hidden; z-index:40;
+  }
+  .chat-menu-item{
+    width:100%; padding:12px 14px; border:none; background:transparent; text-align:left;
+    font-size:13px; font-weight:600; color:var(--ink);
+    border-bottom:1px solid color-mix(in srgb, var(--ink-faint) 18%, transparent);
+  }
+  .chat-menu-item:last-child{ border-bottom:none; }
 
-#chat-list{
-  flex:1 1 auto;
-  min-height:0;
-  overflow-y:auto;
-  overflow-x:hidden;
-  padding:14px 12px;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior:contain;
-  scrollbar-width:none;
-}
-#chat-list::-webkit-scrollbar{ display:none; width:0; }
+   #chat-list{
+    flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden;
+    padding:14px 12px; -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain; scrollbar-width:none;
+    display:flex; flex-direction:column;
+  }
+  /* pushes a short conversation down so it sits just above the composer,
+     while still scrolling normally once it overflows */
+  #chat-inner{ margin-top:auto; width:100%; }
+  #chat-list::-webkit-scrollbar{ display:none; width:0; }
 
-.chat-msg{ display:flex; width:100%; margin:2px 0; }
-.chat-msg.mine{ justify-content:flex-end; }
-.chat-msg.theirs{ justify-content:flex-start; }
-.chat-msg > div{ max-width:75%; min-width:0; }
+  .chat-date-sep{ display:flex; justify-content:center; margin:14px 0 10px; }
+  .chat-date-sep span{
+    font-size:11px; font-weight:600; color:var(--ink-soft);
+    background:var(--glass); padding:4px 12px; border-radius:999px; border:1px solid var(--glass-border);
+  }
 
-.chat-bubble{
-  display:inline-block;
-  padding:8px 12px;
-  border-radius:16px;
-  font-size:14.5px;
-  line-height:1.4;
-  word-break:break-word;
-  white-space:pre-wrap;
-  box-shadow:0 1px 2px rgba(30,20,50,0.06);
-}
-.chat-msg.mine .chat-bubble{
-  background:linear-gradient(135deg,var(--purple),var(--pink));
-  color:#fff;
-  border-bottom-right-radius:4px;
-}
-.chat-msg.theirs .chat-bubble{
-  background:var(--solid);
-  color:var(--ink);
-  border:1px solid var(--glass-border);
-  border-bottom-left-radius:4px;
-}
+  .chat-msg{ display:flex; width:100%; align-items:flex-end; gap:6px; margin:1px 0; }
+  .chat-msg.group-start{ margin-top:10px; }
+  .chat-msg.mine{ justify-content:flex-end; }
+  .chat-msg.theirs{ justify-content:flex-start; }
 
-.chat-time{ font-size:10px; color:var(--ink-faint); margin-top:2px; padding:0 4px; }
-.chat-msg.mine .chat-time{ text-align:right; }
+  .chat-bubble-wrap{ max-width:76%; min-width:0; display:flex; flex-direction:column; }
+  .chat-msg.mine .chat-bubble-wrap{ align-items:flex-end; }
+  .chat-msg.theirs .chat-bubble-wrap{ align-items:flex-start; }
 
-.chat-empty-content{ min-height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; }
-.typing-indicator{ flex:0 0 auto; font-size:11px; color:var(--ink-faint); font-style:italic; padding:2px 16px 4px; }
+  .chat-avatar-sm{
+    width:24px; height:24px; border-radius:50%; flex:0 0 24px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--pink),var(--purple));
+    color:#fff; font-size:10px; font-weight:800;
+  }
 
-#chat-input-bar{
-  flex:0 0 auto;
-  display:flex;
-  align-items:flex-end;
-  gap:8px;
-  width:100%;
-  box-sizing:border-box;
-  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-  background:var(--glass-strong);
-  border-top:1px solid var(--glass-border);
-  backdrop-filter:blur(18px);
-  -webkit-backdrop-filter:blur(18px);
-}
+  .chat-bubble{
+    display:inline-block; max-width:100%; box-sizing:border-box;
+    padding:10px 14px; border-radius:20px;
+    font-size:14.5px; line-height:1.42;
+    word-break:break-word; white-space:pre-wrap;
+    box-shadow:0 1px 3px rgba(30,20,50,0.07);
+    animation: bubbleIn .18s ease;
+  }
+  /* tail only on the last bubble of a group */
+  .chat-msg.tail.mine .chat-bubble{ border-bottom-right-radius:6px; }
+  .chat-msg.tail.theirs .chat-bubble{ border-bottom-left-radius:6px; }
 
-#chat-input{
-  flex:1 1 auto;
-  min-width:0;
-  min-height:42px;
-  max-height:110px;
-  box-sizing:border-box;
-  padding:11px 16px;
-  border:1px solid var(--glass-border);
-  border-radius:21px;
-  outline:none;
-  resize:none;
-  background:var(--solid);
-  color:var(--ink);
-  font-family:'Inter',sans-serif;
-  font-size:16px;
-  line-height:1.35;
-  -webkit-appearance:none;
-  appearance:none;
-}
-#chat-input:focus{ border-color:rgba(155,135,245,.5); }
+  @keyframes bubbleIn{ from{ opacity:0; transform:translateY(4px) } to{ opacity:1; transform:translateY(0) } }
+    .chat-msg.mine .chat-bubble{
+    background:linear-gradient(135deg,var(--purple),var(--pink)); color:#fff;
+  }
+  .chat-msg.theirs .chat-bubble{
+    background:var(--solid); color:var(--ink); border:1px solid var(--glass-border);
+  }
+  .chat-msg.pending .chat-bubble{ opacity:.72; }
 
-#chat-send{
-  flex:0 0 42px;
-  width:42px; height:42px;
-  border:none; border-radius:50%;
-  display:flex; align-items:center; justify-content:center;
-  background:linear-gradient(135deg,var(--purple),var(--pink));
-  color:#fff; font-size:16px;
-  cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-}
-#chat-send:active{ transform:scale(.94); }
+  .chat-time{ font-size:10px; color:var(--ink-faint); margin-top:2px; padding:0 4px; }
+  .chat-msg.mine .chat-time{ text-align:right; }
 
-@media(max-width:380px){
-  #chat-list{ padding:12px 8px; }
-  .chat-msg > div{ max-width:82%; }
-}
+  .typing-bubble{ padding:10px 14px !important; }
+  .typing-dots{ display:inline-flex; align-items:center; gap:3px; }
+  .typing-dots span{
+    width:6px; height:6px; border-radius:50%; background:var(--ink-faint);
+    animation: typingBounce 1.2s infinite ease-in-out;
+  }
+  .typing-dots span:nth-child(2){ animation-delay:.15s; }
+  .typing-dots span:nth-child(3){ animation-delay:.3s; }
+  @keyframes typingBounce{
+    0%,60%,100%{ transform:translateY(0); opacity:.45 }
+    30%{ transform:translateY(-4px); opacity:1 }
+  }
+
+  .chat-empty-content{
+    min-height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px;
+  }
+
+  #chat-input-bar{
+    flex:0 0 auto; display:flex; align-items:flex-end; gap:8px;
+    width:100%; box-sizing:border-box;
+    padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+    background:var(--glass-strong); border-top:1px solid var(--glass-border);
+    backdrop-filter:blur(18px); -webkit-backdrop-filter:blur(18px);
+  }
+  #chat-input{
+    flex:1 1 auto; min-width:0; min-height:42px; max-height:110px; box-sizing:border-box;
+    padding:11px 16px; border:1px solid var(--glass-border); border-radius:21px;
+    outline:none; resize:none; background:var(--solid); color:var(--ink);
+    font-family:'Inter',sans-serif; font-size:16px; line-height:1.35;
+    -webkit-appearance:none; appearance:none;
+  }
+  #chat-input:focus{ border-color:rgba(155,135,245,.5); }
+  #chat-send{
+    flex:0 0 42px; width:42px; height:42px; border:none; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,var(--purple),var(--pink));
+    color:#fff; font-size:16px; cursor:pointer; -webkit-tap-highlight-color:transparent;
+  }
+  #chat-send:active{ transform:scale(.94); }
+
+  @media(max-width:380px){
+    #chat-list{ padding:12px 8px; }
+    .chat-bubble-wrap{ max-width:82%; }
+  }
 </style>
 </head>
 <body>
 <div class="blob blob-1"></div>
 <div class="blob blob-2"></div>
-<div id="app">
-  <div id="screen"></div>
-</div>
+<div id="app"><div id="screen"></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
 
 /* ============================================================ */
-/* Supabase client                                                */
+/* Supabase                                                      */
 /* ============================================================ */
 const SUPABASE_URL = 'https://fccupuootvfonaynmhyh.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZjY3VwdW9vdHZmb25heW5taHloIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODcwNzkwMzEsImV4cCI6MjEwMjY1NTAzMX0._7VXUk-fzA0FYDCpnrfoFTRShpRhtopNLmkgt7IMdrY';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:true }
 });
 const VAPID_PUBLIC_KEY = 'BIuS2o3zQA3UoB8v7FHwQie8dOWjBR5UkgaJhIBvKHdgtFxG8dCBa65n-8btdJNMaXhmFHVEVvAYFbp5qSVmqgA';
 
 function urlBase64ToUint8Array(base64String){
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for(let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
-  return outputArray;
+  const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) out[i] = raw.charCodeAt(i);
+  return out;
 }
 
 function makeInternalEmail(name){
   const slug = (name||'user').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,20) || 'user';
-  const rand = Math.random().toString(36).slice(2,10);
-  return `${slug}.${rand}@coupleflow.internal`;
+  return `${slug}.${Math.random().toString(36).slice(2,10)}@coupleflow.internal`;
 }
 
 /* ============================================================ */
-/* State                                                          */
+/* State                                                         */
 /* ============================================================ */
 const CATEGORY_EMOJI = { study:'📚', fitness:'🏋️', code:'💻', creative:'🎨', learning:'🧠', habit:'🌱' };
 const CATEGORY_LABEL = { study:'Study', fitness:'Fitness', code:'Coding', creative:'Creative', learning:'Learning', habit:'Habit' };
 const AUTH_ONLY_SCREENS = ['loading','authChoice','create','login','yourCode'];
+const REACTION_EMOJIS = ['❤️','🔥','🫶'];
 
 const savedTheme = (() => {
-  try {
-    const value = localStorage.getItem('coupleflow-theme');
-    return value === 'dark' ? 'dark' : 'light';
-  } catch (_){
-    return 'light';
-  }
+  try { return localStorage.getItem('coupleflow-theme') === 'dark' ? 'dark' : 'light'; }
+  catch(_){ return 'light'; }
 })();
 
 let state = {
   theme: savedTheme,
   screen: 'loading',
-  authName: '',
-  authCodeInput: '',
-  authPassword: '',
-  authError: '',
-  busy: false,
-
-  currentUser: null,
-  partnerUser: null,
-  coupleId: null,
-
-  activeTab: 'today',
-  goals: [],
-  partnerGoals: [],
-  updates: [],
-  messages: [],
-  partnerTyping: false,
-
-  modal: null,
-  connectInput: '',
-  connectError: '',
-  chatMenuOpen: false,
-  pendingPhotoFile: null,
-  pushSubscribed: false,
+  authName:'', authCodeInput:'', authPassword:'', authError:'', busy:false,
+  currentUser:null, partnerUser:null, coupleId:null,
+  activeTab:'today',
+  goals:[], partnerGoals:[], updates:[], messages:[],
+  partnerTyping:false,
+  modal:null, connectInput:'', connectError:'',
+  chatMenuOpen:false, pendingPhotoFile:null, pushSubscribed:false,
+  goalsFilter:'all',
+  toast:null,
 };
 
 let lastNavKey = null;
@@ -550,10 +448,18 @@ function setState(patch, opts={}){
   if(opts.fromPopstate){
     lastNavKey = navKey;
   } else if(navKey !== lastNavKey){
-    history.pushState({ screen: state.screen, activeTab: state.activeTab, modal: state.modal }, '');
+    history.pushState({ screen:state.screen, activeTab:state.activeTab, modal:state.modal }, '');
     lastNavKey = navKey;
   }
   render();
+}
+
+let toastTimer = null;
+function showToast(msg){
+  clearTimeout(toastTimer);
+  state.toast = msg;
+  render();
+  toastTimer = setTimeout(() => { state.toast = null; render(); }, 2200);
 }
 
 window.addEventListener('popstate', (e) => {
@@ -562,13 +468,13 @@ window.addEventListener('popstate', (e) => {
     const fallback = state.currentUser
       ? { screen:'app', activeTab: state.activeTab || 'today', modal:null }
       : { screen:'authChoice', modal:null };
-    history.replaceState(fallback, '');
+    history.replaceState(fallback,'');
     setState(fallback, { fromPopstate:true });
     return;
   }
   if(state.currentUser && AUTH_ONLY_SCREENS.includes(target.screen)){
     const fixed = { screen:'app', activeTab: state.activeTab || 'today', modal:null };
-    history.replaceState(fixed, '');
+    history.replaceState(fixed,'');
     setState(fixed, { fromPopstate:true });
     return;
   }
@@ -576,20 +482,19 @@ window.addEventListener('popstate', (e) => {
     screen: target.screen,
     activeTab: target.activeTab || state.activeTab,
     modal: target.modal || null,
+    chatMenuOpen:false,
   }, { fromPopstate:true });
 });
 
 /* ============================================================ */
-/* Utilities                                                      */
+/* Utilities                                                     */
 /* ============================================================ */
-function genId(){ return 'id' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 function initials(name){ return (name||'?').trim()[0]?.toUpperCase() || '?'; }
 function escapeHtml(s){
   return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 function timeAgo(ts){
-  const diff = Date.now() - new Date(ts).getTime();
-  const m = Math.floor(diff/60000);
+  const m = Math.floor((Date.now() - new Date(ts).getTime())/60000);
   if(m < 1) return 'Just now';
   if(m < 60) return `${m}m ago`;
   const h = Math.floor(m/60);
@@ -599,118 +504,101 @@ function timeAgo(ts){
 function timeShort(ts){
   return new Date(ts).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
 }
-function friendlyError(error){
-  return error?.message || 'Something went wrong. Please try again.';
-}
+function friendlyError(e){ return e?.message || 'Something went wrong. Please try again.'; }
 
 /* ============================================================ */
-/* Session restore — self-healing: a broken/expired local session  */
-/* used to silently 401 every authenticated call forever. Now we   */
-/* validate it against the server on load and wipe it if invalid.  */
+/* Session                                                       */
 /* ============================================================ */
 async function restoreSession(){
   try{
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data:{ session } } = await supabase.auth.getSession();
     if(!session){ showAuthChoice(); return; }
-
-    const { data: { user }, error } = await supabase.auth.getUser();
+    const { data:{ user }, error } = await supabase.auth.getUser();
     if(error || !user){
-      console.warn('Stale session detected, clearing it.', error);
-      await supabase.auth.signOut({ scope: 'local' });
+      await supabase.auth.signOut({ scope:'local' });
       showAuthChoice();
       return;
     }
-
     await loadAppData();
   }catch(err){
-    console.error('Session check failed, clearing local session.', err);
-    try{ await supabase.auth.signOut({ scope: 'local' }); }catch(_){}
+    console.error('Session check failed:', err);
+    try{ await supabase.auth.signOut({ scope:'local' }); }catch(_){}
     showAuthChoice();
   }
 }
 
 function showAuthChoice(){
-  history.replaceState({ screen:'authChoice', modal:null }, '');
+  history.replaceState({ screen:'authChoice', modal:null },'');
   lastNavKey = 'authChoice|today|null';
-  setState({ screen: 'authChoice' }, { fromPopstate:true });
+  setState({ screen:'authChoice' }, { fromPopstate:true });
 }
 
 supabase.auth.onAuthStateChange((event) => {
   if(event === 'SIGNED_OUT'){
     unsubscribeChat();
-    const fresh = {
-      currentUser:null, partnerUser:null, coupleId:null, goals:[], partnerGoals:[],
-      updates:[], messages:[], partnerTyping:false,
+    history.replaceState({ screen:'authChoice', modal:null },'');
+    setState({
+      currentUser:null, partnerUser:null, coupleId:null,
+      goals:[], partnerGoals:[], updates:[], messages:[], partnerTyping:false,
       screen:'authChoice', authName:'', authCodeInput:'', authPassword:'',
-      authError:'', modal:null,
-    };
-    history.replaceState({ screen:'authChoice', modal:null }, '');
-    setState(fresh, { fromPopstate:true });
+      authError:'', modal:null, chatMenuOpen:false,
+    }, { fromPopstate:true });
   }
 });
 
 /* ============================================================ */
-/* Data loading                                                   */
+/* Data loading                                                  */
 /* ============================================================ */
 async function loadAppData(){
   try{
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data:{ user } } = await supabase.auth.getUser();
     if(!user){ showAuthChoice(); return; }
 
-    const { data: profile, error: profileError } = await supabase
+    const { data:profile, error } = await supabase
       .from('profiles').select('*').eq('id', user.id).single();
-    if(profileError) throw profileError;
+    if(error) throw error;
 
-    history.replaceState({ screen:'app', activeTab:'today', modal:null }, '');
+    history.replaceState({ screen:'app', activeTab:'today', modal:null },'');
     lastNavKey = 'app|today|null';
-    setState({ currentUser: profile, screen: 'app', activeTab: 'today' }, { fromPopstate:true });
+    setState({ currentUser:profile, screen:'app', activeTab:'today' }, { fromPopstate:true });
+
     await loadUserData();
-    try{
-  await syncExistingPushSubscription();
-}catch(error){
-  console.warn(
-    'Initial push synchronization failed:',
-    error
-  );
-}
+    try{ await syncExistingPushSubscription(); }
+    catch(e){ console.warn('Push sync failed:', e); }
   }catch(err){
     console.error(err);
     try{ await supabase.auth.signOut({ scope:'local' }); }catch(_){}
-    history.replaceState({ screen:'authChoice', modal:null }, '');
+    history.replaceState({ screen:'authChoice', modal:null },'');
     setState({ screen:'authChoice', authError: friendlyError(err) }, { fromPopstate:true });
   }
 }
 
 async function getCoupleAndPartner(){
   const me = state.currentUser.id;
-  const { data: couple, error } = await supabase
+  const { data:couple, error } = await supabase
     .from('couples').select('id, user1_id, user2_id')
     .or(`user1_id.eq.${me},user2_id.eq.${me}`)
     .maybeSingle();
   if(error || !couple) return { couple:null, partner:null };
   const partnerId = couple.user1_id === me ? couple.user2_id : couple.user1_id;
-  const { data: partner, error: pErr } = await supabase
+  const { data:partner, error:pErr } = await supabase
     .from('profiles').select('*').eq('id', partnerId).single();
-  if(pErr) return { couple, partner:null };
-  return { couple, partner };
+  return { couple, partner: pErr ? null : partner };
 }
 
 async function loadUserData(){
   const me = state.currentUser;
   if(!me) return;
 
-  const [goals, { couple, partner }] = await Promise.all([
-    getMyGoals(),
-    getCoupleAndPartner(),
-  ]);
-
-  let partnerGoals = [];
-  if(partner) partnerGoals = await getPartnerGoals(partner.id);
-
+  const [goals, { couple, partner }] = await Promise.all([ getMyGoals(), getCoupleAndPartner() ]);
+  const partnerGoals = partner ? await getPartnerGoals(partner.id) : [];
   const updates = await getUpdatesFeed(me, partner);
   const messages = couple ? await loadMessages(couple.id) : [];
 
-  setState({ goals, partnerUser: partner, partnerGoals, updates, coupleId: couple ? couple.id : null, messages });
+  setState({
+    goals, partnerUser:partner, partnerGoals, updates,
+    coupleId: couple ? couple.id : null, messages,
+  });
 
   if(couple) subscribeToChat(couple.id); else unsubscribeChat();
 }
@@ -743,11 +631,11 @@ async function getUpdatesFeed(me, partner){
     .limit(50);
   if(error){ console.error(error); return []; }
 
-  const withUrls = await Promise.all(data.map(async (u) => {
+  return await Promise.all(data.map(async (u) => {
     let photoUrl = null;
-    if(u.update_photos && u.update_photos.length){
-      const path = u.update_photos[0].storage_path;
-      const { data: signed } = await supabase.storage.from('photos').createSignedUrl(path, 3600);
+    if(u.update_photos?.length){
+      const { data:signed } = await supabase.storage
+        .from('photos').createSignedUrl(u.update_photos[0].storage_path, 3600);
       photoUrl = signed?.signedUrl || null;
     }
     return {
@@ -758,16 +646,16 @@ async function getUpdatesFeed(me, partner){
       reactions: u.reactions || [],
     };
   }));
-  return withUrls;
 }
 
 /* ============================================================ */
-/* Chat                                                            */
+/* Chat                                                          */
 /* ============================================================ */
 let chatChannel = null;
 let subscribedCoupleId = null;
 let lastRenderedMessageCount = 0;
 let typingHideTimer = null;
+let typingSentAt = 0;
 
 async function loadMessages(coupleId){
   const { data, error } = await supabase
@@ -785,13 +673,15 @@ function subscribeToChat(coupleId){
 
   chatChannel = supabase
     .channel(`couple-${coupleId}`)
-       .on('postgres_changes',
+    .on('postgres_changes',
       { event:'INSERT', schema:'public', table:'messages', filter:`couple_id=eq.${coupleId}` },
       (payload) => {
         if(payload.new.sender_id === state.currentUser.id) return;
+        if(state.messages.some(m => m.id === payload.new.id)) return;
         state.messages = [...state.messages, payload.new];
         state.partnerTyping = false;
-        if(state.screen==='app' && state.activeTab==='chat'){
+        clearTimeout(typingHideTimer);
+        if(state.screen === 'app' && state.activeTab === 'chat'){
           refreshChatList();
           updateTypingStatusUI();
         }
@@ -800,11 +690,17 @@ function subscribeToChat(coupleId){
     .on('broadcast', { event:'typing' }, (payload) => {
       if(payload.payload?.userId === state.currentUser.id) return;
       state.partnerTyping = true;
-      updateTypingStatusUI();
+      if(state.screen === 'app' && state.activeTab === 'chat'){
+        refreshChatList();
+        updateTypingStatusUI();
+      }
       clearTimeout(typingHideTimer);
       typingHideTimer = setTimeout(() => {
         state.partnerTyping = false;
-        updateTypingStatusUI();
+        if(state.screen === 'app' && state.activeTab === 'chat'){
+          refreshChatList();
+          updateTypingStatusUI();
+        }
       }, 2500);
     })
     .subscribe();
@@ -817,7 +713,6 @@ function unsubscribeChat(){
   subscribedCoupleId = null;
 }
 
-let typingSentAt = 0;
 function notifyTyping(){
   if(!chatChannel) return;
   const now = Date.now();
@@ -826,38 +721,97 @@ function notifyTyping(){
   chatChannel.send({ type:'broadcast', event:'typing', payload:{ userId: state.currentUser.id } });
 }
 
-function messagesHtml(){
-  if(!state.messages.length){
-    return `<div class="chat-empty-content"><div class="empty-state"><div class="em">💬</div><div style="font-size:13px;font-weight:600;">Say hi — this is just between you two.</div></div></div>`;
+function formatDateLabel(ts){
+  const d = new Date(ts), now = new Date();
+  const yest = new Date(now); yest.setDate(now.getDate() - 1);
+  if(d.toDateString() === now.toDateString()) return 'Today';
+  if(d.toDateString() === yest.toDateString()) return 'Yesterday';
+  return d.toLocaleDateString([], {
+    month:'short', day:'numeric',
+    year: d.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+  });
+}
+
+function buildChatHtml(messages){
+  if(!messages.length){
+    return `<div class="chat-empty-content" style="margin:auto 0;"><div class="empty-state">
+      <div class="em">💬</div>
+      <div style="font-size:13px;font-weight:600;">Say hi — this is just between you two.</div>
+    </div></div>`;
   }
-  return state.messages.map(m => {
+
+  const partnerInitial = state.partnerUser?.name ? initials(state.partnerUser.name) : '♡';
+  let html = '', lastDateLabel = null, lastSenderId = null, lastTs = 0;
+
+  messages.forEach((m, idx) => {
+    const dateLabel = formatDateLabel(m.created_at);
+    if(dateLabel !== lastDateLabel){
+      html += `<div class="chat-date-sep"><span>${dateLabel}</span></div>`;
+      lastDateLabel = dateLabel;
+      lastSenderId = null;
+    }
+
     const mine = m.sender_id === state.currentUser.id;
-    return `
-      <div class="chat-msg ${mine ? 'mine' : 'theirs'}">
-        <div>
+    const sameGroup = m.sender_id === lastSenderId && (new Date(m.created_at) - lastTs) < 5*60*1000;
+    const next = messages[idx+1];
+    const isGroupEnd = !next
+      || next.sender_id !== m.sender_id
+      || (new Date(next.created_at) - new Date(m.created_at)) >= 5*60*1000
+      || formatDateLabel(next.created_at) !== dateLabel;
+
+    const pending = String(m.id).startsWith('temp-');
+
+    
+        html += `
+      <div class="chat-msg ${mine?'mine':'theirs'} ${sameGroup?'':'group-start'} ${isGroupEnd?'tail':''} ${pending?'pending':''}">${!mine ? `<div class="chat-avatar-sm" style="visibility:${isGroupEnd?'visible':'hidden'}">${escapeHtml(partnerInitial)}</div>` : ''}
+        <div class="chat-bubble-wrap">
           <div class="chat-bubble">${escapeHtml(m.body)}</div>
-          <div class="chat-time">${timeShort(m.created_at)}</div>
+          ${isGroupEnd ? `<div class="chat-time">${timeShort(m.created_at)}${pending?' · sending…':''}</div>` : ''}
         </div>
       </div>`;
-  }).join('');
+
+    lastSenderId = m.sender_id;
+    lastTs = new Date(m.created_at);
+  });
+
+  return html;
+}
+
+function typingBubbleHtml(){
+  const partnerInitial = state.partnerUser?.name ? initials(state.partnerUser.name) : '♡';
+  return `
+    <div class="chat-msg theirs group-start">
+      <div class="chat-avatar-sm">${escapeHtml(partnerInitial)}</div>
+      <div class="chat-bubble-wrap">
+        <div class="chat-bubble typing-bubble">
+          <span class="typing-dots"><span></span><span></span><span></span></span>
+        </div>
+      </div>
+    </div>`;
+}
+
+function messagesHtml(){
+  const inner = buildChatHtml(state.messages) + (state.partnerTyping ? typingBubbleHtml() : '');
+  // #chat-inner has margin-top:auto so short conversations hug the composer
+  return `<div id="chat-inner">${inner}</div>`;
 }
 
 function refreshChatList(){
   const list = document.getElementById('chat-list');
   if(!list) return;
-  const shouldScroll = !list.dataset.lockScroll || state.messages.length !== lastRenderedMessageCount;
+  const nearBottom = (list.scrollHeight - list.scrollTop - list.clientHeight) < 160;
+  const countChanged = state.messages.length !== lastRenderedMessageCount;
   list.innerHTML = messagesHtml();
-  if(shouldScroll || state.messages.length === 0){
+  if(nearBottom || countChanged || state.messages.length === 0){
     list.scrollTop = list.scrollHeight;
   }
   lastRenderedMessageCount = state.messages.length;
 }
 
-
 function updateTypingStatusUI(){
-  const statusEl = document.querySelector('.chat-header-status');
-  if(statusEl && state.partnerUser){
-    statusEl.textContent = state.partnerTyping ? 'typing…' : 'Private chat · just you two';
+  const el = document.querySelector('.chat-header-status');
+  if(el && state.partnerUser){
+    el.textContent = state.partnerTyping ? 'typing…' : 'Private chat · just you two';
   }
 }
 
@@ -870,134 +824,99 @@ let chatViewportWatched = false;
 function watchChatViewport(){
   if(chatViewportWatched || !window.visualViewport) return;
   chatViewportWatched = true;
-  const onViewportChange = () => {
+  const onChange = () => {
+    if(!(state.screen === 'app' && state.activeTab === 'chat')) return;
     requestAnimationFrame(scrollChatToBottom);
     setTimeout(scrollChatToBottom, 120);
     setTimeout(scrollChatToBottom, 320);
   };
-  window.visualViewport.addEventListener('resize', onViewportChange);
-  window.visualViewport.addEventListener('scroll', onViewportChange);
+  window.visualViewport.addEventListener('resize', onChange);
+  window.visualViewport.addEventListener('scroll', onChange);
 }
 
 async function sendChatMessage(){
   const input = document.getElementById('chat-input');
   const body = (input?.value || '').trim();
-
   if(!body || !state.coupleId || !state.partnerUser) return;
 
   const optimisticId = `temp-${Date.now()}`;
-  const optimistic = {
+  state.messages = [...state.messages, {
     id: optimisticId,
     couple_id: state.coupleId,
     sender_id: state.currentUser.id,
     body,
     created_at: new Date().toISOString(),
-  };
-
-  const list = document.getElementById('chat-list');
-  if(list){ list.dataset.lockScroll = 'true'; }
-
-  state.messages = [...state.messages, optimistic];
+  }];
   refreshChatList();
 
   if(input){
     input.value = '';
     input.style.height = 'auto';
-    input.focus({ preventScroll: true });
+    input.focus({ preventScroll:true });
   }
-
-  requestAnimationFrame(() => {
-    const nextList = document.getElementById('chat-list');
-    if(nextList){
-      nextList.scrollTop = nextList.scrollHeight;
-      nextList.dataset.lockScroll = 'false';
-    }
-  });
+  requestAnimationFrame(scrollChatToBottom);
 
   const { data, error } = await supabase
     .from('messages')
-    .insert({
-      couple_id: state.coupleId,
-      sender_id: state.currentUser.id,
-      body
-    })
-    .select()
-    .single();
+    .insert({ couple_id: state.coupleId, sender_id: state.currentUser.id, body })
+    .select().single();
 
   if(error){
     console.error('Message send failed:', error);
+    state.messages = state.messages.filter(m => m.id !== optimisticId);
+    refreshChatList();
+    showToast('Message failed to send');
     return;
   }
 
-  state.messages = state.messages.map(m =>
-    m.id === optimisticId ? data : m
-  );
-
+  state.messages = state.messages.map(m => m.id === optimisticId ? data : m);
   refreshChatList();
-  requestAnimationFrame(() => {
-    const nextList = document.getElementById('chat-list');
-    if(nextList){
-      nextList.scrollTop = nextList.scrollHeight;
-      nextList.dataset.lockScroll = 'false';
-    }
-  });
+  requestAnimationFrame(scrollChatToBottom);
 
   try{
-    const { data: pushResult, error: pushError } =
-      await supabase.functions.invoke('push-notifications', {
-        body: {
-          recipient_id: state.partnerUser.id,
-          type: 'message',
-          actor_id: state.currentUser.id,
-          actor_name: state.currentUser.name,
-          message: body,
-          title: `New message from ${state.currentUser.name}`,
-          body: body,
-          url: '/?tab=chat'
-        }
-      });
-
-    if(pushError){
-      console.error('Push notification failed:', pushError);
-    } else {
-      console.log('Chat notification result:', pushResult);
-    }
-  } catch(pushError){
-    console.error('Could not trigger push notification:', pushError);
-  }
+    await supabase.functions.invoke('push-notifications', {
+      body: {
+        recipient_id: state.partnerUser.id,
+        type: 'message',
+        actor_id: state.currentUser.id,
+        actor_name: state.currentUser.name,
+        message: body,
+        title: `New message from ${state.currentUser.name}`,
+        body,
+        url: '/?tab=chat'
+      }
+    });
+  }catch(e){ console.error('Push trigger failed:', e); }
 }
 
 /* ============================================================ */
-/* Auth actions — name + password only, no email shown anywhere    */
+/* Auth                                                          */
 /* ============================================================ */
 async function createAccount(){
   const name = state.authName.trim();
   const password = state.authPassword;
-
   if(!name){ setState({ authError:'Enter your name.' }); return; }
   if(!password || password.length < 6){ setState({ authError:'Password must be at least 6 characters.' }); return; }
 
   setState({ busy:true, authError:'' });
-  const internalEmail = makeInternalEmail(name);
   const { data, error } = await supabase.auth.signUp({
-    email: internalEmail, password, options: { data: { name } },
+    email: makeInternalEmail(name), password, options:{ data:{ name } },
   });
   if(error){ setState({ busy:false, authError: friendlyError(error) }); return; }
 
   if(!data.session){
     setState({
-      busy:false,
-      authError:'Signup needs "Confirm email" turned OFF in your Supabase project (Authentication → Settings → Email).',
-      screen:'authChoice',
+      busy:false, screen:'authChoice',
+      authError:'Signup needs "Confirm email" turned OFF in Supabase (Authentication → Settings → Email).',
     });
     return;
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data:profile, error:pErr } = await supabase
     .from('profiles').select('*').eq('id', data.user.id).single();
-  if(profileError){ setState({ busy:false, authError: friendlyError(profileError) }); return; }
+  if(pErr){ setState({ busy:false, authError: friendlyError(pErr) }); return; }
 
-  setState({ busy:false, currentUser: profile, screen:'yourCode' });
+  setState({ busy:false, currentUser:profile, screen:'yourCode' });
 }
 
 async function loginWithCode(){
@@ -1007,471 +926,171 @@ async function loginWithCode(){
   if(!password){ setState({ authError:'Enter your password.' }); return; }
 
   setState({ busy:true, authError:'' });
-  const { data: email, error } = await supabase.rpc('get_email_for_code', { p_code: code });
+  const { data:email, error } = await supabase.rpc('get_email_for_code', { p_code: code });
   if(error || !email){ setState({ busy:false, authError:'No account found with that code.' }); return; }
 
-  const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
-  if(signInError){ setState({ busy:false, authError: friendlyError(signInError) }); return; }
+  const { error:signInError } = await supabase.auth.signInWithPassword({ email, password });
+  if(signInError){ setState({ busy:false, authError:'Wrong code or password.' }); return; }
 
   setState({ busy:false });
   await loadAppData();
 }
 
 function finishOnboarding(){
-  setState({ screen:'app', activeTab:'today' });
+  setState({ screen:'app', activeTab:'today', modal:null });
   loadUserData();
 }
 
-async function logout(){
-  await supabase.auth.signOut();
-}
+async function logout(){ await supabase.auth.signOut(); }
 
 /* ============================================================ */
-/* Connect partner                                                 */
+/* Partner                                                       */
 /* ============================================================ */
 async function connectPartner(codeValue){
   const code = (codeValue || '').trim().toUpperCase();
-  if(!code){ setState({ connectError:'Enter a code.' }); return; }
+  if(!code){ setState({ connectError:'Enter a code.' }); return false; }
 
   setState({ busy:true, connectError:'' });
   const { error } = await supabase.rpc('connect_partner', { partner_code: code });
-  if(error){ setState({ busy:false, connectError: friendlyError(error) }); return; }
+  if(error){ setState({ busy:false, connectError: friendlyError(error) }); return false; }
 
   setState({ busy:false, modal:null, connectInput:'' });
   await loadUserData();
+  showToast('Connected! 🫶');
+  return true;
 }
 
 async function disconnectPartner(){
   setState({ busy:true });
   const { error } = await supabase.rpc('disconnect_partner');
-  if(error){ console.error(error); }
+  if(error) console.error(error);
   unsubscribeChat();
-  setState({ busy:false, partnerUser:null, partnerGoals:[], coupleId:null, messages:[], modal:null });
+  setState({
+    busy:false, partnerUser:null, partnerGoals:[],
+    coupleId:null, messages:[], modal:null,
+  });
   await loadUserData();
 }
 
 /* ============================================================ */
-/* Push notifications                                             */
+/* Push notifications                                            */
 /* ============================================================ */
-/* ============================================================ */
-/* Push notifications                                           */
-/* ============================================================ */
-
 function pushIsSupported(){
-  return (
-    'serviceWorker' in navigator &&
-    'PushManager' in window &&
-    'Notification' in window
-  );
+  return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
-
-/*
- * Get the active service worker.
- */
 async function getPushRegistration(){
-  if(!('serviceWorker' in navigator)){
-    throw new Error('Service workers are not supported.');
-  }
-
+  if(!('serviceWorker' in navigator)) throw new Error('Service workers not supported.');
   return await navigator.serviceWorker.ready;
 }
 
-
-/*
- * Check the REAL notification state.
- *
- * IMPORTANT:
- * Notification.permission is controlled by iOS/browser.
- * CoupleFlow cannot turn the iPhone Settings switch off.
- */
 async function checkPushSubscriptionStatus(){
-
-  if(!pushIsSupported()){
-    state.pushSubscribed = false;
-    return;
-  }
-
+  if(!pushIsSupported()){ state.pushSubscribed = false; return; }
   try{
-
-    const permission = Notification.permission;
-
-    const registration =
-      await getPushRegistration();
-
-    const subscription =
-      await registration.pushManager.getSubscription();
-
-    /*
-     * CoupleFlow = ON only when BOTH exist:
-     *
-     * permission = granted
-     * subscription = exists
-     */
-    state.pushSubscribed =
-      permission === 'granted' &&
-      !!subscription;
-
-  }catch(error){
-
-    console.warn(
-      'Push status check failed:',
-      error
-    );
-
+    const reg = await getPushRegistration();
+    const sub = await reg.pushManager.getSubscription();
+    state.pushSubscribed = Notification.permission === 'granted' && !!sub;
+  }catch(e){
+    console.warn('Push status check failed:', e);
     state.pushSubscribed = false;
   }
 }
 
-
-/*
- * Save/update the current subscription in Supabase.
- *
- * Endpoint identifies the specific device/browser subscription.
- */
 async function savePushSubscription(subscription){
-
-  if(!state.currentUser){
-    throw new Error('You must be logged in first.');
-  }
-
+  if(!state.currentUser) throw new Error('You must be logged in first.');
   const subJson = subscription.toJSON();
+  if(!subJson?.endpoint) throw new Error('Subscription has no endpoint.');
 
-  if(!subJson?.endpoint){
-    throw new Error(
-      'Push subscription does not contain an endpoint.'
-    );
-  }
+  const { error } = await supabase.from('push_subscriptions').upsert({
+    user_id: state.currentUser.id,
+    endpoint: subJson.endpoint,
+    subscription: subJson,
+    updated_at: new Date().toISOString(),
+  }, { onConflict:'endpoint' });
 
-  const {
-    error
-  } = await supabase
-    .from('push_subscriptions')
-    .upsert(
-      {
-        user_id: state.currentUser.id,
-        endpoint: subJson.endpoint,
-        subscription: subJson,
-        updated_at: new Date().toISOString()
-      },
-      {
-        onConflict: 'endpoint'
-      }
-    );
-
-  if(error){
-    throw error;
-  }
-
-  console.log(
-    'CoupleFlow push subscription synchronized.'
-  );
+  if(error) throw error;
 }
 
-
-/*
- * Synchronize an already-existing subscription.
- *
- * IMPORTANT:
- * This DOES NOT request notification permission.
- *
- * It is safe to run when CoupleFlow starts.
- */
 async function syncExistingPushSubscription(){
-
-  if(!pushIsSupported()){
-    state.pushSubscribed = false;
-    return false;
-  }
-
-  if(!state.currentUser){
-    state.pushSubscribed = false;
-    return false;
-  }
-
+  if(!pushIsSupported() || !state.currentUser){ state.pushSubscribed = false; return false; }
   try{
-
-    /*
-     * iPhone/browser has not granted permission.
-     */
-    if(Notification.permission !== 'granted'){
-
-      state.pushSubscribed = false;
-
-      return false;
-    }
-
-    const registration =
-      await getPushRegistration();
-
-    const subscription =
-      await registration.pushManager.getSubscription();
-
-    /*
-     * Permission is granted but there is no
-     * active PushSubscription.
-     *
-     * Do NOT automatically request permission.
-     * The user can press Enable Notifications.
-     */
-    if(!subscription){
-
-      state.pushSubscribed = false;
-
-      return false;
-    }
-
-    await savePushSubscription(subscription);
-
+    if(Notification.permission !== 'granted'){ state.pushSubscribed = false; return false; }
+    const reg = await getPushRegistration();
+    const sub = await reg.pushManager.getSubscription();
+    if(!sub){ state.pushSubscribed = false; return false; }
+    await savePushSubscription(sub);
     state.pushSubscribed = true;
-
     return true;
-
-  }catch(error){
-
-    console.error(
-      'Push synchronization failed:',
-      error
-    );
-
+  }catch(e){
+    console.error('Push sync failed:', e);
     state.pushSubscribed = false;
-
     return false;
   }
 }
 
-
-/*
- * ENABLE NOTIFICATIONS
- *
- * This must be triggered by the user's button tap.
- * This is especially important for iPhone Web Push.
- */
 async function enablePushNotifications(){
-
-  if(!state.currentUser){
-
-    alert('Please log in first.');
-
-    return;
-  }
-
-  if(!('Notification' in window) || !pushIsSupported()){
-
-    alert(
-      "Push notifications aren't supported on this browser/device."
-    );
-
-    return;
-  }
-
-  if(!window.isSecureContext){
-
-    alert(
-      'Notifications require a secure HTTPS connection or localhost. Open this app from http://localhost or HTTPS, then try again.'
-    );
-
-    return;
-  }
+  if(!state.currentUser){ showToast('Please log in first.'); return; }
+  if(!pushIsSupported()){ showToast("Not supported on this browser"); return; }
+  if(!window.isSecureContext){ showToast('Needs HTTPS'); return; }
 
   try{
-
-    /*
-     * Ask the operating system/browser for permission.
-     *
-     * If permission was already granted,
-     * this simply returns "granted".
-     */
-    const permission =
-      await Notification.requestPermission();
-
+    const permission = await Notification.requestPermission();
     if(permission !== 'granted'){
-
       state.pushSubscribed = false;
-
       render();
-
-      alert(
-        'Notifications were not allowed. ' +
-        'On iPhone, enable CoupleFlow notifications in ' +
-        'Settings → Notifications → CoupleFlow.'
-      );
-
+      showToast('Notifications not allowed');
       return;
     }
 
-    /*
-     * Get active service worker.
-     */
-    const registration =
-      await getPushRegistration();
-
-    /*
-     * Reuse an existing subscription if possible.
-     */
-    let subscription =
-      await registration.pushManager.getSubscription();
-
-    /*
-     * No subscription exists.
-     *
-     * Create a new one.
-     */
-    if(!subscription){
-
-      subscription =
-        await registration.pushManager.subscribe({
-
-          userVisibleOnly: true,
-
-          applicationServerKey:
-            urlBase64ToUint8Array(
-              VAPID_PUBLIC_KEY
-            )
-        });
+    const reg = await getPushRegistration();
+    let sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly:true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
     }
-
-    /*
-     * Save/update the current subscription.
-     */
-    await savePushSubscription(subscription);
-
+    await savePushSubscription(sub);
     state.pushSubscribed = true;
-
     render();
-
-    console.log(
-      'CoupleFlow notifications enabled.'
-    );
-
-  }catch(error){
-
-    console.error(
-      'Push subscribe failed:',
-      error
-    );
-
+    showToast('Notifications on 🔔');
+  }catch(e){
+    console.error('Push subscribe failed:', e);
     state.pushSubscribed = false;
-
     render();
-
-    alert(
-      'Something went wrong turning on notifications: ' +
-      (error?.message || 'Unknown error')
-    );
+    showToast('Could not enable notifications');
   }
 }
 
-
-/*
- * DISABLE NOTIFICATIONS INSIDE COUPLEFLOW
- *
- * IMPORTANT:
- *
- * This removes CoupleFlow's push subscription.
- *
- * It DOES NOT and CANNOT change:
- *
- * iPhone Settings
- * → Notifications
- * → CoupleFlow
- * → Allow Notifications
- *
- * That system setting is controlled by iOS.
- */
 async function disablePushNotifications(){
-
-  if(!state.currentUser){
-
-    return;
-  }
-
-  if(!pushIsSupported()){
-
-    state.pushSubscribed = false;
-
-    render();
-
-    return;
-  }
+  if(!state.currentUser) return;
+  if(!pushIsSupported()){ state.pushSubscribed = false; render(); return; }
 
   try{
-
-    const registration =
-      await getPushRegistration();
-
-    const subscription =
-      await registration.pushManager.getSubscription();
-
-    if(subscription){
-
-      const endpoint =
-        subscription.endpoint;
-
-      /*
-       * Remove the subscription from Supabase.
-       *
-       * IMPORTANT:
-       * Match both user_id AND endpoint so one user's
-       * device cannot accidentally delete another user's row.
-       */
-      const {
-        error: deleteError
-      } = await supabase
-        .from('push_subscriptions')
+    const reg = await getPushRegistration();
+    const sub = await reg.pushManager.getSubscription();
+    if(sub){
+      await supabase.from('push_subscriptions')
         .delete()
         .eq('user_id', state.currentUser.id)
-        .eq('endpoint', endpoint);
-
-      if(deleteError){
-
-        console.warn(
-          'Could not remove push subscription from database:',
-          deleteError
-        );
-      }
-
-      /*
-       * Unsubscribe this browser/PWA subscription.
-       */
-      try{
-
-        await subscription.unsubscribe();
-
-      }catch(unsubscribeError){
-
-        console.warn(
-          'Browser push unsubscribe warning:',
-          unsubscribeError
-        );
-      }
+        .eq('endpoint', sub.endpoint);
+      try{ await sub.unsubscribe(); }catch(e){ console.warn(e); }
     }
-
     state.pushSubscribed = false;
-
     render();
-
-    console.log(
-      'CoupleFlow push notifications disabled.'
-    );
-
-  }catch(error){
-
-    console.error(
-      'Push unsubscribe failed:',
-      error
-    );
-
+    showToast('Notifications off');
+  }catch(e){
+    console.error('Push unsubscribe failed:', e);
     state.pushSubscribed = false;
-
     render();
   }
 }
+
 /* ============================================================ */
-/* Goals                                                          */
+/* Goals                                                         */
 /* ============================================================ */
 async function addGoal(data){
-  const { data: goal, error } = await supabase.from('goals').insert({
+  const { data:goal, error } = await supabase.from('goals').insert({
     user_id: state.currentUser.id,
     title: data.title,
     category: data.category,
@@ -1480,8 +1099,9 @@ async function addGoal(data){
     is_private: !!data.private,
   }).select().single();
 
-  if(error){ alert(friendlyError(error)); return; }
-  setState({ goals: [goal, ...state.goals], modal:null });
+  if(error){ showToast(friendlyError(error)); return; }
+  setState({ goals:[goal, ...state.goals], modal:null });
+  showToast('Goal added 🎯');
 }
 
 async function toggleGoal(id){
@@ -1489,124 +1109,143 @@ async function toggleGoal(id){
   if(!goal) return;
   const nextDone = !goal.is_done;
 
-  setState({ goals: state.goals.map(g => g.id===id ? { ...g, is_done: nextDone } : g) });
+  setState({ goals: state.goals.map(g => g.id === id ? { ...g, is_done:nextDone } : g) });
 
   const { error } = await supabase.from('goals')
-    .update({ is_done: nextDone, completed_at: nextDone ? new Date().toISOString() : null })
+    .update({ is_done:nextDone, completed_at: nextDone ? new Date().toISOString() : null })
     .eq('id', id);
 
   if(error){
     console.error(error);
-    alert(friendlyError(error));
-    setState({ goals: state.goals.map(g => g.id===id ? { ...g, is_done: !nextDone } : g) });
+    showToast(friendlyError(error));
+    setState({ goals: state.goals.map(g => g.id === id ? { ...g, is_done:!nextDone } : g) });
+    return;
   }
+  if(nextDone) showToast('Done! ✨');
 }
 
 async function deleteGoal(id){
   const prev = state.goals;
   setState({ goals: state.goals.filter(g => g.id !== id) });
   const { error } = await supabase.from('goals').delete().eq('id', id);
-  if(error){ console.error(error); setState({ goals: prev }); }
+  if(error){ console.error(error); setState({ goals: prev }); showToast('Could not delete'); }
 }
 
 /* ============================================================ */
-/* Updates + photo upload                                         */
+/* Updates + reactions                                           */
 /* ============================================================ */
 async function postUpdate(caption, file){
   if(!caption.trim() && !file) return;
 
-  const { data: update, error } = await supabase
-    .from('updates')
-    .insert({
-      user_id: state.currentUser.id,
-      caption: caption.trim() || null,
-    })
-    .select()
-    .single();
+  const { data:update, error } = await supabase.from('updates').insert({
+    user_id: state.currentUser.id,
+    caption: caption.trim() || null,
+  }).select().single();
 
-  if(error){
-    console.error(error);
-    alert(friendlyError(error));
-    return;
-  }
+  if(error){ console.error(error); showToast(friendlyError(error)); return; }
 
   if(file){
-
-    // Make the filename safe for Supabase Storage
     const safeName = file.name
       .normalize('NFKD')
-      .replace(/[^\w.-]+/g, '_')
-      .replace(/_+/g, '_')
-      .replace(/^_+|_+$/g, '')
-      .slice(0, 120);
+      .replace(/[^\w.-]+/g,'_')
+      .replace(/_+/g,'_')
+      .replace(/^_+|_+$/g,'')
+      .slice(0,120);
+    const path = `${state.currentUser.id}/updates/${update.id}/${Date.now()}-${safeName || 'photo.jpg'}`;
 
-    const fileName = `${Date.now()}-${safeName || 'photo.jpg'}`;
-
-    const path =
-      `${state.currentUser.id}/updates/${update.id}/${fileName}`;
-
-    console.log('Uploading photo:', path);
-
-    const { error: uploadError } = await supabase
-      .storage
-      .from('photos')
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: file.type || 'image/jpeg'
-      });
+    const { error:uploadError } = await supabase.storage.from('photos')
+      .upload(path, file, { cacheControl:'3600', upsert:false, contentType: file.type || 'image/jpeg' });
 
     if(uploadError){
       console.error('PHOTO UPLOAD ERROR:', uploadError);
-      alert('Could not upload the photo. Please try again.');
+      showToast('Photo upload failed');
       return;
     }
 
-    const { error: photoDbError } = await supabase
-      .from('update_photos')
-      .insert({
-        update_id: update.id,
-        storage_path: path
-      });
+    const { error:dbErr } = await supabase.from('update_photos')
+      .insert({ update_id: update.id, storage_path: path });
+    if(dbErr){ console.error('PHOTO DB ERROR:', dbErr); }
+  }
 
-    if(photoDbError){
-      console.error('PHOTO DATABASE ERROR:', photoDbError);
-      return;
-    }
+  setState({ modal:null, pendingPhotoFile:null });
+  await loadUserData();
+  showToast('Shared ✨');
+}
+
+async function deleteUpdate(id){
+  const prev = state.updates;
+  setState({ updates: state.updates.filter(u => u.id !== id) });
+  const { error } = await supabase.from('updates').delete().eq('id', id);
+  if(error){ console.error(error); setState({ updates: prev }); showToast('Could not delete'); }
+}
+
+async function addReaction(updateId, emoji){
+  const update = state.updates.find(u => u.id === updateId);
+  if(!update) return;
+
+  const existing = (update.reactions || [])
+    .find(r => r.user_id === state.currentUser.id && r.emoji === emoji);
+
+  if(existing){
+    // toggle off
+    setState({
+      updates: state.updates.map(u => u.id !== updateId ? u : {
+        ...u, reactions: u.reactions.filter(r => r.id !== existing.id)
+      })
+    });
+    const { error } = await supabase.from('reactions').delete().eq('id', existing.id);
+    if(error){ console.error(error); await loadUserData(); }
+    return;
+  }
+
+  const tempId = `temp-${Date.now()}`;
+  setState({
+    updates: state.updates.map(u => u.id !== updateId ? u : {
+      ...u, reactions: [...(u.reactions||[]), { id:tempId, emoji, user_id: state.currentUser.id }]
+    })
+  });
+
+  const { data, error } = await supabase.from('reactions')
+    .insert({ update_id: updateId, user_id: state.currentUser.id, emoji })
+    .select().single();
+
+  if(error){
+    if(error.code !== '23505') console.error(error);
+    await loadUserData();
+    return;
   }
 
   setState({
-    modal: null,
-    pendingPhotoFile: null
+    updates: state.updates.map(u => u.id !== updateId ? u : {
+      ...u, reactions: u.reactions.map(r => r.id === tempId ? data : r)
+    })
   });
-
-  await loadUserData();
 }
 
 /* ============================================================ */
-/* Render: shell pieces                                           */
+/* Render: shell                                                 */
 /* ============================================================ */
 function renderTopbar(){
   return `
     <div class="topbar">
       <div></div>
       <div style="display:flex; gap:8px;">
-        ${state.screen==='app' ? `<button class="round-btn" data-action="open-settings">⚙️</button>` : ''}
-        <button class="round-btn" data-action="toggle-theme">${state.theme==='dark' ? '☀️' : '🌙'}</button>
+        <button class="round-btn" data-action="open-settings" aria-label="Settings">⚙️</button>
+        <button class="round-btn" data-action="toggle-theme" aria-label="Toggle theme">${state.theme==='dark'?'☀️':'🌙'}</button>
       </div>
     </div>`;
 }
 
 function renderBottomNav(){
   const left = [
-    {id:'today', label:'Today', ic:'🏠'},
-    {id:'goals', label:'Goals', ic:'🎯'},
-    {id:'chat', label:'Chat', ic:'💬'},
+    { id:'today',  label:'Today',  ic:'🏠' },
+    { id:'goals',  label:'Goals',  ic:'🎯' },
+    { id:'chat',   label:'Chat',   ic:'💬' },
   ];
   const right = [
-    {id:'updates', label:'Updates', ic:'📸'},
-    {id:'progress', label:'Progress', ic:'📊'},
-    {id:'together', label:'Together', ic:'🫶'},
+    { id:'updates',  label:'Updates',  ic:'📸' },
+    { id:'progress', label:'Progress', ic:'📊' },
+    { id:'together', label:'Together', ic:'🫶' },
   ];
   const item = t => `
     <button class="navitem ${state.activeTab===t.id?'active':''}" data-action="tab" data-tab="${t.id}">
@@ -1616,15 +1255,12 @@ function renderBottomNav(){
     <div id="bottomnav">
       <div id="navbar">
         ${left.map(item).join('')}
-        <button id="fab" data-action="open-add">+</button>
+        <button id="fab" data-action="open-add" aria-label="Add">+</button>
         ${right.map(item).join('')}
       </div>
     </div>`;
 }
 
-/* ============================================================ */
-/* Render: Loading                                                */
-/* ============================================================ */
 function renderLoading(){
   return `
     <div class="center-col" style="align-items:center; text-align:center;">
@@ -1634,7 +1270,7 @@ function renderLoading(){
 }
 
 /* ============================================================ */
-/* Render: Auth screens                                           */
+/* Render: auth                                                  */
 /* ============================================================ */
 function renderAuthChoice(){
   return `
@@ -1653,11 +1289,11 @@ function renderAuthChoice(){
 function renderCreateForm(){
   return `
     <div class="center-col">
-      <button class="round-btn" style="position:absolute; top:16px; left:18px;" data-action="goto-choice">←</button>
+      <button class="round-btn" style="position:absolute; top:calc(16px + env(safe-area-inset-top)); left:18px;" data-action="goto-choice">←</button>
       <h2 style="font-size:22px; font-weight:800; margin-bottom:6px;">Let's set you up ✨</h2>
       <p class="muted" style="font-size:13px; margin-bottom:20px;">Just a name and a password — no email needed.</p>
-      <input id="name-input" class="input" placeholder="Your name" value="${escapeHtml(state.authName)}" maxlength="24" />
-      <input id="password-input" class="input" type="password" placeholder="Password (min 6 characters)" value="${escapeHtml(state.authPassword)}" />
+      <input id="name-input" class="input" placeholder="Your name" value="${escapeHtml(state.authName)}" maxlength="24" autocomplete="nickname" />
+      <input id="password-input" class="input" type="password" placeholder="Password (min 6 characters)" value="${escapeHtml(state.authPassword)}" autocomplete="new-password" />
       ${state.authError ? `<div class="error-text">${escapeHtml(state.authError)}</div>` : ''}
       <button class="btn-primary" data-action="submit-create" ${state.busy?'disabled':''}>${state.busy?'Creating…':'Create account'}</button>
     </div>`;
@@ -1666,30 +1302,29 @@ function renderCreateForm(){
 function renderLoginForm(){
   return `
     <div class="center-col">
-      <button class="round-btn" style="position:absolute; top:16px; left:18px;" data-action="goto-choice">←</button>
+      <button class="round-btn" style="position:absolute; top:calc(16px + env(safe-area-inset-top)); left:18px;" data-action="goto-choice">←</button>
       <h2 style="font-size:22px; font-weight:800; margin-bottom:6px;">Welcome back 👋</h2>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Log in with your code and password.</p>
-      <input id="login-code-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Your code (e.g. SUN482)" value="${escapeHtml(state.authCodeInput)}" maxlength="10" />
-      <input id="password-input" class="input" type="password" placeholder="Password" value="${escapeHtml(state.authPassword)}" />
+      <input id="login-code-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Your code (e.g. SUN482)" value="${escapeHtml(state.authCodeInput)}" maxlength="10" autocapitalize="characters" autocomplete="off" />
+      <input id="password-input" class="input" type="password" placeholder="Password" value="${escapeHtml(state.authPassword)}" autocomplete="current-password" />
       ${state.authError ? `<div class="error-text">${escapeHtml(state.authError)}</div>` : ''}
       <button class="btn-primary" data-action="submit-login" ${state.busy?'disabled':''}>${state.busy?'Checking…':'Log in'}</button>
     </div>`;
 }
 
 function renderYourCode(){
-  const code = state.currentUser.code;
   return `
     <div class="center-col">
       <div style="text-align:center; margin-bottom:6px; font-size:32px;">🎉</div>
       <h2 style="font-size:20px; font-weight:800; text-align:center;">You're in, ${escapeHtml(state.currentUser.name)}!</h2>
       <p class="muted" style="font-size:13px; text-align:center; margin-top:6px;">This is your private code. Share it with your partner so they can connect — and use it any time to log in.</p>
       <div class="glass glass-strong" style="margin:20px 0;">
-        <div class="code-display">${code}</div>
+        <div class="code-display">${escapeHtml(state.currentUser.code)}</div>
       </div>
       <button class="btn-secondary" style="margin-bottom:20px;" data-action="copy-code">📋 Copy code</button>
 
       <p class="muted" style="font-size:12.5px; text-align:center; margin-bottom:8px;">Have your partner's code already?</p>
-      <input id="connect-now-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code (optional)" value="${escapeHtml(state.connectInput)}" maxlength="10" />
+      <input id="connect-now-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner's code (optional)" value="${escapeHtml(state.connectInput)}" maxlength="10" autocapitalize="characters" />
       ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
       <button class="btn-primary" style="margin-bottom:10px;" data-action="connect-now" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect & continue'}</button>
       <button class="btn-secondary" data-action="skip-connect">Skip for now</button>
@@ -1697,24 +1332,23 @@ function renderYourCode(){
 }
 
 /* ============================================================ */
-/* Render: Today                                                  */
+/* Render: goal pieces                                           */
 /* ============================================================ */
 function renderGoalCard(g){
-  const cat = CATEGORY_EMOJI[g.category] || '🌱';
   const done = !!g.is_done;
   return `
     <div class="glass" style="padding:14px; display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-      <div class="icon-badge ${done?'done':''}">${cat}</div>
+      <div class="icon-badge ${done?'done':''}">${CATEGORY_EMOJI[g.category] || '🌱'}</div>
       <div style="flex:1; min-width:0;">
-        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:14.5px; ${done?`color:var(--ink-faint); text-decoration:line-through;`:''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(g.title)}</div>
+        <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:600; font-size:14.5px; ${done?'color:var(--ink-faint); text-decoration:line-through;':''} overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(g.title)}</div>
         <div style="display:flex; gap:6px; margin-top:5px; align-items:center; flex-wrap:wrap;">
           ${g.duration ? `<span class="faint" style="font-size:11px;">⏱ ${escapeHtml(g.duration)}</span>` : ''}
           ${g.priority==='high' ? `<span class="tag pink">Priority</span>` : ''}
           ${g.is_private ? `<span class="tag blue">🔒 Private</span>` : ''}
         </div>
       </div>
-      <button class="checkbox-btn ${done?'done':''}" data-action="toggle-goal" data-id="${g.id}">${done?'✓':''}</button>
-      <button class="round-btn" style="width:26px;height:26px;font-size:12px;margin-left:2px;" data-action="delete-goal" data-id="${g.id}">✕</button>
+      <button class="checkbox-btn ${done?'done':''}" data-action="toggle-goal" data-id="${g.id}" aria-label="Toggle goal">${done?'✓':''}</button>
+      <button class="round-btn" style="width:26px;height:26px;font-size:12px;margin-left:2px;" data-action="delete-goal" data-id="${g.id}" aria-label="Delete goal">✕</button>
     </div>`;
 }
 
@@ -1722,27 +1356,33 @@ function renderPartnerGoalRow(g){
   const done = !!g.is_done;
   return `
     <div style="display:flex; align-items:center; gap:8px; padding:6px 0; font-size:13px; ${done?'color:var(--ink-faint); text-decoration:line-through;':''}">
-      <span style="font-size:14px;">${CATEGORY_EMOJI[g.category]||'🌱'}</span> ${escapeHtml(g.title)}
+      <span style="font-size:14px;">${CATEGORY_EMOJI[g.category] || '🌱'}</span> ${escapeHtml(g.title)}
     </div>`;
 }
 
+/* ============================================================ */
+/* Render: Today                                                 */
+/* ============================================================ */
 function renderToday(){
   const goals = state.goals;
-  const done = goals.filter(g=>g.is_done).length;
-  const pct = goals.length ? Math.round((done/goals.length)*100) : 0;
+  const done = goals.filter(g => g.is_done).length;
+  const pct = goals.length ? Math.round(done/goals.length*100) : 0;
   const partner = state.partnerUser;
   const pGoals = state.partnerGoals;
-  const pDone = pGoals.filter(g=>g.is_done).length;
-  const pPct = pGoals.length ? Math.round((pDone/pGoals.length)*100) : 0;
+  const pPct = pGoals.length ? Math.round(pGoals.filter(g=>g.is_done).length/pGoals.length*100) : 0;
 
-  const angle = (pct/100)*360;
+  const angle = pct/100*360;
   const ringStyle = `background: conic-gradient(var(--purple) 0deg, var(--pink) ${angle}deg, var(--glass-border) ${angle}deg 360deg);`;
 
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+  const dateLine = new Date().toLocaleDateString([], { weekday:'long', month:'long', day:'numeric' });
+
   return `
-    <div style="padding:18px 18px 30px;">
+    <div style="padding:6px 18px 30px;">
       <div style="margin-bottom:18px;">
-        <div class="muted" style="font-size:13px; font-weight:500;">Today</div>
-        <h1 style="font-size:24px; font-weight:800; margin-top:2px; letter-spacing:-0.5px;">Good to see you, ${escapeHtml(state.currentUser.name)} ✨</h1>
+        <div class="muted" style="font-size:13px; font-weight:500;">${dateLine}</div>
+        <h1 style="font-size:24px; font-weight:800; margin-top:2px; letter-spacing:-0.5px;">${greeting}, ${escapeHtml(state.currentUser.name)} ✨</h1>
       </div>
 
       <div class="glass glass-strong" style="padding:24px; margin-bottom:18px; display:flex; flex-direction:column; align-items:center;">
@@ -1750,20 +1390,20 @@ function renderToday(){
         <div style="width:168px; height:168px; border-radius:50%; ${ringStyle} display:flex; align-items:center; justify-content:center; padding:14px;">
           <div style="width:100%; height:100%; border-radius:50%; background:var(--solid); display:flex; flex-direction:column; align-items:center; justify-content:center;">
             <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:36px; letter-spacing:-1px;">${pct}%</div>
-            <div class="faint" style="font-size:11px; margin-top:2px;">${done} / ${goals.length || 0} goals</div>
+            <div class="faint" style="font-size:11px; margin-top:2px;">${done} / ${goals.length} goals</div>
           </div>
         </div>
       </div>
 
       <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-        <h3 style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px;">🎯 Today's Goals</h3>
+        <h3 style="font-size:16px; font-weight:700;">🎯 Today's Goals</h3>
         <span class="faint" style="font-size:12px; font-weight:600;">${goals.length - done} left</span>
       </div>
       ${goals.length===0
         ? `<div class="empty-state"><div class="em">🌱</div><div class="heading" style="font-weight:700; font-size:15px;">Nothing planned yet</div><div style="font-size:13px;">Add something you want to accomplish today.</div></div>`
         : goals.map(renderGoalCard).join('')}
 
-      <h3 style="font-size:16px; font-weight:700; display:flex; align-items:center; gap:6px; margin-top:22px; margin-bottom:10px;">🫶 Their Day</h3>
+      <h3 style="font-size:16px; font-weight:700; margin:22px 0 10px;">🫶 Their Day</h3>
       ${!partner ? `
         <div class="glass" style="padding:20px; text-align:center;">
           <div style="font-size:26px; margin-bottom:8px;">🔗</div>
@@ -1775,7 +1415,7 @@ function renderToday(){
         <div class="glass" style="padding:16px;">
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
             <div class="avatar" style="width:40px; height:40px; background:linear-gradient(135deg,var(--pink),var(--purple));">${initials(partner.name)}</div>
-            <div style="flex:1;">
+            <div style="flex:1; min-width:0;">
               <div style="font-size:14px; font-weight:700;">${escapeHtml(partner.name)}</div>
               <div class="muted" style="font-size:12px;">${pPct}% complete</div>
             </div>
@@ -1792,18 +1432,18 @@ function renderToday(){
 }
 
 /* ============================================================ */
-/* Render: Goals                                                  */
+/* Render: Goals                                                 */
 /* ============================================================ */
-let goalsFilter = 'all';
 function renderGoals(){
-  const filtered = state.goals.filter(g => goalsFilter==='all' ? true : goalsFilter==='done' ? g.is_done : !g.is_done);
+  const f = state.goalsFilter;
+  const filtered = state.goals.filter(g => f==='all' ? true : f==='done' ? g.is_done : !g.is_done);
   return `
-    <div style="padding:18px 18px 30px;">
+    <div style="padding:6px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🎯 Goals</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Everything you're working toward</p>
       <div style="display:flex; gap:8px; margin-bottom:16px;">
-        ${['all','active','done'].map(f=>`
-          <button class="auth-tab ${goalsFilter===f?'active':''}" style="flex:none; padding:7px 16px; text-transform:capitalize;" data-action="filter-goals" data-filter="${f}">${f}</button>
+        ${['all','active','done'].map(x => `
+          <button class="auth-tab ${f===x?'active':''}" style="padding:7px 16px; text-transform:capitalize;" data-action="filter-goals" data-filter="${x}">${x}</button>
         `).join('')}
       </div>
       ${filtered.length===0
@@ -1813,23 +1453,39 @@ function renderGoals(){
 }
 
 /* ============================================================ */
-/* Render: Chat                                                   */
+/* Render: Chat                                                  */
 /* ============================================================ */
+function renderChatHeader(name, initial){
+  const items = [
+    { id:'today', label:'🏠 Home' },
+    { id:'goals', label:'🎯 Goals' },
+    { id:'updates', label:'📸 Updates' },
+    { id:'progress', label:'📊 Progress' },
+    { id:'together', label:'🫶 Together' },
+  ];
+  return `
+    <div class="chat-header">
+      <button class="round-btn" data-action="chat-back-home" aria-label="Back">←</button>
+      <div class="chat-avatar">${escapeHtml(initial)}</div>
+      <div class="chat-header-info">
+        <div class="chat-header-name">${name}</div>
+        <div class="chat-header-status">${state.partnerTyping ? 'typing…' : 'Private chat · just you two'}</div>
+      </div>
+      <div class="chat-menu-wrap">
+        <button class="round-btn" data-action="toggle-chat-menu" aria-label="Menu">☰</button>
+        ${state.chatMenuOpen ? `
+          <div class="chat-menu-panel">
+            ${items.map(i => `<button class="chat-menu-item" data-action="chat-menu-select" data-tab="${i.id}">${i.label}</button>`).join('')}
+          </div>` : ''}
+      </div>
+    </div>`;
+}
+
 function renderChat(){
   if(!state.coupleId){
     return `
-      <div class="chat-screen chat-empty-screen">
-        <div class="chat-header" style="padding-top:10px;">
-          <button class="round-btn" data-action="chat-back-home" aria-label="Back to home">←</button>
-          <div class="chat-avatar">♡</div>
-          <div class="chat-header-info">
-            <div class="chat-header-name">Chat</div>
-            <div class="chat-header-status">Private space for two</div>
-          </div>
-          <div class="chat-menu-wrap">
-            <button class="round-btn" data-action="toggle-chat-menu" aria-label="Chat menu">☰</button>
-          </div>
-        </div>
+      <div class="chat-screen">
+        ${renderChatHeader('Chat','♡')}
         <div class="chat-empty-content">
           <div class="empty-state">
             <div class="em">🔗</div>
@@ -1841,101 +1497,55 @@ function renderChat(){
       </div>`;
   }
 
-  const partnerName = state.partnerUser ? escapeHtml(state.partnerUser.name) : 'Partner';
+  const partnerName = escapeHtml(state.partnerUser?.name || 'Partner');
   const partnerInitial = state.partnerUser?.name ? initials(state.partnerUser.name) : '♡';
-
-  const msgs = state.messages.map(m => {
-    const mine = m.sender_id === state.currentUser.id;
-    return `
-      <div class="chat-msg ${mine ? 'mine' : 'theirs'}">
-        <div>
-          <div class="chat-bubble">${escapeHtml(m.body)}</div>
-          <div class="chat-time">${timeShort(m.created_at)}</div>
-        </div>
-      </div>`;
-  }).join('');
-
-  const chatMenuItems = [
-    { id: 'today', label: 'Home' },
-    { id: 'goals', label: 'Goals' },
-    { id: 'updates', label: 'Updates' },
-    { id: 'progress', label: 'Progress' },
-    { id: 'together', label: 'Together' },
-  ];
 
   return `
     <div class="chat-screen">
-      <div class="chat-header" style="padding-top:10px;">
-        <button class="round-btn" data-action="chat-back-home" aria-label="Back to home">←</button>
-        <div class="chat-avatar">${escapeHtml(partnerInitial)}</div>
-        <div class="chat-header-info">
-          <div class="chat-header-name">${partnerName}</div>
-          <div class="chat-header-status">
-            ${state.partnerTyping ? 'typing…' : 'Private chat · just you two'}
-          </div>
-        </div>
-        <div class="chat-menu-wrap">
-          <button class="round-btn" data-action="toggle-chat-menu" aria-label="Open chat menu">☰</button>
-          ${state.chatMenuOpen ? `
-            <div class="chat-menu-panel">
-              ${chatMenuItems.map(item => `
-                <button class="chat-menu-item" data-action="chat-menu-select" data-tab="${item.id}">${item.label}</button>
-              `).join('')}
-            </div>
-          ` : ''}
-        </div>
-      </div>
-
-      <div id="chat-list">
-        ${msgs || `
-          <div class="chat-empty-content">
-            <div class="empty-state">
-              <div class="em">💬</div>
-              <div style="font-size:13px;font-weight:600;">Say hi — this is just between you two.</div>
-            </div>
-          </div>`}
-      </div>
-
-      ${state.partnerTyping ? `<div class="typing-indicator">${partnerName} is typing…</div>` : ''}
-
+      ${renderChatHeader(partnerName, partnerInitial)}
+      <div id="chat-list">${messagesHtml()}</div>
       <div id="chat-input-bar">
         <textarea id="chat-input" rows="1" placeholder="Message ${partnerName}…" autocomplete="off" autocorrect="on" spellcheck="true"></textarea>
-        <button id="chat-send" data-action="send-chat" aria-label="Send message">➤</button>
+        <button id="chat-send" data-action="send-chat" aria-label="Send">➤</button>
       </div>
     </div>`;
 }
 
 /* ============================================================ */
-/* Render: Updates                                                */
+/* Render: Updates                                               */
 /* ============================================================ */
 function renderUpdates(){
   const list = state.updates;
-  const EMOJIS = ['❤️','🔥','🫶'];
   return `
-    <div style="padding:18px 18px 30px;">
+    <div style="padding:6px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">📸 Little moments</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Small glimpses into each other's day</p>
       ${list.length===0
         ? `<div class="empty-state"><div class="em">✨</div><div class="heading" style="font-weight:700; font-size:15px;">Your day is just beginning</div><div style="font-size:13px;">Tap + to share your first moment.</div></div>`
-        : list.map(u=>{
+        : list.map(u => {
           const counts = {};
-          (u.reactions||[]).forEach(r => counts[r.emoji] = (counts[r.emoji]||0)+1);
+          const mineSet = new Set();
+          (u.reactions||[]).forEach(r => {
+            counts[r.emoji] = (counts[r.emoji]||0)+1;
+            if(r.user_id === state.currentUser.id) mineSet.add(r.emoji);
+          });
           return `
           <div class="glass glass-strong" style="padding:16px; margin-bottom:14px;">
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
               <div class="avatar" style="width:34px; height:34px; font-size:13px; background:linear-gradient(135deg,${u.mine?'var(--purple),var(--pink)':'var(--pink),var(--purple)'});">${initials(u.authorName)}</div>
-              <div style="flex:1;">
+              <div style="flex:1; min-width:0;">
                 <div style="font-size:13px; font-weight:700;">${escapeHtml(u.authorName)}</div>
                 <div class="faint" style="font-size:11px;">${timeAgo(u.created_at)}</div>
               </div>
+              ${u.mine ? `<button class="round-btn" style="width:28px;height:28px;font-size:12px;" data-action="delete-update" data-id="${u.id}" aria-label="Delete">✕</button>` : ''}
             </div>
-                        ${u.photoUrl
-              ? `<img src="${u.photoUrl}" alt="" style="width:100%; max-height:480px; object-fit:contain; border-radius:18px; margin-bottom:10px; background:var(--glass); display:block;" />`
-              : `<div class="photo-placeholder" style="height:120px;">📷</div>`}
-            ${u.caption ? `<div style="font-size:14px; line-height:1.4; margin-bottom:10px;">${escapeHtml(u.caption)}</div>` : ''}
+            ${u.photoUrl
+              ? `<img src="${u.photoUrl}" alt="" loading="lazy" style="width:100%; max-height:480px; object-fit:contain; border-radius:18px; margin-bottom:10px; background:var(--glass); display:block;" />`
+              : ''}
+            ${u.caption ? `<div style="font-size:14px; line-height:1.45; margin-bottom:10px; white-space:pre-wrap;">${escapeHtml(u.caption)}</div>` : ''}
             <div style="display:flex; gap:8px;">
-              ${EMOJIS.map(e=>`
-                <button class="glass" style="border-radius:999px; padding:5px 10px; font-size:13px; border-width:1px;" data-action="react" data-update-id="${u.id}" data-emoji="${e}">
+              ${REACTION_EMOJIS.map(e => `
+                <button class="glass" style="border-radius:999px; padding:5px 11px; font-size:13px; ${mineSet.has(e)?'border-color:var(--purple); background:color-mix(in srgb, var(--purple) 16%, transparent);':''}" data-action="react" data-update-id="${u.id}" data-emoji="${e}">
                   ${e}${counts[e] ? ` ${counts[e]}` : ''}
                 </button>`).join('')}
             </div>
@@ -1945,27 +1555,31 @@ function renderUpdates(){
 }
 
 /* ============================================================ */
-/* Render: Progress                                               */
+/* Render: Progress                                              */
 /* ============================================================ */
 function renderProgress(){
   const goals = state.goals;
-  const done = goals.filter(g=>g.is_done).length;
-  const pct = goals.length ? Math.round((done/goals.length)*100) : 0;
+  const done = goals.filter(g => g.is_done).length;
+  const pct = goals.length ? Math.round(done/goals.length*100) : 0;
   const byCat = {};
-  goals.forEach(g=>{ byCat[g.category] = byCat[g.category] || {total:0,done:0}; byCat[g.category].total++; if(g.is_done) byCat[g.category].done++; });
+  goals.forEach(g => {
+    byCat[g.category] = byCat[g.category] || { total:0, done:0 };
+    byCat[g.category].total++;
+    if(g.is_done) byCat[g.category].done++;
+  });
 
   return `
-    <div style="padding:18px 18px 30px;">
+    <div style="padding:6px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">📊 Your progress</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">Based on the goals you've added</p>
 
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px;">
         <div class="glass" style="padding:16px;">
-          <div class="muted" style="font-size:12px; font-weight:600; margin-bottom:6px;">Today</div>
+          <div class="muted" style="font-size:12px; font-weight:600; margin-bottom:6px;">Completion</div>
           <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:26px;">${pct}%</div>
         </div>
         <div class="glass" style="padding:16px;">
-          <div class="muted" style="font-size:12px; font-weight:600; margin-bottom:6px;">Total goals done</div>
+          <div class="muted" style="font-size:12px; font-weight:600; margin-bottom:6px;">Goals done</div>
           <div style="font-family:'Plus Jakarta Sans',sans-serif; font-weight:800; font-size:26px;">${done}</div>
         </div>
       </div>
@@ -1973,13 +1587,13 @@ function renderProgress(){
       <h3 style="font-size:14px; font-weight:700; margin-bottom:10px;">By category</h3>
       ${Object.keys(byCat).length===0
         ? `<div class="empty-state"><div class="em">📊</div><div style="font-size:13px;">Add goals to see your breakdown here.</div></div>`
-        : Object.entries(byCat).map(([cat,v])=>{
-            const p = v.total ? Math.round((v.done/v.total)*100) : 0;
+        : Object.entries(byCat).map(([cat,v]) => {
+            const p = v.total ? Math.round(v.done/v.total*100) : 0;
             return `
               <div class="glass" style="padding:14px; margin-bottom:8px; display:flex; align-items:center; gap:12px;">
-                <div class="icon-badge done">${CATEGORY_EMOJI[cat]}</div>
-                <div style="flex:1;">
-                  <div style="font-size:13px; font-weight:600; margin-bottom:4px;">${CATEGORY_LABEL[cat]||cat}</div>
+                <div class="icon-badge done">${CATEGORY_EMOJI[cat] || '🌱'}</div>
+                <div style="flex:1; min-width:0;">
+                  <div style="font-size:13px; font-weight:600; margin-bottom:4px;">${CATEGORY_LABEL[cat] || cat}</div>
                   <div style="width:100%; height:5px; border-radius:999px; background:var(--glass-border);">
                     <div style="width:${p}%; height:100%; border-radius:999px; background:linear-gradient(90deg,var(--purple),var(--pink));"></div>
                   </div>
@@ -1991,16 +1605,16 @@ function renderProgress(){
 }
 
 /* ============================================================ */
-/* Render: Together                                               */
+/* Render: Together                                              */
 /* ============================================================ */
 function renderTogether(){
   const goals = state.goals, pGoals = state.partnerGoals;
-  const myPct = goals.length ? Math.round((goals.filter(g=>g.is_done).length/goals.length)*100) : 0;
-  const pPct = pGoals.length ? Math.round((pGoals.filter(g=>g.is_done).length/pGoals.length)*100) : 0;
+  const myPct = goals.length ? Math.round(goals.filter(g=>g.is_done).length/goals.length*100) : 0;
+  const pPct = pGoals.length ? Math.round(pGoals.filter(g=>g.is_done).length/pGoals.length*100) : 0;
   const together = state.partnerUser ? Math.round((myPct+pPct)/2) : myPct;
 
   return `
-    <div style="padding:18px 18px 30px;">
+    <div style="padding:6px 18px 30px;">
       <h1 style="font-size:22px; font-weight:800; margin-bottom:4px;">🫶 Together</h1>
       <p class="muted" style="font-size:13px; margin-bottom:16px;">${state.partnerUser ? 'You and '+escapeHtml(state.partnerUser.name) : 'Connect with your partner to see this fill in'}</p>
 
@@ -2020,7 +1634,8 @@ function renderTogether(){
           </div>
         </div>
         <div style="text-align:center; font-size:13.5px; font-weight:500; padding:12px 8px; border-radius:16px; background:linear-gradient(135deg,color-mix(in srgb, var(--purple) 12%, transparent),color-mix(in srgb, var(--pink) 12%, transparent));">
-          ${!state.partnerUser ? 'Connect to start building your week together ✨' : together>=70 ? 'You both had a great week ✨' : 'Every bit of progress counts 🌱'}
+          ${!state.partnerUser ? 'Connect to start building your week together ✨'
+            : together>=70 ? 'You both had a great week ✨' : 'Every bit of progress counts 🌱'}
         </div>
       </div>
 
@@ -2029,387 +1644,176 @@ function renderTogether(){
 }
 
 /* ============================================================ */
-/* Render: Modals                                                 */
+/* Render: Modals                                                */
 /* ============================================================ */
+function modalHeader(title, backAction){
+  return `
+    <div style="display:flex; align-items:center; gap:10px; margin:2px 0 18px;">
+      ${backAction ? `<button class="round-btn" style="font-size:18px;" data-action="${backAction}" aria-label="Back">←</button>` : ''}
+      <h2 style="font-size:17px; font-weight:700; margin:0; flex:1;">${title}</h2>
+      <button class="round-btn" data-action="close-modal-btn" aria-label="Close">✕</button>
+    </div>`;
+}
 
 function renderModal(){
   if(!state.modal) return '';
 
-  const notificationsReady = 'Notification' in window && 'serviceWorker' in navigator && 'PushManager' in window && window.isSecureContext;
+  const notificationsReady = pushIsSupported() && window.isSecureContext;
 
   if(state.modal === 'settings') return `
     <div class="modal-overlay" data-action="close-modal">
       <div class="modal-sheet">
         <div class="drag-handle"></div>
+        ${modalHeader('⚙️ Settings', null)}
 
-        <h2 style="font-size:17px; font-weight:700; margin:0 0 16px;">⚙️ Settings</h2>
+        <div class="glass" style="padding:16px; margin-bottom:12px;">
+          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your name</div>
+          <div style="font-weight:600; font-size:14px; margin-bottom:12px;">${escapeHtml(state.currentUser.name)}</div>
+          <div class="muted" style="font-size:11.5px; margin-bottom:4px;">Your code</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="font-weight:700; font-size:17px; letter-spacing:2px; color:var(--purple-deep); flex:1;">${escapeHtml(state.currentUser.code)}</div>
+            <button class="round-btn" data-action="copy-code" aria-label="Copy code">📋</button>
+          </div>
+        </div>
 
-        <button
-          type="button"
-          class="btn-secondary"
-          style="width:100%; margin-bottom:10px;"
-          data-action="toggle-theme"
-        >
-          ${state.theme === 'dark' ? '☀️ Light mode' : '🌙 Dark mode'}
+        <div class="glass" style="padding:16px; margin-bottom:12px;">
+          <div class="muted" style="font-size:11.5px; margin-bottom:8px;">Partner</div>
+          ${state.partnerUser ? `
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+              <span style="font-weight:600; font-size:14px;">${escapeHtml(state.partnerUser.name)}</span>
+              <button class="tag pink" style="border:none;" data-action="disconnect-partner">Disconnect</button>
+            </div>
+          ` : `<button class="btn-secondary" data-action="open-connect">Connect with your partner</button>`}
+        </div>
+
+        <button class="btn-secondary" style="margin-bottom:10px;" data-action="toggle-theme">
+          ${state.theme==='dark' ? '☀️ Light mode' : '🌙 Dark mode'}
         </button>
 
-        <button
-          type="button"
-          class="btn-secondary"
-          style="width:100%; margin-bottom:10px;"
-          data-action="${notificationsReady ? 'enable-notifications' : 'show-notification-help'}"
-        >
-          ${notificationsReady ? (state.pushSubscribed ? '🔔 Notifications on' : '🔔 Enable notifications') : '🔔 Notifications require HTTPS'}
+        <button class="btn-secondary" style="margin-bottom:10px;"
+          data-action="${notificationsReady ? (state.pushSubscribed ? 'disable-notifications' : 'enable-notifications') : 'show-notification-help'}">
+          ${notificationsReady
+            ? (state.pushSubscribed ? '🔕 Turn off notifications' : '🔔 Enable notifications')
+            : '🔔 Notifications need HTTPS'}
         </button>
 
-        <button
-          type="button"
-          class="btn-secondary"
-          style="width:100%;"
-          data-action="do-logout"
-        >
-          🚪 Log out
-        </button>
+        <button class="btn-secondary" data-action="do-logout">🚪 Log out</button>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  /* =========================
-     ADD CHOICE
-     ========================= */
   if(state.modal === 'addChoice') return `
     <div class="modal-overlay" data-action="close-modal">
       <div class="modal-sheet">
-
         <div class="drag-handle"></div>
-
-        <h2 style="
-          font-size:17px;
-          font-weight:700;
-          margin:0 0 16px;
-        ">
-          ＋ What would you like to do?
-        </h2>
-
-        <button
-          type="button"
-          class="btn-secondary"
-          style="
-            width:100%;
-            margin-bottom:10px;
-            text-align:left;
-            padding:14px 16px;
-          "
-          data-action="open-add-goal"
-        >
-          🎯 &nbsp; Add a goal
-        </button>
-
-        <button
-          type="button"
-          class="btn-secondary"
-          style="
-            width:100%;
-            text-align:left;
-            padding:14px 16px;
-          "
-          data-action="open-add-update"
-        >
-          📸 &nbsp; Share a moment
-        </button>
-
+        ${modalHeader('What would you like to do?', null)}
+        <button class="btn-secondary" style="margin-bottom:10px; text-align:left; padding:14px 16px;" data-action="open-add-goal">🎯 &nbsp; Add a goal</button>
+        <button class="btn-secondary" style="text-align:left; padding:14px 16px;" data-action="open-add-update">📸 &nbsp; Share a moment</button>
       </div>
-    </div>
-  `;
+    </div>`;
 
-
-  /* =========================
-     ADD GOAL
-     ========================= */
   if(state.modal === 'addGoal') return `
     <div class="modal-overlay" data-action="close-modal">
       <div class="modal-sheet">
-
-        <div style="
-          display:flex;
-          align-items:center;
-          gap:10px;
-          margin:2px 0 20px;
-        ">
-
-          <button
-            type="button"
-            class="round-btn"
-            style="
-              width:36px;
-              height:36px;
-              flex-shrink:0;
-              font-size:18px;
-            "
-            data-action="back-add-choice"
-            aria-label="Back"
-          >
-            ←
-          </button>
-
-          <h2 style="
-            font-size:17px;
-            font-weight:700;
-            margin:0;
-          ">
-            🎯 Add a goal
-          </h2>
-
-        </div>
-
-        <input
-          id="goal-title"
-          class="input"
-          placeholder="What do you want to accomplish?"
-          maxlength="60"
-        />
-
+        ${modalHeader('🎯 Add a goal','back-add-choice')}
+        <input id="goal-title" class="input" placeholder="What do you want to accomplish?" maxlength="60" />
         <select id="goal-category" class="input">
-          ${Object.keys(CATEGORY_EMOJI).map(c => `
-            <option value="${c}">
-              ${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}
-            </option>
-          `).join('')}
+          ${Object.keys(CATEGORY_EMOJI).map(c => `<option value="${c}">${CATEGORY_EMOJI[c]} ${CATEGORY_LABEL[c]}</option>`).join('')}
         </select>
-
-        <input
-          id="goal-duration"
-          class="input"
-          placeholder="Estimated time (e.g. 30m)"
-          maxlength="16"
-        />
-
+        <input id="goal-duration" class="input" placeholder="Estimated time (e.g. 30m)" maxlength="16" />
         <select id="goal-priority" class="input">
           <option value="medium">Medium priority</option>
           <option value="high">High priority</option>
           <option value="low">Low priority</option>
         </select>
-
-        <label style="
-          display:flex;
-          align-items:center;
-          gap:8px;
-          font-size:13px;
-          margin:4px 0 18px;
-          cursor:pointer;
-        ">
-          <input type="checkbox" id="goal-private">
-          🔒 Keep this private from my partner
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin:4px 0 18px; cursor:pointer;">
+          <input type="checkbox" id="goal-private"> 🔒 Keep this private from my partner
         </label>
-
-        <button
-          type="button"
-          class="btn-primary"
-          style="
-            width:100%;
-            display:block;
-            margin-top:6px;
-            margin-bottom:4px;
-            padding:13px 16px;
-          "
-          data-action="submit-goal"
-        >
-          🎯 Add goal
-        </button>
-
+        <button class="btn-primary" data-action="submit-goal">Add goal</button>
       </div>
-    </div>
-  `;
+    </div>`;
 
-
-  /* =========================
-     SHARE A MOMENT
-     ========================= */
   if(state.modal === 'addUpdate') return `
     <div class="modal-overlay" data-action="close-modal">
       <div class="modal-sheet">
-
-        <div style="
-          display:flex;
-          align-items:center;
-          gap:10px;
-          margin:2px 0 20px;
-        ">
-
-          <button
-            type="button"
-            class="round-btn"
-            style="
-              width:36px;
-              height:36px;
-              flex-shrink:0;
-              font-size:18px;
-            "
-            data-action="back-add-choice"
-            aria-label="Back"
-          >
-            ←
-          </button>
-
-          <h2 style="
-            font-size:17px;
-            font-weight:700;
-            margin:0;
-          ">
-            📸 Share a moment
-          </h2>
-
-        </div>
-
-        <label
-          class="photo-placeholder"
-          for="update-photo-input"
-          style="cursor:pointer;"
-        >
+        ${modalHeader('📸 Share a moment','back-add-choice')}
+        <label class="photo-placeholder" for="update-photo-input" style="cursor:pointer;">
           ${state.pendingPhotoFile ? '✅' : '🖼️'}
-
-          <span class="photo-note" style="margin:0;">
-            ${
-              state.pendingPhotoFile
-                ? escapeHtml(state.pendingPhotoFile.name)
-                : 'Tap to choose a photo'
-            }
-          </span>
+          <span class="photo-note" style="margin:0;">${state.pendingPhotoFile ? escapeHtml(state.pendingPhotoFile.name) : 'Tap to choose a photo'}</span>
         </label>
-
-        <input
-          type="file"
-          id="update-photo-input"
-          accept="image/*"
-          style="display:none;"
-        />
-
-        <textarea
-          id="update-caption"
-          class="input"
-          rows="3"
-          placeholder="Say something about this moment..."
-          style="resize:none;"
-        ></textarea>
-
-        <button
-          type="button"
-          class="btn-primary"
-          style="
-            width:100%;
-            margin-top:8px;
-            padding:13px 16px;
-          "
-          data-action="submit-update"
-        >
-          📸 Share this moment
-        </button>
-
+        <input type="file" id="update-photo-input" accept="image/*" style="display:none;" />
+        <textarea id="update-caption" class="input" rows="3" placeholder="Say something about this moment..." style="resize:none;"></textarea>
+        <button class="btn-primary" data-action="submit-update" ${state.busy?'disabled':''}>${state.busy?'Sharing…':'Share this moment'}</button>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  /* =========================
-     CONNECT WITH PARTNER
-     ========================= */
   if(state.modal === 'connect') return `
     <div class="modal-overlay" data-action="close-modal">
       <div class="modal-sheet">
         <div class="drag-handle"></div>
-
-        <h2 style="font-size:17px; font-weight:700; margin:0 0 14px;">
-          🔗 Connect with your partner
-        </h2>
-
+        ${modalHeader('🔗 Connect with your partner', null)}
         <p class="muted" style="font-size:12.5px; margin:0 0 14px; line-height:1.5;">
-          Enter your partner's code to link your spaces together.
+          Your code is <strong style="color:var(--purple-deep);">${escapeHtml(state.currentUser?.code || '')}</strong> — share it, or enter theirs below.
         </p>
-
-        <input
-          id="connect-input"
-          class="input"
-          style="text-transform:uppercase; letter-spacing:2px; text-align:center;"
-          placeholder="Partner code"
-          value="${escapeHtml(state.connectInput)}"
-          maxlength="10"
-        />
-
+        <input id="connect-input" class="input" style="text-transform:uppercase; letter-spacing:2px; text-align:center;" placeholder="Partner code" value="${escapeHtml(state.connectInput)}" maxlength="10" autocapitalize="characters" />
         ${state.connectError ? `<div class="error-text">${escapeHtml(state.connectError)}</div>` : ''}
-
-        <button
-          type="button"
-          class="btn-primary"
-          style="margin-bottom:10px;"
-          data-action="submit-connect"
-          ${state.busy ? 'disabled' : ''}
-        >
-          ${state.busy ? 'Connecting…' : 'Connect now'}
-        </button>
-
-        <button
-          type="button"
-          class="btn-secondary"
-          data-action="skip-connect"
-        >
-          Skip for now
-        </button>
+        <button class="btn-primary" data-action="submit-connect" ${state.busy?'disabled':''}>${state.busy?'Connecting…':'Connect now'}</button>
       </div>
-    </div>
-  `;
+    </div>`;
 
   return '';
 }
 
 /* ============================================================ */
-/* Master render                                                  */
+/* Master render                                                 */
 /* ============================================================ */
 function render(){
   const root = document.getElementById('screen');
-  const nextTheme = state.theme === 'dark' ? 'dark' : 'light';
-  document.getElementById('app').setAttribute('data-theme', nextTheme);
-  document.documentElement.setAttribute('data-theme', nextTheme);
-  try { localStorage.setItem('coupleflow-theme', nextTheme); } catch (_) {}
+  const app = document.getElementById('app');
+  const theme = state.theme === 'dark' ? 'dark' : 'light';
+  app.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('data-theme', theme);
 
   let body = '';
-  if(state.screen==='loading') body = renderLoading();
-  else if(state.screen==='authChoice') body = renderAuthChoice();
-  else if(state.screen==='create') body = renderCreateForm();
-  else if(state.screen==='login') body = renderLoginForm();
-  else if(state.screen==='yourCode') body = renderYourCode();
-  else if(state.screen==='app'){
-    const screens = { today:renderToday, goals:renderGoals, chat:renderChat, updates:renderUpdates, progress:renderProgress, together:renderTogether };
-    body = (screens[state.activeTab]||renderToday)();
+  if(state.screen === 'loading') body = renderLoading();
+  else if(state.screen === 'authChoice') body = renderAuthChoice();
+  else if(state.screen === 'create') body = renderCreateForm();
+  else if(state.screen === 'login') body = renderLoginForm();
+  else if(state.screen === 'yourCode') body = renderYourCode();
+  else if(state.screen === 'app'){
+    const screens = {
+      today:renderToday, goals:renderGoals, chat:renderChat,
+      updates:renderUpdates, progress:renderProgress, together:renderTogether,
+    };
+    body = (screens[state.activeTab] || renderToday)();
   }
 
-   const withTopbar = state.screen==='app' && state.activeTab !== 'chat';
-  const showBottomNav = state.screen==='app' && state.activeTab !== 'chat';
+  const isChat = state.screen === 'app' && state.activeTab === 'chat';
+  const showChrome = state.screen === 'app' && !isChat;
+
   root.innerHTML = `
-    ${withTopbar ? renderTopbar() : ''}
+    ${showChrome ? renderTopbar() : ''}
     ${body}
-    ${showBottomNav ? renderBottomNav() : ''}
+    ${showChrome ? renderBottomNav() : ''}
     ${renderModal()}
+    ${state.toast ? `<div class="toast">${escapeHtml(state.toast)}</div>` : ''}
   `;
 
-  document.getElementById('app').classList.toggle(
-    'chat-mode', state.screen==='app' && state.activeTab==='chat'
-  );
+  app.classList.toggle('chat-mode', isChat);
 
   bindInputs();
 
-  if(state.screen==='app' && state.activeTab==='chat'){
+  if(isChat){
     const list = document.getElementById('chat-list');
-    if(list && state.messages.length !== lastRenderedMessageCount){
-      requestAnimationFrame(() => {
-        list.scrollTop = list.scrollHeight;
-        lastRenderedMessageCount = state.messages.length;
-      });
+    if(list){
+      list.scrollTop = list.scrollHeight;
+      lastRenderedMessageCount = state.messages.length;
     }
     const chatInput = document.getElementById('chat-input');
     if(chatInput){
       chatInput.addEventListener('input', () => {
         notifyTyping();
         chatInput.style.height = 'auto';
-        chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+        chatInput.style.height = Math.min(chatInput.scrollHeight, 110) + 'px';
       });
       chatInput.addEventListener('keydown', (e) => {
         if(e.key === 'Enter' && !e.shiftKey){
@@ -2424,372 +1828,184 @@ function render(){
       });
     }
     watchChatViewport();
-
   }
 }
 
 /* ============================================================ */
-/* Input bindings                                                 */
+/* Input bindings                                                */
 /* ============================================================ */
 function bindInputs(){
-  const nameInput = document.getElementById('name-input');
-  if(nameInput) nameInput.addEventListener('input', e => state.authName = e.target.value);
-
-  const passwordInput = document.getElementById('password-input');
-  if(passwordInput) passwordInput.addEventListener('input', e => state.authPassword = e.target.value);
-
-  const loginCodeInput = document.getElementById('login-code-input');
-  if(loginCodeInput) loginCodeInput.addEventListener('input', e => state.authCodeInput = e.target.value);
-
-  const connectNow = document.getElementById('connect-now-input');
-  if(connectNow) connectNow.addEventListener('input', e => state.connectInput = e.target.value);
-
-  const connectInput = document.getElementById('connect-input');
-  if(connectInput) connectInput.addEventListener('input', e => state.connectInput = e.target.value);
+  const bind = (id, key, transform) => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', e => {
+      state[key] = transform ? transform(e.target.value) : e.target.value;
+    });
+  };
+  bind('name-input','authName');
+  bind('password-input','authPassword');
+  bind('login-code-input','authCodeInput');
+  bind('connect-now-input','connectInput');
+  bind('connect-input','connectInput');
 
   const photoInput = document.getElementById('update-photo-input');
   if(photoInput) photoInput.addEventListener('change', e => {
-    state.pendingPhotoFile = e.target.files[0] || null;
+    const file = e.target.files[0] || null;
+    if(file && file.size > 10 * 1024 * 1024){
+      showToast('Photo too large (max 10MB)');
+      return;
+    }
+    state.pendingPhotoFile = file;
     render();
   });
 }
 
+async function copyCode(){
+  const code = state.currentUser?.code || '';
+  try{
+    await navigator.clipboard.writeText(code);
+    showToast('Code copied!');
+  }catch(_){
+    const ta = document.createElement('textarea');
+    ta.value = code;
+    ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta);
+    ta.select();
+    try{ document.execCommand('copy'); showToast('Code copied!'); }
+    catch(e){ showToast('Your code: ' + code); }
+    ta.remove();
+  }
+}
+
 /* ============================================================ */
-/* Event delegation                                               */
+/* Events                                                        */
 /* ============================================================ */
 document.addEventListener('click', async (e) => {
-
   const el = e.target.closest('[data-action]');
-  if(!el) return;
 
+  // tapping outside the chat menu closes it
+  if(state.chatMenuOpen && !e.target.closest('.chat-menu-wrap')){
+    setState({ chatMenuOpen:false });
+    return;
+  }
+
+  if(!el) return;
   const action = el.getAttribute('data-action');
 
-  /* =========================
-     MODAL BACKDROP
-     ========================= */
-  if(action === 'close-modal') {
+  if(action === 'close-modal'){
     if(e.target !== el) return;
     history.back();
     return;
   }
+  if(action === 'close-modal-btn'){ history.back(); return; }
 
-
-  /* =========================
-     GENERAL ACTIONS
-     ========================= */
-
-  if(action === 'toggle-theme') {
-    const nextTheme = state.theme === 'dark' ? 'light' : 'dark';
-    setState({
-      theme: nextTheme,
-      chatMenuOpen: false,
-    });
-    try { localStorage.setItem('coupleflow-theme', nextTheme); } catch (_) {}
+  if(action === 'toggle-theme'){
+    const next = state.theme === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem('coupleflow-theme', next); }catch(_){}
+    setState({ theme: next, chatMenuOpen:false });
     return;
   }
 
-  if(action === 'goto-create') {
-    setState({
-      screen:'create',
-      authError:''
-    });
-    return;
-  }
+  if(action === 'goto-create'){ setState({ screen:'create', authError:'' }); return; }
+  if(action === 'goto-login'){ setState({ screen:'login', authError:'' }); return; }
+  if(action === 'goto-choice'){ setState({ screen:'authChoice', authError:'' }); return; }
+  if(action === 'submit-create'){ createAccount(); return; }
+  if(action === 'submit-login'){ loginWithCode(); return; }
+  if(action === 'copy-code'){ copyCode(); return; }
 
-  if(action === 'goto-login') {
-    setState({
-      screen:'login',
-      authError:''
-    });
-    return;
-  }
+  if(action === 'open-add'){ setState({ modal:'addChoice' }); return; }
+  if(action === 'open-add-goal'){ setState({ modal:'addGoal' }); return; }
+  if(action === 'open-add-update'){ setState({ modal:'addUpdate', pendingPhotoFile:null }); return; }
+  if(action === 'back-add-choice'){ setState({ modal:'addChoice' }); return; }
 
-  if(action === 'goto-choice') {
-    setState({
-      screen:'authChoice',
-      authError:''
-    });
-    return;
-  }
+  if(action === 'tab'){ setState({ activeTab: el.getAttribute('data-tab'), chatMenuOpen:false }); return; }
+  if(action === 'toggle-chat-menu'){ setState({ chatMenuOpen: !state.chatMenuOpen }); return; }
+  if(action === 'chat-back-home'){ setState({ activeTab:'today', chatMenuOpen:false }); return; }
+  if(action === 'chat-menu-select'){ setState({ activeTab: el.getAttribute('data-tab'), chatMenuOpen:false }); return; }
 
-  if(action === 'submit-create') {
-    createAccount();
-    return;
-  }
-
-  if(action === 'submit-login') {
-    loginWithCode();
-    return;
-  }
-
-
-  /* =========================
-     ADD MENU
-     ========================= */
-
-  if(action === 'open-add') {
-    setState({
-      modal:'addChoice'
-    });
-    return;
-  }
-
-  if(action === 'open-add-goal') {
-    setState({
-      modal:'addGoal'
-    });
-    return;
-  }
-
-  if(action === 'open-add-update') {
-    setState({
-      modal:'addUpdate',
-      pendingPhotoFile:null
-    });
-    return;
-  }
-
-  if(action === 'back-add-choice') {
-    setState({
-      modal:'addChoice'
-    });
-    return;
-  }
-
-
-  /* =========================
-     TABS
-     ========================= */
-
-  if(action === 'tab') {
-    setState({
-      activeTab: el.getAttribute('data-tab'),
-      chatMenuOpen: false,
-    });
-    return;
-  }
-
-  if(action === 'toggle-chat-menu') {
-    setState({ chatMenuOpen: !state.chatMenuOpen });
-    return;
-  }
-
-  if(action === 'chat-back-home') {
-    setState({ activeTab: 'today', chatMenuOpen: false });
-    return;
-  }
-
-  if(action === 'chat-menu-select') {
-    setState({
-      activeTab: el.getAttribute('data-tab'),
-      chatMenuOpen: false,
-    });
-    return;
-  }
-
-
-  /* =========================
-     SETTINGS / CONNECTION
-     ========================= */
-
-  if(action === 'open-connect' ||
-     action === 'open-connect-from-settings') {
-
-    setState({
-      modal:'connect',
-      connectError:''
-    });
-
-    return;
-  }
-
-  if(action === 'open-settings') {
-
+  if(action === 'open-connect'){ setState({ modal:'connect', connectError:'' }); return; }
+  if(action === 'open-settings'){
     await checkPushSubscriptionStatus();
-
-    setState({
-      modal:'settings'
-    });
-
+    setState({ modal:'settings' });
     return;
   }
+  if(action === 'show-notification-help'){ showToast('Notifications need HTTPS or localhost'); return; }
+  if(action === 'enable-notifications'){ enablePushNotifications(); return; }
+  if(action === 'disable-notifications'){ disablePushNotifications(); return; }
 
-  if(action === 'show-notification-help') {
-    alert('Notifications only work on a secure site. Open this app from http://localhost or HTTPS, then try again.');
+  if(action === 'do-logout'){ logout(); return; }
+  if(action === 'disconnect-partner'){ disconnectPartner(); return; }
+  if(action === 'filter-goals'){ setState({ goalsFilter: el.getAttribute('data-filter') }); return; }
+  if(action === 'toggle-goal'){ toggleGoal(el.getAttribute('data-id')); return; }
+  if(action === 'delete-goal'){ deleteGoal(el.getAttribute('data-id')); return; }
+  if(action === 'delete-update'){ deleteUpdate(el.getAttribute('data-id')); return; }
+  if(action === 'react'){
+    addReaction(el.getAttribute('data-update-id'), el.getAttribute('data-emoji'));
     return;
   }
+  if(action === 'send-chat'){ sendChatMessage(); return; }
 
-  if(action === 'enable-notifications') {
-    enablePushNotifications();
+  if(action === 'connect-now'){
+    const ok = await connectPartner(state.connectInput);
+    if(ok) finishOnboarding();
     return;
   }
-
-  if(action === 'disable-notifications') {
-    disablePushNotifications();
-    return;
-  }
-
-
-  /* =========================
-     OTHER ACTIONS
-     ========================= */
-
-  if(action === 'do-logout') {
-    logout();
-    return;
-  }
-
-  if(action === 'disconnect-partner') {
-    disconnectPartner();
-    return;
-  }
-
-  if(action === 'filter-goals') {
-    goalsFilter = el.getAttribute('data-filter');
-    render();
-    return;
-  }
-
-  if(action === 'toggle-goal') {
-    toggleGoal(el.getAttribute('data-id'));
-    return;
-  }
-
-  if(action === 'delete-goal') {
-    deleteGoal(el.getAttribute('data-id'));
-    return;
-  }
-
-  if(action === 'react') {
-    addReaction(
-      el.getAttribute('data-update-id'),
-      el.getAttribute('data-emoji')
-    );
-    return;
-  }
-
-  if(action === 'send-chat') {
-    sendChatMessage();
-    return;
-  }
-
-
-  /* =========================
-     CONNECT
-     ========================= */
-
-  if(action === 'connect-now') {
-    await connectPartner(state.connectInput);
-
-    if(!state.connectError) {
-      finishOnboarding();
-    }
-
-    return;
-  }
-
-  if(action === 'skip-connect') {
-    state.connectInput = '';
-    state.connectError = '';
+  if(action === 'skip-connect'){
+    state.connectInput = ''; state.connectError = '';
     finishOnboarding();
     return;
   }
-
-  if(action === 'submit-connect') {
+  if(action === 'submit-connect'){
     const val = state.connectInput || document.getElementById('connect-input')?.value || '';
-    state.connectInput = val;
-    const result = await connectPartner(val);
-
-    if(!state.connectError) {
-      finishOnboarding();
-    }
-
+    await connectPartner(val);
     return;
   }
 
-
-  /* =========================
-     ADD GOAL
-     ========================= */
-
-  if(action === 'submit-goal') {
-
-    const title =
-      document.getElementById('goal-title')?.value.trim();
-
-    if(!title) {
-      document.getElementById('goal-title')?.focus();
-      return;
-    }
-
-    const category =
-      document.getElementById('goal-category')?.value;
-
-    const duration =
-      document.getElementById('goal-duration')?.value.trim();
-
-    const priority =
-      document.getElementById('goal-priority')?.value;
-
-    const priv =
-      document.getElementById('goal-private')?.checked || false;
-
+  if(action === 'submit-goal'){
+    const titleEl = document.getElementById('goal-title');
+    const title = titleEl?.value.trim();
+    if(!title){ titleEl?.focus(); showToast('Give your goal a name'); return; }
     addGoal({
       title,
-      category,
-      duration,
-      priority,
-      private: priv
+      category: document.getElementById('goal-category')?.value,
+      duration: document.getElementById('goal-duration')?.value.trim(),
+      priority: document.getElementById('goal-priority')?.value,
+      private: document.getElementById('goal-private')?.checked || false,
     });
-
     return;
   }
 
-
-  /* =========================
-     SHARE UPDATE
-     ========================= */
-
-  if(action === 'submit-update') {
-
-    const caption =
-      document.getElementById('update-caption')?.value || '';
-
-    postUpdate(
-      caption,
-      state.pendingPhotoFile
-    );
-
+  if(action === 'submit-update'){
+    const caption = document.getElementById('update-caption')?.value || '';
+    if(!caption.trim() && !state.pendingPhotoFile){ showToast('Add a photo or a caption'); return; }
+    state.busy = true; render();
+    await postUpdate(caption, state.pendingPhotoFile);
+    state.busy = false; render();
     return;
   }
+});
 
+// Enter to submit on auth screens
+document.addEventListener('keydown', (e) => {
+  if(e.key !== 'Enter') return;
+  if(state.screen === 'create') createAccount();
+  else if(state.screen === 'login') loginWithCode();
 });
 
 /* ============================================================ */
-/* Init                                                           */
+/* Init                                                          */
 /* ============================================================ */
 render();
 restoreSession();
 
 })();
 </script>
-  <script>
-if ("serviceWorker" in navigator) {
+
+<script>
+if("serviceWorker" in navigator){
   window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js")
-      .then(registration => {
-        console.log(
-          "CoupleFlow service worker registered:",
-          registration.scope
-        );
-      })
-      .catch(error => {
-        console.error(
-          "CoupleFlow service worker registration failed:",
-          error
-        );
-      });
+    navigator.serviceWorker.register("/sw.js")
+      .then(r => console.log("CoupleFlow SW registered:", r.scope))
+      .catch(e => console.error("CoupleFlow SW registration failed:", e));
   });
 }
 </script>
